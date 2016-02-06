@@ -1,3 +1,0 @@
-class Pawn : Piece {
-
-}

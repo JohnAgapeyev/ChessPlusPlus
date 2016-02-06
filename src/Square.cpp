@@ -7,6 +7,5 @@ private:
 public:
     
     Square() : piece(nullptr), occupied(false) {}
-    
-    Square(Piece piece) : this.piece(piece), occupied(false) {}
+    Square(Piece piece) : this.piece(piece), occupied(true) {}
 }

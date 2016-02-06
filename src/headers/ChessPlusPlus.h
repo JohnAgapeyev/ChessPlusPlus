@@ -1,3 +1,4 @@
-int main() {
-    return 0;
-}
+#ifdef CHESSPLUSPLUS_H
+#define CHESSPLUSPLUS_H
+
+#endif

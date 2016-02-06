@@ -1,8 +1,14 @@
+#incldue <enums.h>
+
+template<Pieces P>
 class Piece {
     
-protected:
-    enum class Player {
-        WHITE,
-        BLACK
-    };
+private:
+    Colour pieceColour;
+    P type;
+    
+public:
+    Piece() {}
+    Piece(P type, Colour col) : this.type(type), pieceColour(col) {}
+    
 }
