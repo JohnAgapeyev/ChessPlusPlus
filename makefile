@@ -1,16 +1,28 @@
-COMP=g++
-FLAGS=-c -Wall -pedantic
-DEPS=%.o
-SRC=./src
-HEAD=./headers
+CXX = g++
+CXXFLAGS = -c -Wall -pedantic -std=c++14
+ODIR = bin
+SRC = src
+HEAD = $(SRC)/headers
+APPNAME = Chess
+OBJS = $(ODIR)/%.o
+SRCOBJS = $(SRC)/%.cpp
+SRCWILD = $(wildcard $(SRC)/*.cpp)
+HEADWILD = $(wildcard $(HEAD)/*.h)
+EXEC = $(ODIR)/$(APPNAME)
 
-all: $(DEPS)
-	$(COMP) -o Chess $^
+# Prereqs are all .o files in the bin folder; assuming each source .cpp file is turned into a .o
+all: $(patsubst $(SRCOBJS), $(OBJS), $(SRCWILD))
+# Command takes all bin .o files and creates an executable called chess in the bin folder
+	$(CXX) $^ -o $(EXEC)
 
-%.o: %.c $(HEAD)/*.h
-	$(COMP) $(FLAGS) $@ $<
+# Target is any bin .o file, prereq is the equivalent src .cpp file and all header files
+$(OBJS): $(SRCOBJS) $(HEADWILD)
+# Command compiles the src .cpp file with the listed flags and turns it into a bin .o file
+	$(CXX) $(CXXFLAGS) $< -o $(patsubst $(SRCOBJS), $(OBJS), $<)
 
+# Prevent clean from trying to do anything with a file called clean
 .PHONY: clean
 
+# Deletes the executable and all .o files in the bin folder
 clean:
-	rm -f $(SRC)/*.o
+	$(RM) $(EXEC).exe $(wildcard $(ODIR)/*.o)

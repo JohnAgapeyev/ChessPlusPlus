@@ -1,7 +1,7 @@
 class MoveGenerator {
     
 public:
-    template<Pieces p>
+    template<PieceTypes p>
     std::vector<Move> generate(const P& piece, auto& vectorTable, auto& board) {
         
     }

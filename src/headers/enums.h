@@ -1,7 +1,7 @@
 #ifndef ENUMS_H
 #define ENUMS_H
 
-enum class Pieces {
+enum class PieceTypes {
     PAWN,
     KNIGHT,
     BISHOP,
