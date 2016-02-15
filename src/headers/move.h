@@ -1,4 +1,6 @@
-#ifdef MOVE_H
+#ifndef MOVE_H
 #define MOVE_H
-
+class Move {
+    
+};
 #endif

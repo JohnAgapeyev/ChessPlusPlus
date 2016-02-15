@@ -1,4 +1,4 @@
-#ifdef MOVEGEN_H
+#ifndef MOVEGEN_H
 #define MOVEGEN_H
 
 #endif
