@@ -3,9 +3,14 @@
 
 #include "enums.h"
 
-template<PieceTypes P, Colour pieceColour>
 class Piece {
-    
+private:
+    PieceTypes type;
+    Colour pieceColour;
+
+public:
+    PieceTypes getType() {return type;}
+    Colour getColour() {return pieceColour;}
 };
 
 #endif
