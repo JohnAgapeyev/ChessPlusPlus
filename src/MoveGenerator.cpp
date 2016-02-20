@@ -4,14 +4,14 @@
 #include <vector>
 #include <array>
 
-class MoveGenerator {
+//class MoveGenerator {
     
-public:
+//public:
     //std::vector<Move> generate(const PieceTypes& piece, 
-    void generate(const PieceTypes& piece, 
-        std::array<std::array<int, 15>, 15>& vectorTable, 
-        std::array<std::array<Square, 8>, 8>& board) {
-        return;
-    }
+    //void generate(const PieceTypes& piece, 
+        //std::array<std::array<int, 15>, 15>& vectorTable, 
+        //std::array<std::array<Square, 8>, 8>& board) {
+        //return;
+    //}
     
-};
+//};

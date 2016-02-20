@@ -1,5 +1,3 @@
-#include "headers/enums.h"
-#include "headers/piece.h"
 #include "headers/square.h"
 #include "headers/board.h"
 #include <vector>
@@ -7,14 +5,12 @@
 #include <iostream>
 #include <memory>
 
-const std::array<std::array<std::unique_ptr<Square>, 15>, 15> Board::vectorTable = [](){
+void Board::setVector() {
     int count = -112;
-    std::array<std::array<std::unique_ptr<Square>, 15>, 15> output{0};
     for (int i = 0; i < 15; ++i) {
         for (int j = 0; j < 15; ++j) {
-            output[i][j] = std::unique_ptr<Square>(new Square());
-            output[i][j]->setOffset(count++);
+            vectorTable[i][j] = std::unique_ptr<Square>(new Square());
+            vectorTable[i][j]->setOffset(count++);
         }
     }
-    return output;
-};
+}

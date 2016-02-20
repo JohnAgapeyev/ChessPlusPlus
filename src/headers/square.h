@@ -13,6 +13,6 @@ public:
     Square(Piece piece) : piece(piece), offset(0) {}
     
     void setOffset(int offset) {offset = offset;}
-    int getOffset() {return offset;}
+    //int getOffset() {return offset;}
 };
 #endif

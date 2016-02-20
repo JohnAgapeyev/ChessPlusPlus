@@ -9,8 +9,8 @@ private:
     Colour pieceColour;
 
 public:
-    PieceTypes getType() {return type;}
-    Colour getColour() {return pieceColour;}
+    //PieceTypes getType() {return type;}
+    //Colour getColour() {return pieceColour;}
 };
 
 #endif

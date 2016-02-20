@@ -5,7 +5,10 @@
 #include <memory>
 
 class Board {
-    static const std::array<std::array<std::unique_ptr<Square>, 15>, 15> vectorTable;
+    
+    std::array<std::array<std::unique_ptr<Square>, 15>, 15> vectorTable;
+    
+    void setVector();
     
 };
 
