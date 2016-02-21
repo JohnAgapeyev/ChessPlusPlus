@@ -2,17 +2,21 @@
 #define SQUARE_H
 
 #include "piece.h"
+#include <memory>
 
 class Square {
 private:
-    Piece piece;
+    std::unique_ptr<Piece> piece;
     int offset;
     
 public:
-    Square() : offset(404) {}
-    Square(Piece piece) : piece(piece), offset(0) {}
+    Square() : piece(nullptr), offset(404) {}
+    Square(std::unique_ptr<Piece> p) : piece(std::move(p)), offset(0) {}
+    Square(const Piece p) : piece(std::make_unique<Piece>(p)), offset(0) {}
     
-    void setOffset(int offset) {offset = offset;}
-    //int getOffset() {return offset;}
+    void setPiece(std::unique_ptr<Piece> p) {this->piece = std::move(p);}
+    void setPiece(Piece p) {this->piece = std::make_unique<Piece>(p);}
+    void setOffset(int offset) {this->offset = offset;}
+    int getOffset() {return offset;}
 };
 #endif

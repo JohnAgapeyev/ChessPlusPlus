@@ -9,8 +9,9 @@ private:
     Colour pieceColour;
 
 public:
-    //PieceTypes getType() {return type;}
-    //Colour getColour() {return pieceColour;}
+    Piece(const PieceTypes t, const Colour c) : type(t), pieceColour(c) {}
+    PieceTypes getType() {return type;}
+    Colour getColour() {return pieceColour;}
 };
 
 #endif
