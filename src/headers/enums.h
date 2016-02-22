@@ -2,17 +2,17 @@
 #define ENUMS_H
 
 enum class PieceTypes {
-    PAWN,
-    KNIGHT,
-    BISHOP,
-    ROOK,
-    QUEEN,
-    KING
+    PAWN = 'P',
+    KNIGHT = 'N',
+    BISHOP = 'B',
+    ROOK = 'R',
+    QUEEN = 'Q',
+    KING = 'K'
 };
 
 enum class Colour {
-    WHITE,
-    BLACK
+    WHITE = 'W',
+    BLACK = 'B'
 };
 
 

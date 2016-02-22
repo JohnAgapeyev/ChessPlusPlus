@@ -3,6 +3,7 @@
 
 #include "piece.h"
 #include <memory>
+#include <iostream>
 
 class Square {
 private:
@@ -18,5 +19,7 @@ public:
     void setPiece(Piece p) {this->piece = std::make_unique<Piece>(p);}
     void setOffset(int offset) {this->offset = offset;}
     int getOffset() {return offset;}
+    
+    friend auto& operator<<(std::ostream& os, const Square& sq);
 };
 #endif
