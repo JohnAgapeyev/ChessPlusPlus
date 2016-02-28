@@ -7,7 +7,7 @@
 #include <memory>
 
 void Board::setVector() {
-    int count = -112;
+    int count = 98;
     for (int i = 0; i < 15; ++i) {
         for (int j = 0; j < 15; ++j) {
             if (i >= 0 && i <= 7) {
@@ -21,5 +21,6 @@ void Board::setVector() {
                 vectorTable[i][j] = std::make_shared<Square>(count++);
             }
         }
+        count -= 30;
     }
 }

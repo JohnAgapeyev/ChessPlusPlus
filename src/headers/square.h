@@ -19,10 +19,11 @@ public:
     Square(std::unique_ptr<Piece> p, const int off) : piece(std::move(p)), offset(off) {}
     Square(const Piece p, const int off) : piece(std::make_unique<Piece>(p)), offset(off) {}
     
-    void setPiece(std::unique_ptr<Piece> p) {this->piece = std::move(p);}
-    void setPiece(Piece p) {this->piece = std::make_unique<Piece>(p);}
-    void setOffset(int offset) {this->offset = offset;}
-    int getOffset() {return offset;}
+    auto setPiece(std::unique_ptr<Piece> p) {this->piece = std::move(p);}
+    auto setPiece(Piece p) {this->piece = std::make_unique<Piece>(p);}
+    auto setOffset(int offset) {this->offset = offset;}
+    auto getOffset() {return offset;}
+    auto getPiece() {return piece.get();}
     
     friend std::ostream& operator<<(std::ostream& os, const Square& square);
 };
