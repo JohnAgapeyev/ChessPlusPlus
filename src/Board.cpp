@@ -13,7 +13,7 @@ void Board::setVector() {
             if (i >= 0 && i <= 7) {
                 if (j >= 0 && j <= 7) {
                     vectorTable[i][j] = INIT_BOARD[i][j];
-                    vectorTable[i][j]->setOffset(INIT_BOARD[i][j]->getOffset());
+                    vectorTable[i][j]->setOffset(count++);
                 } else {
                     vectorTable[i][j] = std::make_shared<Square>(count++);
                 }
