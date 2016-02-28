@@ -7,13 +7,13 @@
 
 class Board {
     
-    std::array<std::array<std::unique_ptr<Square>, 15>, 15> vectorTable;
+    std::array<std::array<std::shared_ptr<Square>, 15>, 15> vectorTable;
     
-    void setVector();
+    //void setVector();
     
 public:
     auto& getBoard(){return vectorTable;};
-    
+    void setVector();
 };
 
 #endif

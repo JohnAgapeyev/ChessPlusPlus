@@ -2,14 +2,29 @@
 #include "headers/board.h"
 #include "headers/square.h"
 #include "headers/piece.h"
+#include "headers/chessplusplus.h"
 
 int main() {
-    std::cout << "Hello World!" << std::endl;
     Board b;
-    for (const auto& row : b.getBoard()) {
-        for (const auto& sq : row) {
-            std::cout << sq.get() << std::endl;
-        }
-    }
+    b.setVector();
+    printBoardStateDebug(b);
     return 0;
+}
+
+void printBoardStateDebug(Board b) {
+    for (const auto& row : b.getBoard()) {
+        for (int i = 0; i < 15; ++i) {
+            std::cout << "------";
+        }
+        std::cout << '-' << std::endl;
+        std::cout << "|";
+        for (const auto& sq : row) {
+            std::cout << *sq << "|";
+        }
+        std::cout << std::endl;
+    }
+    for (int i = 0; i < 15; ++i) {
+        std::cout << "------";
+    }
+    std::cout << '-' << std::endl;
 }
