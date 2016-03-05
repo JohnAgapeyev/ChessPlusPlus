@@ -8,22 +8,34 @@
 #include <utility>
 #include <algorithm>
 
+/*
+ * Try to remove index from squares and instead calculate it based off the index
+ * This will ensure that the offsets aren't rotated during board movement
+ * 
+ * Offset = 98 - (15 * i) + (j + 1)
+ * 
+ * 
+ * Also, might have to replace std rotate in my board hifting methods to ensure
+ * things all fit together nicely.
+ * 
+ */
+ 
+constexpr auto genOffset = [=](auto a, auto b){return 98 - (15 * a) + b;};
+
 void Board::setVector() {
-    int count = 98;
     for (int i = 0; i < 15; ++i) {
         for (int j = 0; j < 15; ++j) {
             if (i >= 0 && i <= 7) {
                 if (j >= 0 && j <= 7) {
                     vectorTable[i][j] = INIT_BOARD[i][j];
-                    vectorTable[i][j]->setOffset(count++);
+                    vectorTable[i][j]->setOffset(genOffset(i, j));
                 } else {
-                    vectorTable[i][j] = std::make_shared<Square>(count++);
+                    vectorTable[i][j] = std::make_shared<Square>(genOffset(i, j));
                 }
             } else {
-                vectorTable[i][j] = std::make_shared<Square>(count++);
+                vectorTable[i][j] = std::make_shared<Square>(genOffset(i, j));
             }
         }
-        count -= 30;
     }
 }
 

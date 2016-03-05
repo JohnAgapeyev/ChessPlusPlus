@@ -8,11 +8,11 @@
 int main() {
     Board b;
     printBoardState(b);
-    for (int i = 0; i < 10; ++i) {
-        std::cout << std::endl;
-    }
-    b.shiftBoard(1, 1);
-    printBoardState(b);
+    //for (int i = 0; i < 10; ++i) {
+        //std::cout << std::endl;
+    //}
+    //b.shiftBoard(1, 1);
+    //printBoardState(b);
     return 0;
 }
 
