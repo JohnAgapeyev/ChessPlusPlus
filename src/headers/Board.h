@@ -6,14 +6,17 @@
 #include "square.h"
 
 class Board {
-    
     std::array<std::array<std::shared_ptr<Square>, 15>, 15> vectorTable;
-    
-    //void setVector();
+    void setVector();
     
 public:
-    auto& getBoard(){return vectorTable;};
-    void setVector();
+    Board(){setVector();};
+    auto& getBoard() const {return vectorTable;};
+    auto findCorner();
+    void shiftBoard(int col, int row);
+    void shiftVertical(int count);
+    void shiftHorizontal(int count);
+    
 };
 
 #endif

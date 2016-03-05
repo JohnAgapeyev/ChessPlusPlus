@@ -22,8 +22,8 @@ public:
     auto setPiece(std::unique_ptr<Piece> p) {this->piece = std::move(p);}
     auto setPiece(Piece p) {this->piece = std::make_unique<Piece>(p);}
     auto setOffset(int offset) {this->offset = offset;}
-    auto getOffset() {return offset;}
-    auto getPiece() {return piece.get();}
+    auto getOffset() const {return offset;}
+    auto getPiece() const {return piece.get();}
     
     friend std::ostream& operator<<(std::ostream& os, const Square& square);
 };

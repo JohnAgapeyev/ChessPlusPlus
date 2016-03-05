@@ -18,6 +18,7 @@ std::ostream& operator<<(std::ostream& os, const Square& square) {
     if (squarePiece->getColour() == Colour::UNKNOWN 
             || squarePiece->getType() == PieceTypes::UNKNOWN) {
 #ifdef DEBUG
+        //return os << std::right << std::setw(4) << square.offset << " x ";
         return os << "   x   ";
 #else
         return os << "";

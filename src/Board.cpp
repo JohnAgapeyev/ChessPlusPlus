@@ -5,6 +5,8 @@
 #include <array>
 #include <iostream>
 #include <memory>
+#include <utility>
+#include <algorithm>
 
 void Board::setVector() {
     int count = 98;
@@ -23,4 +25,52 @@ void Board::setVector() {
         }
         count -= 30;
     }
+}
+
+auto Board::findCorner() {
+    auto colOffset = -1;
+    auto rowOffset = -1;
+    
+    auto findValid = [](auto sq) {
+        auto pc = sq->getPiece();
+        return (pc && pc->getColour() != Colour::UNKNOWN && pc->getType() != PieceTypes::UNKNOWN);
+    };
+        
+    for (int i = 0; i < 15; ++i) {
+        if (colOffset != -1 && rowOffset != -1) {
+            break;
+        }
+        for (int j = 0; j < 15; ++j) {
+            if (findValid((vectorTable[i][j]).get())) {
+                colOffset = i;
+                rowOffset = j;
+                break;
+            }
+        }
+    }
+    if (colOffset != -1 && rowOffset != -1) {
+        return std::make_pair(colOffset, rowOffset);
+    }
+    return std::make_pair(-1, -1);
+}
+
+void Board::shiftHorizontal(int count) {
+    auto it = vectorTable[0].begin();
+    for (auto& row : vectorTable) {
+        it = (count > 0) ? row.begin() : row.end();
+        std::rotate(row.begin(), it + count, row.end());
+    }
+}
+
+void Board::shiftVertical(int count) {
+    auto it = (count > 0) ? vectorTable.begin() : vectorTable.end();
+    std::rotate(vectorTable.begin(), it + count, vectorTable.end());
+}
+
+void Board::shiftBoard(int col, int row) {
+    auto startCoords = findCorner();
+    auto colDiff = startCoords.first + col - ZERO_LOCATION.first;
+    auto rowDiff = startCoords.second + row - ZERO_LOCATION.second;
+    shiftHorizontal(colDiff);
+    shiftVertical(rowDiff);
 }

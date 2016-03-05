@@ -7,12 +7,16 @@
 
 int main() {
     Board b;
-    b.setVector();
+    printBoardState(b);
+    for (int i = 0; i < 10; ++i) {
+        std::cout << std::endl;
+    }
+    b.shiftBoard(1, 1);
     printBoardState(b);
     return 0;
 }
 
-void printBoardState(Board b) {
+void printBoardState(const Board b) {
 #ifdef DEBUG
     const int range = 15;
 #else

@@ -17,5 +17,4 @@ enum class Colour {
     BLACK = 'B'
 };
 
-
 #endif
