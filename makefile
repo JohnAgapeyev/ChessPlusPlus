@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -c -Wall -pedantic -std=c++14 -D DEBU
+CXXFLAGS = -c -Wall -pedantic -std=c++14 -D DEBUG
 ODIR = bin
 SRC = src
 HEAD = $(SRC)/headers

@@ -60,6 +60,10 @@ void Board::shiftHorizontal(const int count) {
         return;
     }
     auto startCoords = findCorner();
+    if (startCoords.second + count < 0 || startCoords.second + count + INNER_BOARD_SIZE - 1 > OUTER_BOARD_SIZE) {
+        std::cerr << "Invalid board shift; No movement performed" << std::endl;
+        return;
+    }
     for (int i = 0, col = 0; i < INNER_BOARD_SIZE; ++i) {
         for (int j = 0, row = 0; j < INNER_BOARD_SIZE; ++j) {
             col = (count > 0) ? INNER_BOARD_SIZE - 1 - i : i;
@@ -81,6 +85,10 @@ void Board::shiftVertical(int count) {
         return;
     }
     auto startCoords = findCorner();
+    if (startCoords.first + count < 0 || startCoords.first + count + INNER_BOARD_SIZE - 1 > OUTER_BOARD_SIZE) {
+        std::cerr << "Invalid board shift; No movement performed" << std::endl;
+        return;
+    }
     for (int i = 0, col = 0; i < INNER_BOARD_SIZE; ++i) {
         for (int j = 0, row = 0; j < INNER_BOARD_SIZE; ++j) {
             col = (count > 0) ? INNER_BOARD_SIZE - 1 - i : i;
