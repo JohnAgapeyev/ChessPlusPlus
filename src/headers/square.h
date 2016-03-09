@@ -23,6 +23,8 @@ public:
     auto getOffset() const {return offset;}
     auto getPiece() const {return piece.get();}
     
+    bool checkSentinel();
+    
     friend std::ostream& operator<<(std::ostream& os, const Square& square);
 };
 #endif

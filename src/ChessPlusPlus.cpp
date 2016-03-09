@@ -2,38 +2,29 @@
 #include "headers/square.h"
 #include "headers/piece.h"
 #include "headers/chessplusplus.h"
+#include "headers/consts.h"
 #include <iostream>
 #include <algorithm>
 
 int main() {
     Board b;
     printBoardState(b);
-    //for (int i = 0; i < 10; ++i) {
-        //std::cout << std::endl;
-    //}
-    //b.shiftBoard(1, 1);
-    //printBoardState(b);
+    for (int i = 0; i < 10; ++i) {
+        std::cout << std::endl;
+    }
+    b.shiftBoard(1, 1);
+    printBoardState(b);
     return 0;
 }
 
 void printBoardState(const Board b) {
 #ifdef DEBUG
-    const int range = 15;
+    auto range = OUTER_BOARD_SIZE;
 #else
-    const int range = 8;
+    auto range = INNER_BOARD_SIZE;
 #endif
-    for (const auto& row : b.getBoard()) {
-#ifndef DEBUG
-        if (std::count_if(row.cbegin(), row.cend(), [](auto sq){
-                    auto pc = sq->getPiece();
-                    return (pc
-                            && (pc->getColour() == Colour::UNKNOWN
-                            || pc->getType() == PieceTypes::UNKNOWN)
-                    );
-                    }) == 15) {
-            continue;
-        }
-#endif
+    auto table = b.getBoard();
+    for (int i = 0; i < range; ++i) {
         for (int i = 0; i < range; ++i) {
 #ifdef DEBUG
             std::cout << "--------";
@@ -42,14 +33,17 @@ void printBoardState(const Board b) {
 #endif
         }
         std::cout << '-' << std::endl << "|";
-        for (const auto& sq : row) {
+        for (auto j = 0; j < 15; ++j) {
 #ifndef DEBUG
-            auto pc = sq->getPiece();
-            if (pc && (pc->getColour() == Colour::UNKNOWN || pc->getType() == PieceTypes::UNKNOWN)) {
+            if (table[(i * OUTER_BOARD_SIZE) + j]->checkSentinel()) {
                 continue;
             }
 #endif
-            std::cout << *sq << '|';
+            if (!table[(i * OUTER_BOARD_SIZE) + j]) {
+                std::cout << '0' << '|';
+            } else {
+                std::cout << *table[(i * OUTER_BOARD_SIZE) + j] << '|';
+            }
         }
         std::cout << std::endl;
     }

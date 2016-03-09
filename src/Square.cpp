@@ -4,6 +4,11 @@
 #include <iostream>
 #include <iomanip>
 
+bool Square::checkSentinel() {
+    auto pc = this->getPiece();
+    return (pc && pc->getColour() == Colour::UNKNOWN && pc->getType() == PieceTypes::UNKNOWN);
+}
+
 std::ostream& operator<<(std::ostream& os, const Square& square) {
     auto squarePiece = square.piece.get();
     // Checks if Square is empty

@@ -7,6 +7,7 @@
 #include <memory>
 #include <utility>
 #include <algorithm>
+#include <iterator>
 
 /*
  * Try to remove index from squares and instead calculate it based off the index
@@ -27,62 +28,79 @@ void Board::setVector() {
         for (int j = 0; j < 15; ++j) {
             if (i >= 0 && i <= 7) {
                 if (j >= 0 && j <= 7) {
-                    vectorTable[i][j] = INIT_BOARD[i][j];
-                    vectorTable[i][j]->setOffset(genOffset(i, j));
+                    vectorTable[(i * OUTER_BOARD_SIZE) + j] = INIT_BOARD[i][j];
+                    vectorTable[(i * OUTER_BOARD_SIZE) + j]->setOffset(genOffset(i, j));
                 } else {
-                    vectorTable[i][j] = std::make_shared<Square>(genOffset(i, j));
+                    vectorTable[(i * OUTER_BOARD_SIZE) + j] = std::make_shared<Square>(genOffset(i, j));
                 }
             } else {
-                vectorTable[i][j] = std::make_shared<Square>(genOffset(i, j));
+                vectorTable[(i * OUTER_BOARD_SIZE) + j] = std::make_shared<Square>(genOffset(i, j));
             }
         }
     }
 }
 
 auto Board::findCorner() {
-    auto colOffset = -1;
-    auto rowOffset = -1;
-    
-    auto findValid = [](auto sq) {
+    auto result = std::find_if(
+    vectorTable.cbegin(), vectorTable.cend(), 
+    [](auto sq) {
         auto pc = sq->getPiece();
         return (pc && pc->getColour() != Colour::UNKNOWN && pc->getType() != PieceTypes::UNKNOWN);
-    };
-        
-    for (int i = 0; i < 15; ++i) {
-        if (colOffset != -1 && rowOffset != -1) {
-            break;
-        }
-        for (int j = 0; j < 15; ++j) {
-            if (findValid((vectorTable[i][j]).get())) {
-                colOffset = i;
-                rowOffset = j;
-                break;
-            }
-        }
+    });
+    
+    if (result != vectorTable.cend()) {
+        auto dist = std::distance(vectorTable.cbegin(), result);
+        return std::make_pair(dist / OUTER_BOARD_SIZE, dist % OUTER_BOARD_SIZE);
     }
-    if (colOffset != -1 && rowOffset != -1) {
-        return std::make_pair(colOffset, rowOffset);
-    }
-    return std::make_pair(-1, -1);
+    return std::make_pair(-1L, -1L);
 }
 
-void Board::shiftHorizontal(int count) {
-    auto it = vectorTable[0].begin();
-    for (auto& row : vectorTable) {
-        it = (count > 0) ? row.begin() : row.end();
-        std::rotate(row.begin(), it + count, row.end());
+void Board::shiftHorizontal(const int count) {
+    if (!count) {
+        return;
+    }
+    auto startCoords = findCorner();
+    for (int i = 0, col = 0; i < INNER_BOARD_SIZE; ++i) {
+        for (int j = 0, row = 0; j < INNER_BOARD_SIZE; ++j) {
+            col = (count > 0) ? INNER_BOARD_SIZE - 1 - i : i;
+            row = (count > 0) ? INNER_BOARD_SIZE - 1 - j : j;
+            
+            std::swap(
+                vectorTable[
+                (startCoords.first * OUTER_BOARD_SIZE) + startCoords.second + (col * OUTER_BOARD_SIZE) + row]
+                ,
+                vectorTable[
+                count + (startCoords.first * OUTER_BOARD_SIZE) + startCoords.second + (col * OUTER_BOARD_SIZE) + row]
+            );
+        }
     }
 }
 
 void Board::shiftVertical(int count) {
-    auto it = (count > 0) ? vectorTable.begin() : vectorTable.end();
-    std::rotate(vectorTable.begin(), it + count, vectorTable.end());
+    if (!count) {
+        return;
+    }
+    auto startCoords = findCorner();
+    for (int i = 0, col = 0; i < INNER_BOARD_SIZE; ++i) {
+        for (int j = 0, row = 0; j < INNER_BOARD_SIZE; ++j) {
+            col = (count > 0) ? INNER_BOARD_SIZE - 1 - i : i;
+            row = (count > 0) ? INNER_BOARD_SIZE - 1 - j : j;
+            
+            std::swap(
+                vectorTable[
+                (startCoords.first * OUTER_BOARD_SIZE) + startCoords.second + (col * OUTER_BOARD_SIZE) + row]
+                ,
+                vectorTable[
+                (count * OUTER_BOARD_SIZE) + (startCoords.first * OUTER_BOARD_SIZE) + startCoords.second + (col * OUTER_BOARD_SIZE) + row]
+            );
+        }
+    }
 }
 
 void Board::shiftBoard(int col, int row) {
     auto startCoords = findCorner();
-    auto colDiff = startCoords.first + col - ZERO_LOCATION.first;
-    auto rowDiff = startCoords.second + row - ZERO_LOCATION.second;
+    auto colDiff = ZERO_LOCATION.first - (startCoords.first + col);
+    auto rowDiff = ZERO_LOCATION.second - (startCoords.second + row);
     shiftHorizontal(colDiff);
     shiftVertical(rowDiff);
 }
