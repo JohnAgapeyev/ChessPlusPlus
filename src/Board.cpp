@@ -111,4 +111,9 @@ void Board::shiftBoard(int col, int row) {
     auto rowDiff = ZERO_LOCATION.second - (startCoords.second + row);
     shiftHorizontal(colDiff);
     shiftVertical(rowDiff);
+    for (int i = 0; i < OUTER_BOARD_SIZE; ++i) {
+        for (int j = 0; j < OUTER_BOARD_SIZE; ++j) {
+            vectorTable[(i* OUTER_BOARD_SIZE) + j]->setOffset(genOffset(i, j));
+        }
+    }
 }

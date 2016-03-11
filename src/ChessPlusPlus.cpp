@@ -4,7 +4,10 @@
 #include "headers/chessplusplus.h"
 #include "headers/consts.h"
 #include <iostream>
+#include <string>
 #include <algorithm>
+#include <cctype>
+#include <regex>
 
 int main() {
     Board b;
@@ -14,6 +17,10 @@ int main() {
     }
     b.shiftBoard(1, 1);
     printBoardState(b);
+    for (int i = 0; i < 10; ++i) {
+        std::cout << std::endl;
+    }
+    mainLoop();
     return 0;
 }
 
@@ -55,4 +62,29 @@ void printBoardState(const Board b) {
 #endif
     }
     std::cout << '-' << std::endl;
+}
+
+void mainLoop() {
+    std::string input;
+    for (;;) {
+        std::cout << "Enter your move: ";
+        std::getline(std::cin, input);
+        for (auto& ch : input) {
+            ch = std::tolower(ch);
+        }
+        // Input equals exit
+        if (!input.compare("exit")) {
+            break;
+        }
+        if (!checkMoveValid(input)) {
+            std::cout << "Not a valid move" << std::endl;
+            continue;
+        }
+    }
+}
+
+bool checkMoveValid(std::string input) {
+    // Match 4 letter inputs that are either 1-8 or alternate a-h, 1-8
+    std::regex reg("([a-h][1-8]){2}|[1-8]{4}");
+    return std::regex_match(input, reg);
 }

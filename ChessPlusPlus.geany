@@ -29,16 +29,19 @@ long_line_behaviour=1
 long_line_column=80
 
 [files]
-current_page=6
+current_page=2
 FILE_NAME_0=0;C++;0;EUTF-8;0;1;0;C%3A%5CUsers%5CJohn%5CDocuments%5CGitHub%5CChessPlusPlus%5Csrc%5CPiece.cpp;0;4
-FILE_NAME_1=145;C++;0;EUTF-8;0;1;0;C%3A%5CUsers%5CJohn%5CDocuments%5CGitHub%5CChessPlusPlus%5Csrc%5Cheaders%5Cpiece.h;0;4
-FILE_NAME_2=536;C++;0;EUTF-8;0;1;0;C%3A%5CUsers%5CJohn%5CDocuments%5CGitHub%5CChessPlusPlus%5Csrc%5CBoard.cpp;0;4
-FILE_NAME_3=304;C++;0;EUTF-8;0;1;0;C%3A%5CUsers%5CJohn%5CDocuments%5CGitHub%5CChessPlusPlus%5Csrc%5Cheaders%5Cboard.h;0;4
-FILE_NAME_4=542;C++;0;EUTF-8;0;1;0;C%3A%5CUsers%5CJohn%5CDocuments%5CGitHub%5CChessPlusPlus%5Csrc%5CSquare.cpp;0;4
-FILE_NAME_5=656;C++;0;EUTF-8;0;1;0;C%3A%5CUsers%5CJohn%5CDocuments%5CGitHub%5CChessPlusPlus%5Csrc%5Cheaders%5Csquare.h;0;4
-FILE_NAME_6=362;C++;0;EUTF-8;0;1;0;C%3A%5CUsers%5CJohn%5CDocuments%5CGitHub%5CChessPlusPlus%5Csrc%5CChessPlusPlus.cpp;0;4
-FILE_NAME_7=60;C++;0;EUTF-8;0;1;0;C%3A%5CUsers%5CJohn%5CDocuments%5CGitHub%5CChessPlusPlus%5Csrc%5Cheaders%5Cchessplusplus.h;0;4
-FILE_NAME_8=192;C++;0;EUTF-8;0;1;0;C%3A%5CUsers%5CJohn%5CDocuments%5CGitHub%5CChessPlusPlus%5Csrc%5Cheaders%5Cenums.h;0;4
+FILE_NAME_1=139;C++;0;EUTF-8;0;1;0;C%3A%5CUsers%5CJohn%5CDocuments%5CGitHub%5CChessPlusPlus%5Csrc%5Cheaders%5Cpiece.h;0;4
+FILE_NAME_2=3801;C++;0;EUTF-8;0;1;0;C%3A%5CUsers%5CJohn%5CDocuments%5CGitHub%5CChessPlusPlus%5Csrc%5CBoard.cpp;0;4
+FILE_NAME_3=73;C++;0;EUTF-8;0;1;0;C%3A%5CUsers%5CJohn%5CDocuments%5CGitHub%5CChessPlusPlus%5Csrc%5Cheaders%5Cboard.h;0;4
+FILE_NAME_4=154;C++;0;EUTF-8;0;1;0;C%3A%5CUsers%5CJohn%5CDocuments%5CGitHub%5CChessPlusPlus%5Csrc%5CSquare.cpp;0;4
+FILE_NAME_5=879;C++;0;EUTF-8;0;1;0;C%3A%5CUsers%5CJohn%5CDocuments%5CGitHub%5CChessPlusPlus%5Csrc%5Cheaders%5Csquare.h;0;4
+FILE_NAME_6=342;C++;0;EUTF-8;0;1;0;C%3A%5CUsers%5CJohn%5CDocuments%5CGitHub%5CChessPlusPlus%5Csrc%5CChessPlusPlus.cpp;0;4
+FILE_NAME_7=52;C++;0;EUTF-8;0;1;0;C%3A%5CUsers%5CJohn%5CDocuments%5CGitHub%5CChessPlusPlus%5Csrc%5Cheaders%5Cchessplusplus.h;0;4
+FILE_NAME_8=34;C++;0;EUTF-8;0;1;0;C%3A%5CUsers%5CJohn%5CDocuments%5CGitHub%5CChessPlusPlus%5Csrc%5Cheaders%5Cenums.h;0;4
+FILE_NAME_9=212;C++;0;EUTF-8;0;1;0;C%3A%5CUsers%5CJohn%5CDocuments%5CGitHub%5CChessPlusPlus%5Csrc%5Cheaders%5Cconsts.h;0;4
+FILE_NAME_10=59;Make;0;EUTF-8;1;1;0;C%3A%5CUsers%5CJohn%5CDocuments%5CGitHub%5CChessPlusPlus%5Cmakefile;0;4
+FILE_NAME_11=29;C++;0;EUTF-8;0;1;0;C%3A%5CUsers%5CJohn%5CDocuments%5CGitHub%5CChessPlusPlus%5Csrc%5CConsts.cpp;0;4
 
 [build-menu]
 NF_00_LB=_Make
