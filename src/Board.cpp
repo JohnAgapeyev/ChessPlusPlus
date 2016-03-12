@@ -23,7 +23,7 @@
  
 constexpr auto genOffset = [=](auto a, auto b){return 98 - (15 * a) + b;};
 
-void Board::setVector() {
+Board::Board() {
     for (int i = 0; i < 15; ++i) {
         for (int j = 0; j < 15; ++j) {
             if (i >= 0 && i <= 7) {
@@ -40,7 +40,7 @@ void Board::setVector() {
     }
 }
 
-auto Board::findCorner() {
+auto Board::findCorner() const {
     auto result = std::find_if(
     vectorTable.cbegin(), vectorTable.cend(), 
     [](auto sq) {
@@ -71,10 +71,11 @@ void Board::shiftHorizontal(const int count) {
             
             std::swap(
                 vectorTable[
-                (startCoords.first * OUTER_BOARD_SIZE) + startCoords.second + (col * OUTER_BOARD_SIZE) + row]
-                ,
+                (startCoords.first * OUTER_BOARD_SIZE) 
+                    + startCoords.second + (col * OUTER_BOARD_SIZE) + row],
                 vectorTable[
-                count + (startCoords.first * OUTER_BOARD_SIZE) + startCoords.second + (col * OUTER_BOARD_SIZE) + row]
+                count + (startCoords.first * OUTER_BOARD_SIZE) 
+                    + startCoords.second + (col * OUTER_BOARD_SIZE) + row]
             );
         }
     }

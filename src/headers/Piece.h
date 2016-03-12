@@ -2,17 +2,19 @@
 #define PIECE_H
 
 #include "enums.h"
+#include <array>
+#include <vector>
 
 class Piece {
 private:
     PieceTypes type;
     Colour pieceColour;
+    std::vector<int> vecOffsets;
 
 public:
-    Piece() {}
-    Piece(const PieceTypes t, const Colour c) : type(t), pieceColour(c) {}
-    PieceTypes getType() {return type;}
-    Colour getColour() {return pieceColour;}
+    Piece(const PieceTypes t, const Colour c);
+    PieceTypes getType() const {return type;}
+    Colour getColour() const {return pieceColour;}
 };
 
 #endif
