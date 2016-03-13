@@ -20,7 +20,7 @@ int main() {
     for (int i = 0; i < 10; ++i) {
         std::cout << std::endl;
     }
-    mainLoop();
+    mainLoop(b);
     return 0;
 }
 
@@ -64,7 +64,7 @@ void printBoardState(const Board b) {
     std::cout << '-' << std::endl;
 }
 
-void mainLoop() {
+void mainLoop(Board& b) {
     std::string input;
     for (;;) {
         std::cout << "Enter your move: ";
@@ -80,6 +80,8 @@ void mainLoop() {
             std::cout << "Not a valid move" << std::endl;
             continue;
         }
+        Move test = b.getMoveGen().createMove(input);
+        std::cout << b.getMoveGen().validateMove(test) << std::endl;
     }
 }
 

@@ -15,6 +15,7 @@ public:
     Piece(const PieceTypes t, const Colour c);
     PieceTypes getType() const {return type;}
     Colour getColour() const {return pieceColour;}
+    auto getVectorList() const {return vecOffsets;}
 };
 
 #endif

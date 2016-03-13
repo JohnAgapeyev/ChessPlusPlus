@@ -1,5 +1,6 @@
 
 #include "headers/piece.h"
+#include <algorithm>
 
 Piece::Piece(const PieceTypes t, const Colour c) : type(t), pieceColour(c) {
     switch(t) {
@@ -51,4 +52,5 @@ Piece::Piece(const PieceTypes t, const Colour c) : type(t), pieceColour(c) {
             vecOffsets.push_back(0);
             break;
     }
+    std::sort(vecOffsets.begin(), vecOffsets.end());
 }

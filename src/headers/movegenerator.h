@@ -2,6 +2,7 @@
 #define MOVEGEN_H
 
 #include "move.h"
+#include "consts.h"
 #include <vector>
 
 class MoveGenerator {
@@ -16,10 +17,10 @@ public:
             OUTER_BOARD_SIZE * OUTER_BOARD_SIZE>& table) : board(table) {}
             
     auto getMoveList() const {return moveList;}
-    
     void generateAll();
     bool validateMove(Move mv);
     bool inCheck();
+    Move createMove(std::string input);
     
     
 };

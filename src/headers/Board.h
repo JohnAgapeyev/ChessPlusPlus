@@ -15,7 +15,8 @@ class Board {
     
 public:
     Board();
-    auto& getBoard() const {return vectorTable;};
+    auto& getBoard() const {return vectorTable;}
+    auto& getMoveGen() {return moveGen;}
     auto findCorner() const;
     void shiftBoard(int col, int row);
 };
