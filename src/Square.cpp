@@ -38,4 +38,8 @@ std::ostream& operator<<(std::ostream& os, const Square& square) {
     return os << static_cast<char>(squarePiece->getColour()) 
             << static_cast<char>(squarePiece->getType());
 #endif
-}   
+}
+
+bool operator==(const Square& first, const Square& second) {
+    return (first.piece == second.piece);
+}

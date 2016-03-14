@@ -26,5 +26,6 @@ public:
     bool checkSentinel();
     
     friend std::ostream& operator<<(std::ostream& os, const Square& square);
+    friend bool operator==(const Square& first, const Square& second);
 };
 #endif

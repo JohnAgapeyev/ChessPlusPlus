@@ -5,6 +5,6 @@
 
 static void printBoardState(Board b);
 static void mainLoop(Board& b);
-static bool checkMoveValid(std::string input);
+static bool checkInputValid(std::string input);
 
 #endif

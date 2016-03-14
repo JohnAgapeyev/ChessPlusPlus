@@ -15,11 +15,13 @@ int main() {
     for (int i = 0; i < 10; ++i) {
         std::cout << std::endl;
     }
-    b.shiftBoard(1, 1);
+    b.shiftBoard(0, 6);
     printBoardState(b);
     for (int i = 0; i < 10; ++i) {
         std::cout << std::endl;
     }
+    b.shiftBoard(1, 1);
+    printBoardState(b);
     mainLoop(b);
     return 0;
 }
@@ -76,16 +78,19 @@ void mainLoop(Board& b) {
         if (!input.compare("exit")) {
             break;
         }
-        if (!checkMoveValid(input)) {
+        if (!checkInputValid(input)) {
             std::cout << "Not a valid move" << std::endl;
             continue;
         }
-        Move test = b.getMoveGen().createMove(input);
-        std::cout << b.getMoveGen().validateMove(test) << std::endl;
+        b.makeMove(input);
+        for (int i = 0; i < 10; ++i) {
+            std::cout << std::endl;
+        }
+        printBoardState(b);
     }
 }
 
-bool checkMoveValid(std::string input) {
+bool checkInputValid(std::string input) {
     // Match 4 letter inputs that are either 1-8 or alternate a-h, 1-8
     std::regex reg("([a-h][1-8]){2}|[1-8]{4}");
     return std::regex_match(input, reg);
