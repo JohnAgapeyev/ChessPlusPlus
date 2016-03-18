@@ -1,7 +1,6 @@
 #include "headers/square.h"
 #include "headers/board.h"
 #include "headers/consts.h"
-#include "headers/movegenerator.h"
 #include "headers/enums.h"
 #include "headers/move.h"
 #include <vector>
@@ -63,10 +62,10 @@ void Board::shiftHorizontal(const int count) {
         return;
     }
     auto startCoords = findCorner();
-    //if (startCoords.second + count < 0 || startCoords.second + count + INNER_BOARD_SIZE - 1 > OUTER_BOARD_SIZE) {
-        //std::cerr << "Invalid board shift; No movement performed" << std::endl;
-        //return;
-    //}
+    if (startCoords.second + count < 0 || startCoords.second + count + INNER_BOARD_SIZE - 1 > OUTER_BOARD_SIZE) {
+        std::cerr << "Invalid horizontal board shift; No movement performed" << std::endl;
+        return;
+    }
     for (int i = 0, col = 0; i < INNER_BOARD_SIZE; ++i) {
         for (int j = 0, row = 0; j < INNER_BOARD_SIZE; ++j) {
             col = (count > 0) ? INNER_BOARD_SIZE - 1 - i : i;
@@ -89,10 +88,11 @@ void Board::shiftVertical(int count) {
         return;
     }
     auto startCoords = findCorner();
-    //if (startCoords.first + count < 0 || startCoords.first + count + INNER_BOARD_SIZE - 1 > OUTER_BOARD_SIZE) {
-        //std::cerr << "Invalid board shift; No movement performed" << std::endl;
-        //return;
-    //}
+    if (startCoords.first + count < 0 
+        || startCoords.first + count + INNER_BOARD_SIZE - 1 > OUTER_BOARD_SIZE) {
+        std::cerr << "Invalid vertical board shift; No movement performed" << std::endl;
+        return;
+    }
     for (int i = 0, col = 0; i < INNER_BOARD_SIZE; ++i) {
         for (int j = 0, row = 0; j < INNER_BOARD_SIZE; ++j) {
             col = (count > 0) ? INNER_BOARD_SIZE - 1 - i : i;
@@ -100,10 +100,13 @@ void Board::shiftVertical(int count) {
             
             std::swap(
                 vectorTable[
-                (startCoords.first * OUTER_BOARD_SIZE) + startCoords.second + (col * OUTER_BOARD_SIZE) + row]
+                (startCoords.first * OUTER_BOARD_SIZE) 
+                    + startCoords.second + (col * OUTER_BOARD_SIZE) + row]
                 ,
                 vectorTable[
-                (count * OUTER_BOARD_SIZE) + (startCoords.first * OUTER_BOARD_SIZE) + startCoords.second + (col * OUTER_BOARD_SIZE) + row]
+                (count * OUTER_BOARD_SIZE) 
+                    + (startCoords.first * OUTER_BOARD_SIZE) 
+                    + startCoords.second + (col * OUTER_BOARD_SIZE) + row]
             );
         }
     }
@@ -148,7 +151,10 @@ void Board::makeMove(std::string input) {
     if (mv.toSq->getPiece()) {
         mv.toSq->setPiece(nullptr);
     }
-    std::swap(mv.fromSq, mv.toSq);
+    std::swap(*(mv.fromSq), *(mv.toSq));
+    auto temp = mv.fromSq->getOffset();
+    mv.fromSq->setOffset(mv.toSq->getOffset());
+    mv.toSq->setOffset(temp);
 }
 
 Move Board::MoveGenerator::createMove(std::string input) {
