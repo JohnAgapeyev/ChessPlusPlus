@@ -10,6 +10,7 @@
 #include <utility>
 #include <algorithm>
 #include <iterator>
+#include <cstdlib>
 
 /*
  * Try to remove index from squares and instead calculate it based off the index
@@ -205,7 +206,11 @@ bool Board::MoveGenerator::validateMove(Move mv) {
     
     // Check if the move offset is a legal one
     if (selectedOffset == vectorOffsets.cend()) {
+#ifdef DEBUG
         std::cout << "Move is not legal1" << std::endl;
+#else
+        std::cout << "Move is not legal" << std::endl;
+#endif
         return false;
     }
     
@@ -214,7 +219,11 @@ bool Board::MoveGenerator::validateMove(Move mv) {
      * is the same colour as the piece on the ending square.
      */
     if (mv.toSq->getPiece() && fromPiece->getColour() == mv.toSq->getPiece()->getColour()) {
+#ifdef DEBUG
         std::cout << "Move is not legal2" << std::endl;
+#else
+        std::cout << "Move is not legal" << std::endl;
+#endif
         return false;
     }
     
@@ -247,18 +256,44 @@ bool Board::MoveGenerator::validateMove(Move mv) {
         }
         // Check if the square has a piece on it or is a sentinel
         if (currSquare->getPiece()) {
-            std::cout << "Move is not legal3" << std::endl;
+#ifdef DEBUG
+        std::cout << "Move is not legal3" << std::endl;
+#else
+        std::cout << "Move is not legal" << std::endl;
+#endif
             return false;
         }
     }
     
     // Check if square was found in previous loop
     if (!foundToSquare) {
+#ifdef DEBUG
         std::cout << "Move is not legal4" << std::endl;
+#else
+        std::cout << "Move is not legal" << std::endl;
+#endif
         return false;
     }
     
-    // ensure pawns only move diagonally if they capture a piece, including en passant
+    auto secondSquareIndex = std::distance(board.vectorTable.cbegin(), secondSquare);
+    
+    /* 
+     * Ensure pawns only move diagonally if they capture a piece, including en passant
+     * En passant not implemented, but when it is, replace false with 
+     * the check of the neighbouring squares
+     */
+    if (fromPiece->getType() == PieceTypes::PAWN 
+            && std::abs(*selectedOffset) != 15 
+            && ((!board.vectorTable[secondSquareIndex]->getPiece() 
+                    || board.vectorTable[secondSquareIndex]->checkSentinel()) 
+                || false)) {
+#ifdef DEBUG
+        std::cout << "Move is not legal5" << std::endl;
+#else
+        std::cout << "Move is not legal" << std::endl;
+#endif
+        return false;
+    }
     
     // call inCheck to ensure the board state doesn't leave the same coloured king in check
     
