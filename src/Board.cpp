@@ -194,22 +194,21 @@ bool Board::MoveGenerator::validateMove(Move mv) {
         std::cout << "Cannot start a move on an empty square" << std::endl;
         return false;
     }
-    auto firstIndex = std::distance(board.vectorTable.cbegin(), firstSquare);
-    auto secondIndex = std::distance(board.vectorTable.cbegin(), secondSquare);
     auto vectorOffsets = fromPiece->getVectorList();
-    auto vectorStart = vectorOffsets.cbegin();
-    auto vectorEnd = vectorOffsets.cend();
     auto diff = (*secondSquare)->getOffset() - (*firstSquare)->getOffset();
     
-    auto selectedOffset = std::find_if(vectorStart, vectorEnd, [diff](auto offset){
-        return (diff / offset > 0 && diff / offset < 8 && diff % offset == 0);
-    });
+    auto selectedOffset = std::find_if(vectorOffsets.cbegin(), 
+        vectorOffsets.cend(), [diff](auto offset){
+            return (diff / offset > 0 && diff / offset < 8 && !(diff % offset));
+        }
+    );
     
     // Check if the move offset is a legal one
-    if (selectedOffset == vectorEnd) {
+    if (selectedOffset == vectorOffsets.cend()) {
         std::cout << "Move is not legal1" << std::endl;
         return false;
     }
+    
     /*
      * Check if the colour of the piece on the starting square 
      * is the same colour as the piece on the ending square.
@@ -218,16 +217,32 @@ bool Board::MoveGenerator::validateMove(Move mv) {
         std::cout << "Move is not legal2" << std::endl;
         return false;
     }
+    
+    int moveLen;
+    switch (fromPiece->getType()) {
+        case PieceTypes::KING:
+        case PieceTypes::PAWN:
+        case PieceTypes::KNIGHT:
+            moveLen = 2;
+            break;
+        default:
+            moveLen = INNER_BOARD_SIZE;
+            break;
+    }
+    
     auto currSquare = board.vectorTable[0];
+    auto foundToSquare = false;
+    
     // Iterate through to ensure sliding pieces aren't being blocked
-    for (int i = 1; i < INNER_BOARD_SIZE; ++i) {
+    for (int i = 1; i < moveLen; ++i) {
         currSquare = board.vectorTable[(ZERO_LOCATION.first * OUTER_BOARD_SIZE) 
                         + ZERO_LOCATION.second - (i * (
                         (OUTER_BOARD_SIZE * ((*selectedOffset) / OUTER_BOARD_SIZE)) 
                         - ((*selectedOffset) 
                         - (OUTER_BOARD_SIZE * ((*selectedOffset) / OUTER_BOARD_SIZE))))
                     )];
-        if (*currSquare == *(mv.toSq)) {
+        if (currSquare->getOffset() == mv.toSq->getOffset()) {
+            foundToSquare = true;
             break;
         }
         // Check if the square has a piece on it or is a sentinel
@@ -235,6 +250,12 @@ bool Board::MoveGenerator::validateMove(Move mv) {
             std::cout << "Move is not legal3" << std::endl;
             return false;
         }
+    }
+    
+    // Check if square was found in previous loop
+    if (!foundToSquare) {
+        std::cout << "Move is not legal4" << std::endl;
+        return false;
     }
     
     // ensure pawns only move diagonally if they capture a piece, including en passant
