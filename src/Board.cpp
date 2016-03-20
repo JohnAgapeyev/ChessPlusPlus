@@ -22,6 +22,7 @@
  * Also, might have to replace std rotate in my board hifting methods to ensure
  * things all fit together nicely.
  * 
+ * TODO: Add check to allow double pawn movement when selecting offset
  */
  
 constexpr auto genOffset = [=](auto a, auto b){return 98 - (15 * a) + b;};
@@ -197,14 +198,16 @@ bool Board::MoveGenerator::validateMove(Move mv) {
     }
     auto vectorOffsets = fromPiece->getVectorList();
     auto diff = (*secondSquare)->getOffset() - (*firstSquare)->getOffset();
+    auto secondSquareIndex = std::distance(board.vectorTable.cbegin(), secondSquare);
     
+    // Find the offset that the move uses
     auto selectedOffset = std::find_if(vectorOffsets.cbegin(), 
         vectorOffsets.cend(), [diff](auto offset){
             return (diff / offset > 0 && diff / offset < 8 && !(diff % offset));
         }
     );
     
-    // Check if the move offset is a legal one
+    // Check if the move offset was found
     if (selectedOffset == vectorOffsets.cend()) {
 #ifdef DEBUG
         std::cout << "Move is not legal1" << std::endl;
@@ -244,6 +247,8 @@ bool Board::MoveGenerator::validateMove(Move mv) {
     const auto verticalDisplacement = (OUTER_BOARD_SIZE 
         * ((*selectedOffset) / OUTER_BOARD_SIZE));
     
+    std::cout << *selectedOffset << std::endl;
+    
     // Iterate through to ensure sliding pieces aren't being blocked
     for (int i = 1; i < moveLen; ++i) {
         currSquare = board.vectorTable[ZERO_LOCATION_1D 
@@ -275,7 +280,26 @@ bool Board::MoveGenerator::validateMove(Move mv) {
         return false;
     }
     
-    auto secondSquareIndex = std::distance(board.vectorTable.cbegin(), secondSquare);
+    // Check that pawns don't double move except on their starting rows
+    if (*selectedOffset == 30) {
+        auto startCoords = board.findCorner();
+        auto dist = std::distance(board.vectorTable.cbegin(), firstSquare);
+        auto cornerIndex = (startCoords.first * OUTER_BOARD_SIZE) + startCoords.second;
+        auto rowPairs = (fromPiece->getColour() == Colour::WHITE) ? std::make_pair(90, 104) : std::make_pair(15, 29);
+        auto distFromStartToCorner = dist - cornerIndex;
+        if (distFromStartToCorner < rowPairs.first || distFromStartToCorner > rowPairs.second) {
+#ifdef DEBUG
+            std::cout << "Move is not legal5" << std::endl;
+#else
+            std::cout << "Move is not legal" << std::endl;
+#endif
+            return false;
+        }
+        
+    }
+    
+    
+    
     
     /* 
      * Ensure pawns only move diagonally if they capture a piece, including en passant
@@ -288,7 +312,7 @@ bool Board::MoveGenerator::validateMove(Move mv) {
                     || board.vectorTable[secondSquareIndex]->checkSentinel()) 
                 || false)) {
 #ifdef DEBUG
-        std::cout << "Move is not legal5" << std::endl;
+        std::cout << "Move is not legal6" << std::endl;
 #else
         std::cout << "Move is not legal" << std::endl;
 #endif

@@ -9,10 +9,12 @@ Piece::Piece(const PieceTypes t, const Colour c) : type(t), pieceColour(c) {
                 vecOffsets.push_back(14);
                 vecOffsets.push_back(15);
                 vecOffsets.push_back(16);
+                vecOffsets.push_back(30);
             } else {
                 vecOffsets.push_back(-14);
                 vecOffsets.push_back(-15);
                 vecOffsets.push_back(-16);
+                vecOffsets.push_back(-30);
             }
             break;
         case PieceTypes::KNIGHT:
