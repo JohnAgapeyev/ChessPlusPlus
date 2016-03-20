@@ -122,7 +122,6 @@ void Board::shiftBoard(int col, int row) {
     auto colDiff = ZERO_LOCATION.first - (startCoords.second + col);
     auto rowDiff = ZERO_LOCATION.second - (startCoords.first + row);
     shiftHorizontal(colDiff);
-    std::cout << colDiff << ", " << rowDiff << std::endl;
     shiftVertical(rowDiff);
     for (int i = 0; i < OUTER_BOARD_SIZE; ++i) {
         for (int j = 0; j < OUTER_BOARD_SIZE; ++j) {
@@ -200,9 +199,14 @@ bool Board::MoveGenerator::validateMove(Move mv) {
     auto vectorOffsets = fromPiece->getVectorList();
     auto vectorStart = vectorOffsets.cbegin();
     auto vectorEnd = vectorOffsets.cend();
-    auto diff = firstIndex - secondIndex;
+    auto diff = (*secondSquare)->getOffset() - (*firstSquare)->getOffset();
+    
+    auto selectedOffset = std::find_if(vectorStart, vectorEnd, [diff](auto offset){
+        return (diff / offset > 0 && diff / offset < 8 && diff % offset == 0);
+    });
+    
     // Check if the move offset is a legal one
-    if (!std::binary_search(vectorStart, vectorEnd, diff)) {
+    if (selectedOffset == vectorEnd) {
         std::cout << "Move is not legal1" << std::endl;
         return false;
     }
@@ -217,7 +221,12 @@ bool Board::MoveGenerator::validateMove(Move mv) {
     auto currSquare = board.vectorTable[0];
     // Iterate through to ensure sliding pieces aren't being blocked
     for (int i = 1; i < INNER_BOARD_SIZE; ++i) {
-        currSquare = board.vectorTable[(ZERO_LOCATION.first * OUTER_BOARD_SIZE) + ZERO_LOCATION.second - (i * diff)];
+        currSquare = board.vectorTable[(ZERO_LOCATION.first * OUTER_BOARD_SIZE) 
+                        + ZERO_LOCATION.second - (i * (
+                        (OUTER_BOARD_SIZE * ((*selectedOffset) / OUTER_BOARD_SIZE)) 
+                        - ((*selectedOffset) 
+                        - (OUTER_BOARD_SIZE * ((*selectedOffset) / OUTER_BOARD_SIZE))))
+                    )];
         if (*currSquare == *(mv.toSq)) {
             break;
         }
