@@ -150,7 +150,7 @@ void Board::makeMove(std::string input) {
     if (mv.toSq->getPiece()) {
         mv.toSq->setPiece(nullptr);
     }
-    std::swap(*(mv.fromSq), *(mv.toSq));
+    std::swap(*mv.fromSq, *mv.toSq);
     auto temp = mv.fromSq->getOffset();
     mv.fromSq->setOffset(mv.toSq->getOffset());
     mv.toSq->setOffset(temp);
@@ -232,14 +232,14 @@ bool Board::MoveGenerator::validateMove(Move mv) {
     
     auto currSquare = board.vectorTable[0];
     auto foundToSquare = false;
+    const auto verticalDisplacement = (OUTER_BOARD_SIZE 
+        * ((*selectedOffset) / OUTER_BOARD_SIZE));
     
     // Iterate through to ensure sliding pieces aren't being blocked
     for (int i = 1; i < moveLen; ++i) {
-        currSquare = board.vectorTable[(ZERO_LOCATION.first * OUTER_BOARD_SIZE) 
-                        + ZERO_LOCATION.second - (i * (
-                        (OUTER_BOARD_SIZE * ((*selectedOffset) / OUTER_BOARD_SIZE)) 
-                        - ((*selectedOffset) 
-                        - (OUTER_BOARD_SIZE * ((*selectedOffset) / OUTER_BOARD_SIZE))))
+        currSquare = board.vectorTable[ZERO_LOCATION_1D 
+                        - (i * (verticalDisplacement 
+                        - ((*selectedOffset) - verticalDisplacement))
                     )];
         if (currSquare->getOffset() == mv.toSq->getOffset()) {
             foundToSquare = true;
