@@ -17,7 +17,9 @@
  * This will ensure that the offsets aren't rotated during board movement
  * 
  * Offset = 98 - (15 * i) + (j + 1)
- * 
+ * IMPORTANT:
+ * Positive x: (30 * ((x + 7) / 15)) - x
+ * Negative x: -((30 * ((abs(x) + 7) / 15)) - abs(x))
  * 
  * Also, might have to replace std rotate in my board hifting methods to ensure
  * things all fit together nicely.
@@ -59,6 +61,46 @@ auto Board::findCorner() const {
     return std::make_pair(-1L, -1L);
 }
 
+void Board::printBoardState() const {
+#ifndef DEBUG
+    auto range = INNER_BOARD_SIZE;
+    std::array<std::shared_ptr<Square>, 64> outputTable;
+    std::copy_if(vectorTable.begin(), vectorTable.end(), outputTable.begin(), [](const auto& sq) {
+        auto pc = sq->getPiece();
+        return !(pc && pc->getColour() == Colour::UNKNOWN && pc->getType() == PieceTypes::UNKNOWN);
+    });
+#else
+    auto range = OUTER_BOARD_SIZE;
+#endif
+    for (auto i = 0; i < range; ++i) {
+        for (int j = 0; j < range; ++j) {
+#ifdef DEBUG
+            std::cout << "--------";
+#else
+            std::cout << "---";
+#endif
+        }
+        std::cout << "-\n|";
+#ifdef DEBUG
+        std::for_each(vectorTable.cbegin() + (i * range), vectorTable.cbegin() + ((i + 1) * range), 
+                [](const auto& sq){std::cout << *sq << '|';});
+#else
+        std::for_each(outputTable.cbegin() + (i * range), outputTable.cbegin() + ((i + 1) * range), 
+                [](const auto& sq){std::cout << *sq << '|';});
+#endif
+        std::cout << std::endl;
+    }
+
+    for (int k = 0; k < range; ++k) {
+#ifdef DEBUG
+        std::cout << "--------";
+#else
+        std::cout << "---";
+#endif
+    }
+    std::cout << "-\n";
+}
+
 void Board::shiftHorizontal(const int count) {
     if (!count) {
         return;
@@ -76,7 +118,8 @@ void Board::shiftHorizontal(const int count) {
             std::swap(
                 vectorTable[
                 (startCoords.first * OUTER_BOARD_SIZE) 
-                    + startCoords.second + (col * OUTER_BOARD_SIZE) + row],
+                    + startCoords.second + (col * OUTER_BOARD_SIZE) + row]
+                ,
                 vectorTable[
                 count + (startCoords.first * OUTER_BOARD_SIZE) 
                     + startCoords.second + (col * OUTER_BOARD_SIZE) + row]
@@ -114,11 +157,6 @@ void Board::shiftVertical(int count) {
     }
 }
 
-/*
- * TODO: Board is being shifted from its current position rather than 0,0
- * Aka, calling shiftBoard(1,1) on a move board will move it up and right by 1
- * rather than shifting it so that 1,1 is at offset 0
- */
 void Board::shiftBoard(int col, int row) {
     const auto& startCoords = findCorner();
     const auto colDiff = ZERO_LOCATION.first - (startCoords.second + col);
@@ -316,7 +354,7 @@ bool Board::MoveGenerator::validateMove(const Move& mv) {
      * the check of the neighbouring squares
      */
     if (fromPiece->getType() == PieceTypes::PAWN 
-            && (std::abs(*selectedOffset) % 15) != 0 
+            && (*selectedOffset % 15) != 0 
             && ((!board.vectorTable[secondSquareIndex]->getPiece() 
                     || board.vectorTable[secondSquareIndex]->checkSentinel()) 
                 || false)) {

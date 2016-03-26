@@ -3,8 +3,7 @@
 
 #include <string>
 
-static void printBoardState(Board b);
 static void mainLoop(Board& b);
-static bool checkInputValid(std::string input);
+static bool checkInputValid(const std::string& input);
 
 #endif

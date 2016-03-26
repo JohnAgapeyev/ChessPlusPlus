@@ -30,6 +30,7 @@ class Board {
     
 public:
     Board();
+    void printBoardState() const;
     auto& getBoard() const {return vectorTable;}
     auto& getMoveGen() {return moveGen;}
     auto findCorner() const;
