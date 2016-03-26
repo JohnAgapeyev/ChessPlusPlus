@@ -6,7 +6,7 @@
 
 typedef struct Move Move;
 struct Move {
-    std::shared_ptr<Square> fromSq;
-    std::shared_ptr<Square> toSq;
+    Square *fromSq;
+    Square *toSq;
 };
 #endif

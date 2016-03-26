@@ -171,10 +171,10 @@ Move Board::MoveGenerator::createMove(std::string input) {
     auto topLeftCorner = board.findCorner();
     result.fromSq = board.vectorTable[((INNER_BOARD_SIZE - 1 - (input[1] - '0')) * OUTER_BOARD_SIZE) 
             + (topLeftCorner.first * OUTER_BOARD_SIZE) 
-            + input[0] - '0' + topLeftCorner.second];
+            + input[0] - '0' + topLeftCorner.second].get();
     result.toSq = board.vectorTable[((INNER_BOARD_SIZE - 1 - (input[3] - '0')) * OUTER_BOARD_SIZE) 
             + (topLeftCorner.first * OUTER_BOARD_SIZE) + input[2] - '0' 
-            + topLeftCorner.second];
+            + topLeftCorner.second].get();
     return result;
 }
  /*
@@ -191,8 +191,12 @@ Move Board::MoveGenerator::createMove(std::string input) {
   * breaks everything.
   */
 bool Board::MoveGenerator::validateMove(const Move& mv) {
-    const auto& firstSquare = std::find(board.vectorTable.cbegin(), board.vectorTable.cend(), mv.fromSq);
-    const auto& secondSquare = std::find(board.vectorTable.cbegin(), board.vectorTable.cend(), mv.toSq);
+    const auto& firstSquare = std::find_if(board.vectorTable.cbegin(), board.vectorTable.cend(), [&mv](const auto& sq){
+        return (sq->getOffset() == mv.fromSq->getOffset());
+        });
+    const auto& secondSquare = std::find_if(board.vectorTable.cbegin(), board.vectorTable.cend(), [&mv](const auto& sq){
+        return (sq->getOffset() == mv.toSq->getOffset());
+        });
     // Try to find the start and end points
     if (firstSquare == board.vectorTable.cend() || secondSquare == board.vectorTable.cend()) {
         std::cerr << "Could not find start or end squares" << std::endl;
