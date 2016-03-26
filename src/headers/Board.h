@@ -18,7 +18,7 @@ class Board {
         MoveGenerator(const Board& b) : board(b) {}
         auto getMoveList() const {return moveList;}
         void generateAll();
-        bool validateMove(Move mv);
+        bool validateMove(const Move& mv);
         bool inCheck();
         Move createMove(std::string input);
     };

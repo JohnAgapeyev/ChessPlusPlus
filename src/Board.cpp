@@ -120,9 +120,9 @@ void Board::shiftVertical(int count) {
  * rather than shifting it so that 1,1 is at offset 0
  */
 void Board::shiftBoard(int col, int row) {
-    auto startCoords = findCorner();
-    auto colDiff = ZERO_LOCATION.first - (startCoords.second + col);
-    auto rowDiff = ZERO_LOCATION.second - (startCoords.first + row);
+    const auto& startCoords = findCorner();
+    const auto colDiff = ZERO_LOCATION.first - (startCoords.second + col);
+    const auto rowDiff = ZERO_LOCATION.second - (startCoords.first + row);
     shiftHorizontal(colDiff);
     shiftVertical(rowDiff);
     for (int i = 0; i < OUTER_BOARD_SIZE; ++i) {
@@ -177,28 +177,36 @@ Move Board::MoveGenerator::createMove(std::string input) {
             + topLeftCorner.second];
     return result;
 }
-
-/*
- * TODO: Need to shift squares according to 8x8 board, not the default 15x15
- * AKA a1 should always be valid square, not a sentinel if the board hasn't shifted
- */
-bool Board::MoveGenerator::validateMove(Move mv) {
-    auto firstSquare = std::find(board.vectorTable.cbegin(), board.vectorTable.cend(), mv.fromSq);
-    auto secondSquare = std::find(board.vectorTable.cbegin(), board.vectorTable.cend(), mv.toSq);
+ /*
+  * IMPORTANT:
+  * Positive x: (30 * ((x + 7) / 15)) - x
+  * Negative x: -((30 * ((abs(x) + 7) / 15)) - abs(x))
+  * This function represents the number of spaces needed to be subtracted
+  * from 0 to reach the corresponding offset square based on the fact
+  * that the board is represented in a 1-D array with offsets increasing
+  * left to right 
+  * x is the desired offset square to find.
+  * This method is critical for part of this validation method, and as such
+  * I am commenting it here as a backup just in case the code gets altered and
+  * breaks everything.
+  */
+bool Board::MoveGenerator::validateMove(const Move& mv) {
+    const auto& firstSquare = std::find(board.vectorTable.cbegin(), board.vectorTable.cend(), mv.fromSq);
+    const auto& secondSquare = std::find(board.vectorTable.cbegin(), board.vectorTable.cend(), mv.toSq);
     // Try to find the start and end points
     if (firstSquare == board.vectorTable.cend() || secondSquare == board.vectorTable.cend()) {
         std::cerr << "Could not find start or end squares" << std::endl;
         return false;
     }
-    auto fromPiece = mv.fromSq->getPiece();
+    const auto& fromPiece = mv.fromSq->getPiece();
     if (!fromPiece || (fromPiece->getType() == PieceTypes::UNKNOWN 
                   && fromPiece->getColour() == Colour::UNKNOWN)) {
         std::cout << "Cannot start a move on an empty square" << std::endl;
         return false;
     }
-    auto vectorOffsets = fromPiece->getVectorList();
-    auto diff = (*secondSquare)->getOffset() - (*firstSquare)->getOffset();
-    auto secondSquareIndex = std::distance(board.vectorTable.cbegin(), secondSquare);
+    const auto& vectorOffsets = fromPiece->getVectorList();
+    const auto diff = (*secondSquare)->getOffset() - (*firstSquare)->getOffset();
+    const auto& secondSquareIndex = std::distance(board.vectorTable.cbegin(), secondSquare);
     
     // Find the offset that the move uses
     auto selectedOffset = std::find_if(vectorOffsets.cbegin(), 
@@ -210,9 +218,9 @@ bool Board::MoveGenerator::validateMove(Move mv) {
     // Check if the move offset was found
     if (selectedOffset == vectorOffsets.cend()) {
 #ifdef DEBUG
-        std::cout << "Move is not legal1" << std::endl;
+        std::cout << "Move is not legal1\n";
 #else
-        std::cout << "Move is not legal" << std::endl;
+        std::cout << "Move is not legal\n";
 #endif
         return false;
     }
@@ -223,9 +231,9 @@ bool Board::MoveGenerator::validateMove(Move mv) {
      */
     if (mv.toSq->getPiece() && fromPiece->getColour() == mv.toSq->getPiece()->getColour()) {
 #ifdef DEBUG
-        std::cout << "Move is not legal2" << std::endl;
+        std::cout << "Move is not legal2\n";
 #else
-        std::cout << "Move is not legal" << std::endl;
+        std::cout << "Move is not legal\n";
 #endif
         return false;
     }
@@ -244,17 +252,18 @@ bool Board::MoveGenerator::validateMove(Move mv) {
     
     auto currSquare = board.vectorTable[0];
     auto foundToSquare = false;
-    const auto verticalDisplacement = (OUTER_BOARD_SIZE 
-        * ((*selectedOffset) / OUTER_BOARD_SIZE));
-    
-    std::cout << *selectedOffset << std::endl;
     
     // Iterate through to ensure sliding pieces aren't being blocked
     for (int i = 1; i < moveLen; ++i) {
-        currSquare = board.vectorTable[ZERO_LOCATION_1D 
-                        - (i * (verticalDisplacement 
-                        - ((*selectedOffset) - verticalDisplacement))
-                    )];
+        if (*selectedOffset > 0) {
+            currSquare = board.vectorTable[ZERO_LOCATION_1D 
+                - (i * (((OUTER_BOARD_SIZE * 2) * ((*selectedOffset + INNER_BOARD_SIZE - 1) 
+                / OUTER_BOARD_SIZE)) - *selectedOffset))];
+        } else {
+            currSquare = board.vectorTable[ZERO_LOCATION_1D 
+                + (i * (((OUTER_BOARD_SIZE * 2) * ((std::abs(*selectedOffset) + INNER_BOARD_SIZE - 1) 
+                / OUTER_BOARD_SIZE)) - std::abs(*selectedOffset)))];
+        }
         if (currSquare->getOffset() == mv.toSq->getOffset()) {
             foundToSquare = true;
             break;
@@ -262,9 +271,9 @@ bool Board::MoveGenerator::validateMove(Move mv) {
         // Check if the square has a piece on it or is a sentinel
         if (currSquare->getPiece()) {
 #ifdef DEBUG
-        std::cout << "Move is not legal3" << std::endl;
+        std::cout << "Move is not legal3\n";
 #else
-        std::cout << "Move is not legal" << std::endl;
+        std::cout << "Move is not legal\n";
 #endif
             return false;
         }
@@ -273,33 +282,29 @@ bool Board::MoveGenerator::validateMove(Move mv) {
     // Check if square was found in previous loop
     if (!foundToSquare) {
 #ifdef DEBUG
-        std::cout << "Move is not legal4" << std::endl;
+        std::cout << "Move is not legal4\n";
 #else
-        std::cout << "Move is not legal" << std::endl;
+        std::cout << "Move is not legal\n";
 #endif
         return false;
     }
     
     // Check that pawns don't double move except on their starting rows
     if (*selectedOffset == 30) {
-        auto startCoords = board.findCorner();
-        auto dist = std::distance(board.vectorTable.cbegin(), firstSquare);
-        auto cornerIndex = (startCoords.first * OUTER_BOARD_SIZE) + startCoords.second;
-        auto rowPairs = (fromPiece->getColour() == Colour::WHITE) ? std::make_pair(90, 104) : std::make_pair(15, 29);
-        auto distFromStartToCorner = dist - cornerIndex;
+        const auto& startCoords = board.findCorner();
+        const auto& dist = std::distance(board.vectorTable.cbegin(), firstSquare);
+        const auto cornerIndex = (startCoords.first * OUTER_BOARD_SIZE) + startCoords.second;
+        const auto& rowPairs = (fromPiece->getColour() == Colour::WHITE) ? std::make_pair(90, 104) : std::make_pair(15, 29);
+        const auto distFromStartToCorner = dist - cornerIndex;
         if (distFromStartToCorner < rowPairs.first || distFromStartToCorner > rowPairs.second) {
 #ifdef DEBUG
-            std::cout << "Move is not legal5" << std::endl;
+            std::cout << "Move is not legal5\n";
 #else
-            std::cout << "Move is not legal" << std::endl;
+            std::cout << "Move is not legal\n";
 #endif
             return false;
         }
-        
     }
-    
-    
-    
     
     /* 
      * Ensure pawns only move diagonally if they capture a piece, including en passant
@@ -307,14 +312,14 @@ bool Board::MoveGenerator::validateMove(Move mv) {
      * the check of the neighbouring squares
      */
     if (fromPiece->getType() == PieceTypes::PAWN 
-            && std::abs(*selectedOffset) != 15 
+            && (std::abs(*selectedOffset) % 15) != 0 
             && ((!board.vectorTable[secondSquareIndex]->getPiece() 
                     || board.vectorTable[secondSquareIndex]->checkSentinel()) 
                 || false)) {
 #ifdef DEBUG
-        std::cout << "Move is not legal6" << std::endl;
+        std::cout << "Move is not legal6\n";
 #else
-        std::cout << "Move is not legal" << std::endl;
+        std::cout << "Move is not legal\n";
 #endif
         return false;
     }

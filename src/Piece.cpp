@@ -1,6 +1,8 @@
 
 #include "headers/piece.h"
 #include <algorithm>
+#include <cctype>
+#include <iostream>
 
 Piece::Piece(const PieceTypes t, const Colour c) : type(t), pieceColour(c) {
     switch(t) {
@@ -54,5 +56,11 @@ Piece::Piece(const PieceTypes t, const Colour c) : type(t), pieceColour(c) {
             vecOffsets.push_back(0);
             break;
     }
-    std::sort(vecOffsets.begin(), vecOffsets.end());
+    std::sort(vecOffsets.begin(), vecOffsets.end(), [](auto& first, auto& second){
+        return std::abs(first) > std::abs(second);
+        });
+    //if (t == PieceTypes::PAWN) {
+        //std::for_each(vecOffsets.cbegin(), vecOffsets.cend(), [](auto& elem){std::cout << elem << std::endl;});
+        //std::cout << std::endl;
+    //}
 }
