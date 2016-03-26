@@ -348,22 +348,31 @@ bool Board::MoveGenerator::validateMove(const Move& mv) {
         }
     }
     
-    /* 
-     * Ensure pawns only move diagonally if they capture a piece, including en passant
-     * En passant not implemented, but when it is, replace false with 
-     * the check of the neighbouring squares
-     */
-    if (fromPiece->getType() == PieceTypes::PAWN 
-            && (*selectedOffset % 15) != 0 
-            && ((!board.vectorTable[secondSquareIndex]->getPiece() 
-                    || board.vectorTable[secondSquareIndex]->checkSentinel()) 
-                || false)) {
-#ifdef DEBUG
-        std::cout << "Move is not legal6\n";
-#else
-        std::cout << "Move is not legal\n";
-#endif
-        return false;
+    // Pawn related validation checks
+    if (fromPiece->getType() == PieceTypes::PAWN) {
+        /* 
+         * Ensure pawns only move diagonally if they capture a piece, including en passant
+         * En passant not implemented, but when it is, replace false with 
+         * the check of the neighbouring squares
+         */
+        if ((*selectedOffset % 15) != 0 && ((!board.vectorTable[secondSquareIndex]->getPiece() 
+                || board.vectorTable[secondSquareIndex]->checkSentinel()) || false)) {
+    #ifdef DEBUG
+            std::cout << "Move is not legal6\n";
+    #else
+            std::cout << "Move is not legal\n";
+    #endif
+            return false;
+        }
+        // Prevent pawns from capturing vertically
+        if (!(*selectedOffset % 15) && board.vectorTable[secondSquareIndex]->getPiece()) {
+    #ifdef DEBUG
+            std::cout << "Move is not legal7\n";
+    #else
+            std::cout << "Move is not legal\n";
+    #endif
+            return false;
+        }
     }
     
     // call inCheck to ensure the board state doesn't leave the same coloured king in check
