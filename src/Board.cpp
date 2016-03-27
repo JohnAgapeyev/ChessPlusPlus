@@ -170,34 +170,26 @@ void Board::shiftBoard(int col, int row) {
     }
 }
 
-void Board::makeMove(std::string input) {
-    Move mv = moveGen.createMove(input);
+void Board::makeMove(std::string& input) {
+    const auto& mv = moveGen.createMove(input);
     
-    // If the characters are letters, convert them to digits
-    if (input[0] > 8 && input[2] > 8) {
-        input[0] -= 49;
-        input[2] -= 49;
-    }
-    // Change input to zero-indexed value
-    input[1] -= 1;
-    input[3] -= 1;
-    
-    shiftBoard((input[0] - '0'), INNER_BOARD_SIZE - 1 - (input[1] - '0'));
+    shiftBoard(input[0], INNER_BOARD_SIZE - 1 - input[1]);
     
     if (!moveGen.validateMove(mv)) {
         return;
     }
+    // If moving to an occupied square, capture the piece
     if (mv.toSq->getPiece()) {
         mv.toSq->setPiece(nullptr);
     }
     std::swap(*mv.fromSq, *mv.toSq);
-    auto temp = mv.fromSq->getOffset();
+    const auto temp = mv.fromSq->getOffset();
     mv.fromSq->setOffset(mv.toSq->getOffset());
     mv.toSq->setOffset(temp);
     isWhiteTurn = !isWhiteTurn;
 }
 
-Move Board::MoveGenerator::createMove(std::string input) {
+Move Board::MoveGenerator::createMove(std::string& input) {
     // If the characters are letters, convert them to digits
     if (input[0] > 8 && input[2] > 8) {
         input[0] -= 49;
@@ -206,14 +198,17 @@ Move Board::MoveGenerator::createMove(std::string input) {
     // Change input to zero-indexed value
     input[1] -= 1;
     input[3] -= 1;
+    
+    for (auto& ch : input) {
+        ch = ch - '0';
+    }
+    
     Move result;
     auto topLeftCorner = board.findCorner();
-    result.fromSq = board.vectorTable[((INNER_BOARD_SIZE - 1 - (input[1] - '0')) * OUTER_BOARD_SIZE) 
-            + (topLeftCorner.first * OUTER_BOARD_SIZE) 
-            + input[0] - '0' + topLeftCorner.second].get();
-    result.toSq = board.vectorTable[((INNER_BOARD_SIZE - 1 - (input[3] - '0')) * OUTER_BOARD_SIZE) 
-            + (topLeftCorner.first * OUTER_BOARD_SIZE) + input[2] - '0' 
-            + topLeftCorner.second].get();
+    result.fromSq = board.vectorTable[((INNER_BOARD_SIZE - 1 - input[1]) * OUTER_BOARD_SIZE) 
+            + (topLeftCorner.first * OUTER_BOARD_SIZE) + input[0] + topLeftCorner.second].get();
+    result.toSq = board.vectorTable[((INNER_BOARD_SIZE - 1 - input[3]) * OUTER_BOARD_SIZE) 
+            + (topLeftCorner.first * OUTER_BOARD_SIZE) + topLeftCorner.second + input[2]].get();
     return result;
 }
  /*

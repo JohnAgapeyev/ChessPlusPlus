@@ -20,22 +20,23 @@ class Board {
         void generateAll();
         bool validateMove(const Move& mv);
         bool inCheck();
-        Move createMove(std::string input);
+        Move createMove(std::string& input);
     };
     MoveGenerator moveGen;
     std::array<std::shared_ptr<Square>, OUTER_BOARD_SIZE * OUTER_BOARD_SIZE> vectorTable;
     bool isWhiteTurn = true;
+    bool enPassantActive = false;
     void shiftVertical(int count);
     void shiftHorizontal(int count);
     
 public:
     Board();
     void printBoardState() const;
-    auto& getBoard() const {return vectorTable;}
-    auto& getMoveGen() {return moveGen;}
+    auto getBoard() const {return vectorTable;}
+    auto getMoveGen() const {return moveGen;}
     auto findCorner() const;
     void shiftBoard(int col, int row);
-    void makeMove(std::string input);
+    void makeMove(std::string& input);
 };
 
 #endif
