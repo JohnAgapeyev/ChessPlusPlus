@@ -5,5 +5,6 @@
 
 static void mainLoop(Board& b);
 static bool checkInputValid(const std::string& input);
+static bool gameActive = true;
 
 #endif

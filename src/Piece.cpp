@@ -58,9 +58,5 @@ Piece::Piece(const PieceTypes t, const Colour c) : type(t), pieceColour(c) {
     }
     std::sort(vecOffsets.begin(), vecOffsets.end(), [](auto& first, auto& second){
         return std::abs(first) > std::abs(second);
-        });
-    //if (t == PieceTypes::PAWN) {
-        //std::for_each(vecOffsets.cbegin(), vecOffsets.cend(), [](auto& elem){std::cout << elem << std::endl;});
-        //std::cout << std::endl;
-    //}
+    });
 }

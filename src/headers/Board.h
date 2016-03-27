@@ -22,11 +22,11 @@ class Board {
         bool inCheck();
         Move createMove(std::string input);
     };
-    
+    MoveGenerator moveGen;
     std::array<std::shared_ptr<Square>, OUTER_BOARD_SIZE * OUTER_BOARD_SIZE> vectorTable;
+    bool isWhiteTurn = true;
     void shiftVertical(int count);
     void shiftHorizontal(int count);
-    MoveGenerator moveGen;
     
 public:
     Board();
