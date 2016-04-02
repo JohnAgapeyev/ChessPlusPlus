@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <iterator>
 #include <cstdlib>
+#include <stdexcept>
 
 /*
  * Try to remove index from squares and instead calculate it based off the index
@@ -106,7 +107,8 @@ void Board::shiftHorizontal(const int count) {
         return;
     }
     auto startCoords = findCorner();
-    if (startCoords.second + count < 0 || startCoords.second + count + INNER_BOARD_SIZE - 1 > OUTER_BOARD_SIZE) {
+    if (startCoords.second + count < 0 
+        || startCoords.second + count + INNER_BOARD_SIZE - 1 > OUTER_BOARD_SIZE) {
         std::cerr << "Invalid horizontal board shift; No movement performed" << std::endl;
         return;
     }
@@ -178,6 +180,41 @@ void Board::makeMove(std::string& input) {
     if (!moveGen.validateMove(mv)) {
         return;
     }
+    const auto diff = mv.toSq->getOffset() - mv.fromSq->getOffset();
+    
+    try {
+        if (enPassantActive && !enPassantTarget) {
+            throw std::logic_error("En passant target should never be null when en passant is active");
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "FATAL ERROR: " << e.what() << std::endl;
+        return;
+    }
+    
+    if (enPassantActive && mv.fromSq->getPiece()->getType() == PieceTypes::PAWN 
+            && (diff % 15) && *mv.toSq == *enPassantTarget) {
+        auto test = std::distance(vectorTable.cbegin(), 
+            std::find_if(vectorTable.cbegin(), vectorTable.cend(), 
+                [&mv](auto sq){return (*sq == *mv.fromSq);}));
+        vectorTable[test + (diff % 15)]->setPiece(nullptr);
+    }
+    
+    enPassantActive = false;
+    enPassantTarget = nullptr;
+    
+    // Add en Passant target if pawn double move was made.
+    if (std::abs(diff) == 30 && mv.fromSq->getPiece()->getType() == PieceTypes::PAWN) {
+        auto distToEndSquare = std::distance(vectorTable.cbegin(), 
+                std::find_if(vectorTable.cbegin(), vectorTable.cend(), 
+                [&mv](const auto& sq){
+                    return (sq->getOffset() == mv.toSq->getOffset());
+                }));
+        enPassantActive = true;
+        enPassantTarget = vectorTable[distToEndSquare + (diff >> 1)].get();
+    }
+    
+    std::cout << enPassantTarget << std::endl;
+    
     // If moving to an occupied square, capture the piece
     if (mv.toSq->getPiece()) {
         mv.toSq->setPiece(nullptr);
@@ -198,15 +235,14 @@ Move Board::MoveGenerator::createMove(std::string& input) {
     // Change input to zero-indexed value
     input[1] -= 1;
     input[3] -= 1;
-    
+    // Change chars to digits
     for (auto& ch : input) {
-        ch = ch - '0';
+        ch -= '0';
     }
-    
     Move result;
     auto topLeftCorner = board.findCorner();
     result.fromSq = board.vectorTable[((INNER_BOARD_SIZE - 1 - input[1]) * OUTER_BOARD_SIZE) 
-            + (topLeftCorner.first * OUTER_BOARD_SIZE) + input[0] + topLeftCorner.second].get();
+            + (topLeftCorner.first * OUTER_BOARD_SIZE) + topLeftCorner.second + input[0]].get();
     result.toSq = board.vectorTable[((INNER_BOARD_SIZE - 1 - input[3]) * OUTER_BOARD_SIZE) 
             + (topLeftCorner.first * OUTER_BOARD_SIZE) + topLeftCorner.second + input[2]].get();
     return result;
@@ -225,15 +261,23 @@ Move Board::MoveGenerator::createMove(std::string& input) {
   * breaks everything.
   */
 bool Board::MoveGenerator::validateMove(const Move& mv) {
-    const auto& firstSquare = std::find_if(board.vectorTable.cbegin(), board.vectorTable.cend(), [&mv](const auto& sq){
+    const auto& firstSquare = std::find_if(board.vectorTable.cbegin(), 
+            board.vectorTable.cend(), [&mv](const auto& sq){
         return (sq->getOffset() == mv.fromSq->getOffset());
         });
-    const auto& secondSquare = std::find_if(board.vectorTable.cbegin(), board.vectorTable.cend(), [&mv](const auto& sq){
+    const auto& secondSquare = std::find_if(board.vectorTable.cbegin(), 
+            board.vectorTable.cend(), [&mv](const auto& sq){
         return (sq->getOffset() == mv.toSq->getOffset());
         });
     // Try to find the start and end points
     if (firstSquare == board.vectorTable.cend() || secondSquare == board.vectorTable.cend()) {
         std::cerr << "Could not find start or end squares" << std::endl;
+        return false;
+    }
+    
+    // Check for either square being a sentinel
+    if ((*firstSquare)->checkSentinel() || (*secondSquare)->checkSentinel()) {
+        std::cerr << "You somehow referenced a sentinel square for your move. GJ\n";
         return false;
     }
     const auto& fromPiece = mv.fromSq->getPiece();
@@ -264,7 +308,7 @@ bool Board::MoveGenerator::validateMove(const Move& mv) {
     const auto& secondSquareIndex = std::distance(board.vectorTable.cbegin(), secondSquare);
     
     // Find the offset that the move uses
-    auto selectedOffset = std::find_if(vectorOffsets.cbegin(), 
+    const auto& selectedOffset = std::find_if(vectorOffsets.cbegin(), 
         vectorOffsets.cend(), [diff](auto offset){
             return (diff / offset > 0 && diff / offset < 8 && !(diff % offset));
         }
@@ -361,15 +405,21 @@ bool Board::MoveGenerator::validateMove(const Move& mv) {
         }
     }
     
+    try {
+        if (board.enPassantActive && !board.enPassantTarget) {
+            throw std::logic_error("En passant target should never be null when en passant is active");
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "FATAL ERROR: " << e.what() << std::endl;
+        return false;
+    }
+    
     // Pawn related validation checks
     if (fromPieceType == PieceTypes::PAWN) {
-        /* 
-         * Ensure pawns only move diagonally if they capture a piece, including en passant
-         * En passant not implemented, but when it is, replace false with 
-         * the check of the neighbouring squares
-         */
-        if ((*selectedOffset % 15) != 0 && ((!board.vectorTable[secondSquareIndex]->getPiece() 
-                || board.vectorTable[secondSquareIndex]->checkSentinel()) || false)) {
+        // Ensure pawns only move diagonally if they capture a piece, including en passant
+        if ((*selectedOffset % 15) 
+                && !board.vectorTable[secondSquareIndex]->getPiece() 
+                && !board.enPassantActive) {
     #ifdef DEBUG
             std::cout << "Move is not legal6\n";
     #else

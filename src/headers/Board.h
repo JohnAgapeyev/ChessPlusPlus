@@ -8,7 +8,6 @@
 #include <array>
 #include <memory>
 
-
 class Board {
     class MoveGenerator {
         const Board& board;
@@ -26,6 +25,7 @@ class Board {
     std::array<std::shared_ptr<Square>, OUTER_BOARD_SIZE * OUTER_BOARD_SIZE> vectorTable;
     bool isWhiteTurn = true;
     bool enPassantActive = false;
+    Square *enPassantTarget = nullptr;
     void shiftVertical(int count);
     void shiftHorizontal(int count);
     
