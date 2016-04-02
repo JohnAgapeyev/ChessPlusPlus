@@ -25,4 +25,4 @@ $(OBJS): $(SRCOBJS) $(HEADWILD)
 
 # Deletes the executable and all .o files in the bin folder
 clean:
-	$(RM) $(EXEC).exe $(wildcard $(ODIR)/*.o)
+	$(RM) $(ODIR)/*

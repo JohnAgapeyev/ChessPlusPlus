@@ -26,16 +26,17 @@ class Board {
     bool isWhiteTurn = true;
     bool enPassantActive = false;
     Square *enPassantTarget = nullptr;
-    void shiftVertical(int count);
-    void shiftHorizontal(int count);
+    void shiftVertical(const int count);
+    void shiftHorizontal(const int count);
+    bool ensureEnPassantValid() const;
     
 public:
     Board();
     void printBoardState() const;
     auto getBoard() const {return vectorTable;}
     auto getMoveGen() const {return moveGen;}
-    auto findCorner() const;
-    void shiftBoard(int col, int row);
+    const std::pair<int, int> findCorner() const;
+    void shiftBoard(const int col, const int row);
     void makeMove(std::string& input);
 };
 

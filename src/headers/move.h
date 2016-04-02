@@ -9,4 +9,6 @@ struct Move {
     Square *fromSq;
     Square *toSq;
 };
+
+void swapOffsets(const Move& mv);
 #endif
