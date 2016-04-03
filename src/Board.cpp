@@ -3,6 +3,7 @@
 #include "headers/consts.h"
 #include "headers/enums.h"
 #include "headers/move.h"
+#include "headers/movegenerator.h"
 #include <vector>
 #include <array>
 #include <iostream>
@@ -28,9 +29,10 @@
  * TODO: Add check to allow double pawn movement when selecting offset
  */
  
-constexpr auto genOffset = [=](auto a, auto b){return 98 - (15 * a) + b;};
+constexpr auto genOffset = [](const auto a, const auto b){return 98 - (15 * a) + b;};
 
-Board::Board() : moveGen(*this) {
+Board::Board() {
+    moveGen = std::make_unique<MoveGenerator>(*this);
     for (int i = 0; i < 15; ++i) {
         for (int j = 0; j < 15; ++j) {
             if (i >= 0 && i <= 7) {
@@ -46,6 +48,18 @@ Board::Board() : moveGen(*this) {
         }
     }
 }
+
+/*
+ * Board contains a unique_ptr<MoveGenerator> where MoveGenerator
+ * is an inner class defined outside of board's header. This results in
+ * MoveGenerator being defined as an incomplete type at compile time.
+ * Unique_ptr requires that the type it holds is 100% complete at compile time.
+ * Therefore, I need to manually define a destructor since unique_ptr can't create
+ * one due to it holding an incomplete type. Since it's a unique ptr, I don't 
+ * have to manually delete any memory, so my destructor just calls 
+ * the default one expicitly.
+ */
+Board::~Board() = default;
 
 const std::pair<int, int> Board::findCorner() const {
     auto result = std::find_if(
@@ -173,11 +187,11 @@ void Board::shiftBoard(const int col, const int row) {
 }
 
 void Board::makeMove(std::string& input) {
-    const auto& mv = moveGen.createMove(input);
+    const auto& mv = moveGen->createMove(input);
     
     shiftBoard(input[0], INNER_BOARD_SIZE - 1 - input[1]);
     
-    if (!moveGen.validateMove(mv)) {
+    if (!moveGen->validateMove(mv)) {
         return;
     }
     const auto diff = mv.toSq->getOffset() - mv.fromSq->getOffset();

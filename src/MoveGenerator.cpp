@@ -3,6 +3,7 @@
 #include "headers/consts.h"
 #include "headers/enums.h"
 #include "headers/move.h"
+#include "headers/movegenerator.h"
 #include <vector>
 #include <array>
 #include <iostream>
