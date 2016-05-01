@@ -9,13 +9,12 @@ class Piece {
 private:
     PieceTypes type;
     Colour pieceColour;
-    std::vector<int> vecOffsets;
 
 public:
-    Piece(const PieceTypes t, const Colour c);
+    Piece(const PieceTypes t, const Colour c) : type(t), pieceColour(c) {}
     auto getType() const {return type;}
     auto getColour() const {return pieceColour;}
-    auto getVectorList() const {return vecOffsets;}
+    std::vector<int> getVectorList() const;
 };
 
 #endif

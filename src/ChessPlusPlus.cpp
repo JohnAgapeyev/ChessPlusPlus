@@ -24,10 +24,11 @@ void mainLoop(Board& b) {
         std::transform(input.begin(), input.end(), input.begin(), ::tolower);
         // Input equals exit
         if (!input.compare("exit")) {
-            break;
+            gameActive = false;
+            continue;
         }
         if (!checkInputValid(input)) {
-            std::cout << "Not a valid move\n";
+            std::cout << "Not a valid move format\n";
             continue;
         }
         b.makeMove(input);

@@ -3,60 +3,43 @@
 #include <algorithm>
 #include <cctype>
 #include <iostream>
+#include <vector>
 
-Piece::Piece(const PieceTypes t, const Colour c) : type(t), pieceColour(c) {
-    switch(t) {
+std::vector<int> Piece::getVectorList() const {
+    std::vector<int> rtn;
+    switch(this->type) {
         case PieceTypes::PAWN:
-            if (c == Colour::WHITE) {
-                vecOffsets.push_back(14);
-                vecOffsets.push_back(15);
-                vecOffsets.push_back(16);
-                vecOffsets.push_back(30);
+            if (this->pieceColour == Colour::WHITE) {
+                rtn = {14, 15, 16, 30};
             } else {
-                vecOffsets.push_back(-14);
-                vecOffsets.push_back(-15);
-                vecOffsets.push_back(-16);
-                vecOffsets.push_back(-30);
+                rtn = {-14, -15, -16, -30};
             }
             break;
         case PieceTypes::KNIGHT:
-            vecOffsets.push_back(13);
-            vecOffsets.push_back(29);
-            vecOffsets.push_back(31);
-            vecOffsets.push_back(17);
-            vecOffsets.push_back(-13);
-            vecOffsets.push_back(-29);
-            vecOffsets.push_back(-31);
-            vecOffsets.push_back(-17);
+            rtn = {13, 29, 31, 17, -13, -29, -31, -17};
             break;
         case PieceTypes::BISHOP:
-            vecOffsets.push_back(14);
-            vecOffsets.push_back(16);
-            vecOffsets.push_back(-14);
-            vecOffsets.push_back(-16);
+            rtn = {14, 16, -14, -16};
             break;
-        case PieceTypes::ROOK:
-            vecOffsets.push_back(15);
-            vecOffsets.push_back(1);
-            vecOffsets.push_back(-15);
-            vecOffsets.push_back(-1);
+        case PieceTypes::KING:
+            rtn = {15, 1, -15, -1, 14, 16, -14, -16, 2, -2};
             break;
         case PieceTypes::QUEEN:
-        case PieceTypes::KING:
-            vecOffsets.push_back(15);
-            vecOffsets.push_back(1);
-            vecOffsets.push_back(-15);
-            vecOffsets.push_back(-1);
-            vecOffsets.push_back(14);
-            vecOffsets.push_back(16);
-            vecOffsets.push_back(-14);
-            vecOffsets.push_back(-16);
+            rtn = {15, 1, -15, -1, 14, 16, -14, -16};
+            break;
+        case PieceTypes::ROOK:
+            rtn = {15, 1, -15, -1};
+            break;
+        case PieceTypes::UNKNOWN:
+            rtn = {15, 1, -15, -1, 14, 16, -14, -16, 13, 29, 31, 17, -13, -29, -31, -17};
             break;
         default:
-            vecOffsets.push_back(0);
-            break;
+            return std::vector<int>();
     }
-    std::sort(vecOffsets.begin(), vecOffsets.end(), [](auto& first, auto& second){
+    
+    std::sort(rtn.begin(), rtn.end(), [](const auto& first, const auto& second){
         return std::abs(first) > std::abs(second);
     });
+    
+    return rtn;
 }

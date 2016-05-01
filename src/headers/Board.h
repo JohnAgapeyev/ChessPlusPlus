@@ -12,19 +12,24 @@ class Board {
     class MoveGenerator;
     std::unique_ptr<MoveGenerator> moveGen;
     std::array<std::shared_ptr<Square>, OUTER_BOARD_SIZE * OUTER_BOARD_SIZE> vectorTable;
+    bool whiteCastleKing = true;
+    bool whiteCastleQueen = true;
+    bool blackCastleKing = true;
+    bool blackCastleQueen = true;
+    bool blackInCheck = false;
+    bool whiteInCheck = false;
     bool isWhiteTurn = true;
     bool enPassantActive = false;
     Square *enPassantTarget = nullptr;
     void shiftVertical(const int count);
     void shiftHorizontal(const int count);
-    bool ensureEnPassantValid() const;
+    void ensureEnPassantValid() const;
     
 public:
     Board();
     ~Board();
     void printBoardState() const;
     auto getBoard() const {return vectorTable;}
-    auto getMoveGen() const {return moveGen.get();}
     const std::pair<int, int> findCorner() const;
     void shiftBoard(const int col, const int row);
     void makeMove(std::string& input);

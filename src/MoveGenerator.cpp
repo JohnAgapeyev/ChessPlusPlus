@@ -97,7 +97,7 @@ bool Board::MoveGenerator::validateMove(const Move& mv) {
     
     // Find the offset that the move uses
     const auto& selectedOffset = std::find_if(vectorOffsets.cbegin(), 
-        vectorOffsets.cend(), [diff](auto offset){
+        vectorOffsets.cend(), [diff](auto offset) {
             return (diff / offset > 0 && diff / offset < 8 && !(diff % offset));
         }
     );
@@ -138,20 +138,13 @@ bool Board::MoveGenerator::validateMove(const Move& mv) {
             break;
     }
     
-    auto currSquare = board.vectorTable[0];
+    auto currSquare = board.vectorTable[0].get();
     auto foundToSquare = false;
     
     // Iterate through to ensure sliding pieces aren't being blocked
     for (int i = 1; i < moveLen; ++i) {
-        if (*selectedOffset > 0) {
-            currSquare = board.vectorTable[ZERO_LOCATION_1D 
-                - (i * (((OUTER_BOARD_SIZE * 2) * ((*selectedOffset + INNER_BOARD_SIZE - 1) 
-                / OUTER_BOARD_SIZE)) - *selectedOffset))];
-        } else {
-            currSquare = board.vectorTable[ZERO_LOCATION_1D 
-                + (i * (((OUTER_BOARD_SIZE * 2) * ((std::abs(*selectedOffset) + INNER_BOARD_SIZE - 1) 
-                / OUTER_BOARD_SIZE)) - std::abs(*selectedOffset)))];
-        }
+        currSquare = board.vectorTable[getOffsetIndex(*selectedOffset, ZERO_LOCATION_1D, i)].get();
+        
         if (currSquare->getOffset() == mv.toSq->getOffset()) {
             foundToSquare = true;
             break;
@@ -177,13 +170,18 @@ bool Board::MoveGenerator::validateMove(const Move& mv) {
         return false;
     }
     
-    // Check that pawns don't double move except on their starting rows
+    /* 
+     * Check that pawns don't double move except on their starting rows.
+     * Since board is 1D array, finding the pawn row can be done by counting
+     * the number of squares between the top left corner and the starting square
+     * of the selected move.
+     */
     if (*selectedOffset == 30) {
         const auto& startCoords = board.findCorner();
         const auto& dist = std::distance(board.vectorTable.cbegin(), firstSquare);
         const auto cornerIndex = (startCoords.first * OUTER_BOARD_SIZE) + startCoords.second;
-        const auto& rowPairs = (fromPieceColour == Colour::WHITE) ? std::make_pair(90, 104) : std::make_pair(15, 29);
         const auto distFromStartToCorner = dist - cornerIndex;
+        const auto& rowPairs = (fromPieceColour == Colour::WHITE) ? std::make_pair(90, 104) : std::make_pair(15, 29);
         if (distFromStartToCorner < rowPairs.first || distFromStartToCorner > rowPairs.second) {
 #ifdef DEBUG
             std::cout << "Move is not legal5\n";
@@ -194,9 +192,7 @@ bool Board::MoveGenerator::validateMove(const Move& mv) {
         }
     }
     
-    if (!board.ensureEnPassantValid()) {
-        return false;
-    }
+    board.ensureEnPassantValid();
     
     // Pawn related validation checks
     if (fromPieceType == PieceTypes::PAWN) {
@@ -222,7 +218,71 @@ bool Board::MoveGenerator::validateMove(const Move& mv) {
         }
     }
     
+    const auto kingDist = std::distance(board.vectorTable.cbegin(), 
+        std::find_if(board.vectorTable.cbegin(), board.vectorTable.cend(), 
+            [](const auto& sq){
+                return sq->getPiece()->getType() == PieceTypes::KING 
+                    && sq->getPiece()->getColour() == Colour::BLACK;
+            }));
+    
+    std::cout << "Check: " << inCheck(kingDist) << std::endl;
+    
     // call inCheck to ensure the board state doesn't leave the same coloured king in check
     
     return true;
+}
+
+bool Board::MoveGenerator::inCheck(const int squareIndex) {
+    const auto& checkVectors = Piece(PieceTypes::UNKNOWN, Colour::UNKNOWN).getVectorList();
+    const auto& cornerCoords = board.findCorner();
+    const int cornerIndex = (cornerCoords.first * OUTER_BOARD_SIZE) + cornerCoords.second;
+    
+    /*
+     * If square is empty, AKA castling validity check, set friendly colour 
+     * based on which half of the board the square is.
+     */
+    Colour friendlyPieceColour;
+    if (!board.vectorTable[squareIndex]->getPiece()) {
+        friendlyPieceColour = (squareIndex - cornerIndex >= 52) ? Colour::BLACK : Colour::WHITE;
+    } else {
+        friendlyPieceColour = board.vectorTable[squareIndex]->getPiece()->getColour();
+    }
+    
+    int vectorLength = 7;
+    for (const auto& offset : checkVectors) {
+        const auto absOffset = std::abs(offset);
+        // Change depth if current offset is a knight offset
+        vectorLength = (absOffset == 13 || absOffset > 16) ? 1 : 7;
+        
+        for (int i = 1; i <= vectorLength; ++i) {
+            if (squareIndex + (i * -offset) < 0 
+                    || squareIndex + (i * -offset) >= OUTER_BOARD_SIZE * OUTER_BOARD_SIZE) {
+                break;
+            }
+            const auto currSquare = board.vectorTable[getOffsetIndex(offset, squareIndex, i)].get();
+            const auto& currPiece = currSquare->getPiece();
+            
+            if (currPiece) {
+                const auto currPieceColour = currPiece->getColour();
+                if (currPieceColour == friendlyPieceColour) {
+                    break;
+                }
+                if (currPieceColour == Colour::UNKNOWN) {
+                    break;
+                }
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+int Board::MoveGenerator::getOffsetIndex(const int offset, const int startIndex, const int vectorLen) {
+    if (offset > 0) {
+        return (startIndex - (vectorLen * (((OUTER_BOARD_SIZE * 2) 
+            * ((offset + INNER_BOARD_SIZE - 1) / OUTER_BOARD_SIZE)) - offset)));
+    }
+    return (startIndex + (vectorLen * (((OUTER_BOARD_SIZE * 2) 
+        * ((std::abs(offset) + INNER_BOARD_SIZE - 1) 
+            / OUTER_BOARD_SIZE)) - std::abs(offset))));
 }

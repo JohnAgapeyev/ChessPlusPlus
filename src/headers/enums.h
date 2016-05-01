@@ -2,7 +2,7 @@
 #define ENUMS_H
 
 enum class PieceTypes {
-    UNKNOWN = '\0',
+    UNKNOWN = ' ',
     PAWN = 'P',
     KNIGHT = 'N',
     BISHOP = 'B',
@@ -12,7 +12,7 @@ enum class PieceTypes {
 };
 
 enum class Colour {
-    UNKNOWN = '\0',
+    UNKNOWN = ' ',
     WHITE = 'W',
     BLACK = 'B'
 };

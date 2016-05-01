@@ -10,8 +10,9 @@ class Board::MoveGenerator {
         auto getMoveList() const {return moveList;}
         void generateAll();
         bool validateMove(const Move& mv);
-        bool inCheck();
+        bool inCheck(const int squareIndex);
         Move createMove(std::string& input);
+        int getOffsetIndex(const int offset, const int startIndex = 0, const int vectorLen = 1);
 };
 
 #endif

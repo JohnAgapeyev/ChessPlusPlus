@@ -194,19 +194,20 @@ void Board::makeMove(std::string& input) {
     if (!moveGen->validateMove(mv)) {
         return;
     }
+    
+    ensureEnPassantValid();
+    
     const auto diff = mv.toSq->getOffset() - mv.fromSq->getOffset();
-    
-    if (!ensureEnPassantValid()) {
-        return;
-    }
-    
     const auto& fromPieceType = mv.fromSq->getPiece()->getType();
     
+    // If en passant move is made, capture the appropriate pawn
     if (enPassantActive && fromPieceType == PieceTypes::PAWN 
             && (diff % 15) && *mv.toSq == *enPassantTarget) {
+                
         const auto distToFromSquare = std::distance(vectorTable.cbegin(), 
             std::find_if(vectorTable.cbegin(), vectorTable.cend(), 
                 [&mv](const auto& sq){return (*sq == *mv.fromSq);}));
+                
         vectorTable[distToFromSquare + (diff % 15)]->setPiece(nullptr);
     }
     
@@ -215,9 +216,11 @@ void Board::makeMove(std::string& input) {
     
     // Add en Passant target if pawn double move was made.
     if (std::abs(diff) == 30 && fromPieceType == PieceTypes::PAWN) {
+        
         const auto distToEndSquare = std::distance(vectorTable.cbegin(), 
             std::find_if(vectorTable.cbegin(), vectorTable.cend(), 
                 [&mv](const auto& sq){return (*sq == *mv.toSq);}));
+                
         enPassantActive = true;
         enPassantTarget = vectorTable[distToEndSquare + (diff >> 1)].get();
     }
@@ -229,16 +232,34 @@ void Board::makeMove(std::string& input) {
     std::swap(*mv.fromSq, *mv.toSq);
     swapOffsets(mv);
     isWhiteTurn = !isWhiteTurn;
+    
+    const auto blackKingDist = std::distance(vectorTable.cbegin(), 
+        std::find_if(vectorTable.cbegin(), vectorTable.cend(), 
+            [](const auto& sq){
+                const auto& piece = sq->getPiece();
+                return piece && piece->getType() == PieceTypes::KING 
+                    && piece->getColour() == Colour::BLACK;
+            }));
+    
+    const auto whiteKingDist = std::distance(vectorTable.cbegin(), 
+        std::find_if(vectorTable.cbegin(), vectorTable.cend(), 
+            [](const auto& sq){
+                const auto& piece = sq->getPiece();
+                return piece && piece->getType() == PieceTypes::KING 
+                    && piece->getColour() == Colour::WHITE;
+            }));
+    
+    blackInCheck = moveGen->inCheck(blackKingDist);
+    whiteInCheck = moveGen->inCheck(whiteKingDist);
 }
 
-bool Board::ensureEnPassantValid() const {
+void Board::ensureEnPassantValid() const {
     try {
         if (enPassantActive && !enPassantTarget) {
             throw std::logic_error("En passant target should never be null when en passant is active");
         }
     } catch (const std::exception& e) {
         std::cerr << "FATAL ERROR: " << e.what() << std::endl;
-        return false;
+        throw e;
     }
-    return true;
 }
