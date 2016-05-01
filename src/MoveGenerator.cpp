@@ -199,34 +199,62 @@ bool Board::MoveGenerator::validateMove(const Move& mv) {
         if ((*selectedOffset % 15) 
                 && !board.vectorTable[secondSquareIndex]->getPiece() 
                 && !board.enPassantActive) {
-    #ifdef DEBUG
+#ifdef DEBUG
             std::cout << "Move is not legal6\n";
-    #else
+#else
             std::cout << "Move is not legal\n";
-    #endif
+#endif
             return false;
         }
         // Prevent pawns from capturing vertically
         if (!(*selectedOffset % 15) && board.vectorTable[secondSquareIndex]->getPiece()) {
-    #ifdef DEBUG
+#ifdef DEBUG
             std::cout << "Move is not legal7\n";
-    #else
+#else
             std::cout << "Move is not legal\n";
-    #endif
+#endif
             return false;
         }
     }
     
+    //Swap the pieces to emulate the move being made so that check verification works
+    std::swap(*mv.fromSq, *mv.toSq);
+    
     const auto kingDist = std::distance(board.vectorTable.cbegin(), 
         std::find_if(board.vectorTable.cbegin(), board.vectorTable.cend(), 
-            [](const auto& sq){
-                return sq->getPiece()->getType() == PieceTypes::KING 
-                    && sq->getPiece()->getColour() == Colour::BLACK;
+            [fromPieceColour](const auto& sq){
+                const auto& piece = sq->getPiece();
+                return piece && piece->getType() == PieceTypes::KING 
+                    && piece->getColour() == fromPieceColour;
             }));
     
-    std::cout << "Check: " << inCheck(kingDist) << std::endl;
+    //Ensure king has been found
+    try {
+        if (kingDist == (int) board.vectorTable.size()) {
+            throw std::logic_error("Cannot find current player's king");
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "FATAL ERROR: " << e.what() << std::endl;
+        throw e;
+    }
     
-    // call inCheck to ensure the board state doesn't leave the same coloured king in check
+    //Prevent players from placing their own king in check
+    if (inCheck(kingDist)) {
+        std::swap(*mv.fromSq, *mv.toSq);
+#ifdef DEBUG
+        std::cout << "Move is not legal8\n";
+#else
+        std::cout << "Move is not legal\n";
+#endif
+        return false;
+    }
+    
+    /*
+     * Swap the pieces back since check verification is done, and the main
+     * move method will handle all the complex data changes
+     */
+    std::swap(*mv.fromSq, *mv.toSq);
+    
     
     return true;
 }
