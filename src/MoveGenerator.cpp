@@ -28,11 +28,11 @@ Move Board::MoveGenerator::createMove(std::string& input) {
         ch -= '0';
     }
     Move result;
-    const auto& topLeftCorner = board.findCorner();
+    const auto topLeftCornerIndex = board.findCorner_1D();
     result.fromSq = board.vectorTable[((INNER_BOARD_SIZE - 1 - input[1]) * OUTER_BOARD_SIZE) 
-            + (topLeftCorner.first * OUTER_BOARD_SIZE) + topLeftCorner.second + input[0]].get();
+            + topLeftCornerIndex + input[0]].get();
     result.toSq = board.vectorTable[((INNER_BOARD_SIZE - 1 - input[3]) * OUTER_BOARD_SIZE) 
-            + (topLeftCorner.first * OUTER_BOARD_SIZE) + topLeftCorner.second + input[2]].get();
+            + topLeftCornerIndex + input[2]].get();
     return result;
 }
  /*
@@ -177,9 +177,8 @@ bool Board::MoveGenerator::validateMove(const Move& mv) {
      * of the selected move.
      */
     if (*selectedOffset == 30) {
-        const auto& startCoords = board.findCorner();
         const auto& dist = std::distance(board.vectorTable.cbegin(), firstSquare);
-        const auto cornerIndex = (startCoords.first * OUTER_BOARD_SIZE) + startCoords.second;
+        const auto cornerIndex =  board.findCorner_1D();
         const auto distFromStartToCorner = dist - cornerIndex;
         const auto& rowPairs = (fromPieceColour == Colour::WHITE) ? std::make_pair(90, 104) : std::make_pair(15, 29);
         if (distFromStartToCorner < rowPairs.first || distFromStartToCorner > rowPairs.second) {
@@ -232,10 +231,9 @@ bool Board::MoveGenerator::validateMove(const Move& mv) {
     return true;
 }
 
-bool Board::MoveGenerator::inCheck(const int squareIndex) {
+bool Board::MoveGenerator::inCheck(const int squareIndex) const {
     const auto& checkVectors = Piece(PieceTypes::UNKNOWN, Colour::UNKNOWN).getVectorList();
-    const auto& cornerCoords = board.findCorner();
-    const int cornerIndex = (cornerCoords.first * OUTER_BOARD_SIZE) + cornerCoords.second;
+    const int cornerIndex =  board.findCorner_1D();
     
     /*
      * If square is empty, AKA castling validity check, set friendly colour 
@@ -277,12 +275,12 @@ bool Board::MoveGenerator::inCheck(const int squareIndex) {
     return false;
 }
 
-int Board::MoveGenerator::getOffsetIndex(const int offset, const int startIndex, const int vectorLen) {
+int Board::MoveGenerator::getOffsetIndex(const int offset, const int startIndex, const int vectorLen) const {
     if (offset > 0) {
-        return (startIndex - (vectorLen * (((OUTER_BOARD_SIZE * 2) 
+        return (startIndex - (vectorLen * (((OUTER_BOARD_SIZE << 1) 
             * ((offset + INNER_BOARD_SIZE - 1) / OUTER_BOARD_SIZE)) - offset)));
     }
-    return (startIndex + (vectorLen * (((OUTER_BOARD_SIZE * 2) 
+    return (startIndex + (vectorLen * (((OUTER_BOARD_SIZE << 1) 
         * ((std::abs(offset) + INNER_BOARD_SIZE - 1) 
             / OUTER_BOARD_SIZE)) - std::abs(offset))));
 }

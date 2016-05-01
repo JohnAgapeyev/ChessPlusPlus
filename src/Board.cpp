@@ -61,7 +61,7 @@ Board::Board() {
  */
 Board::~Board() = default;
 
-const std::pair<int, int> Board::findCorner() const {
+std::pair<int, int> Board::findCorner() const {
     auto result = std::find_if(
     vectorTable.cbegin(), vectorTable.cend(), 
     [](auto sq) {
@@ -74,6 +74,20 @@ const std::pair<int, int> Board::findCorner() const {
         return std::make_pair(dist / OUTER_BOARD_SIZE, dist % OUTER_BOARD_SIZE);
     }
     return std::make_pair(-1, -1);
+}
+
+int Board::findCorner_1D() const {
+    auto result = std::find_if(
+    vectorTable.cbegin(), vectorTable.cend(), 
+    [](auto sq) {
+        auto pc = sq->getPiece();
+        return (pc && pc->getColour() != Colour::UNKNOWN && pc->getType() != PieceTypes::UNKNOWN);
+    });
+    
+    if (result != vectorTable.cend()) {
+        return std::distance(vectorTable.cbegin(), result);
+    }
+    return -1;
 }
 
 void Board::printBoardState() const {
