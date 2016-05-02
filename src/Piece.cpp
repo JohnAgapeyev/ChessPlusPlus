@@ -43,3 +43,17 @@ std::vector<int> Piece::getVectorList() const {
     
     return rtn;
 }
+
+std::ostream& operator<<(std::ostream& os, const Piece& piece) {
+    if (piece.pieceColour == Colour::UNKNOWN || piece.type == PieceTypes::UNKNOWN) {
+#ifdef DEBUG
+        return os << " x ";
+#else
+        return os << "";
+#endif
+    }
+#ifdef DEBUG
+    os << ' ';
+#endif
+    return os << static_cast<char>(piece.pieceColour) << static_cast<char>(piece.type);
+}

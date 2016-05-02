@@ -8,7 +8,7 @@
 #include "headers/enums.h"
 
 std::array<std::array<std::shared_ptr<Square>, 8>, 8> fillInitBoard() {
-    auto pickColour = [](auto T){return (T < 5) ? Colour::BLACK : Colour::WHITE;};
+    const auto& pickColour = [](const auto T){return (T < 5) ? Colour::BLACK : Colour::WHITE;};
     std::array<std::array<std::shared_ptr<Square>, 8>, 8> result;
     for (int i = 0; i < 8; ++i) {
         std::array<std::shared_ptr<Square>, 8> row;

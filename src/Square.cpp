@@ -10,8 +10,34 @@ bool Square::checkSentinel() {
 }
 
 std::ostream& operator<<(std::ostream& os, const Square& square) {
-    auto squarePiece = square.piece.get();
-    // Checks if Square is empty
+    const auto squarePiece = square.piece.get();
+     //Checks if Square is empty
+    //if (!squarePiece) {
+//#ifdef DEBUG
+        //return os << "  " << std::left << std::setw(5) << square.offset;
+//#else
+        //return os << "  ";
+//#endif
+    //}
+     //Checks if Square is a sentinel
+    //if (squarePiece->getColour() == Colour::UNKNOWN 
+            //|| squarePiece->getType() == PieceTypes::UNKNOWN) {
+//#ifdef DEBUG
+        //return os << std::right << std::setw(4) << square.offset << " x ";
+//#else
+        //return os << "";
+//#endif
+    //}
+     //Prints out the contents of the Square
+//#ifdef DEBUG
+    //return os << std::right << std::setw(4) << square.offset << ' ' 
+            //<< static_cast<char>(squarePiece->getColour()) 
+            //<< static_cast<char>(squarePiece->getType());
+//#else
+    //return os << static_cast<char>(squarePiece->getColour()) 
+            //<< static_cast<char>(squarePiece->getType());
+//#endif
+    //// Checks if Square is empty
     if (!squarePiece) {
 #ifdef DEBUG
         return os << "  " << std::left << std::setw(5) << square.offset;
@@ -19,24 +45,11 @@ std::ostream& operator<<(std::ostream& os, const Square& square) {
         return os << "  ";
 #endif
     }
-    // Checks if Square is a sentinel
-    if (squarePiece->getColour() == Colour::UNKNOWN 
-            || squarePiece->getType() == PieceTypes::UNKNOWN) {
+    //// Prints out the contents of the Square
 #ifdef DEBUG
-        return os << std::right << std::setw(4) << square.offset << " x ";
-        //return os << "   x   ";
+    return os << std::right << std::setw(4) << square.offset << *squarePiece;
 #else
-        return os << "";
-#endif
-    }
-    // Prints out the contents of the Square
-#ifdef DEBUG
-    return os << std::right << std::setw(4) << square.offset << ' ' 
-            << static_cast<char>(squarePiece->getColour()) 
-            << static_cast<char>(squarePiece->getType());
-#else
-    return os << static_cast<char>(squarePiece->getColour()) 
-            << static_cast<char>(squarePiece->getType());
+    return os << *squarePiece;
 #endif
 }
 

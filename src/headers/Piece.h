@@ -4,6 +4,7 @@
 #include "enums.h"
 #include <array>
 #include <vector>
+#include <iostream>
 
 class Piece {
 private:
@@ -15,6 +16,8 @@ public:
     auto getType() const {return type;}
     auto getColour() const {return pieceColour;}
     std::vector<int> getVectorList() const;
+    
+    friend std::ostream& operator<<(std::ostream& os, const Piece& piece);
 };
 
 #endif
