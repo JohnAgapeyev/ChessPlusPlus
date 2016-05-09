@@ -217,30 +217,8 @@ bool Board::MoveGenerator::validateMove(const Move& mv) {
         }
     }
     
-    //Swap the pieces to emulate the move being made so that check verification works
-    std::swap(*mv.fromSq, *mv.toSq);
-    
-    const auto kingDist = std::distance(board.vectorTable.cbegin(), 
-        std::find_if(board.vectorTable.cbegin(), board.vectorTable.cend(), 
-            [fromPieceColour](const auto& sq){
-                const auto& piece = sq->getPiece();
-                return piece && piece->getType() == PieceTypes::KING 
-                    && piece->getColour() == fromPieceColour;
-            }));
-    
-    //Ensure king has been found
-    try {
-        if (kingDist == (int) board.vectorTable.size()) {
-            throw std::logic_error("Cannot find current player's king");
-        }
-    } catch (const std::exception& e) {
-        std::cerr << "FATAL ERROR: " << e.what() << std::endl;
-        throw e;
-    }
-    
     //Prevent players from placing their own king in check
-    if (inCheck(kingDist)) {
-        std::swap(*mv.fromSq, *mv.toSq);
+    if (inCheck(mv)) {
 #ifdef DEBUG
         std::cout << "Move is not legal8\n";
 #else
@@ -249,13 +227,38 @@ bool Board::MoveGenerator::validateMove(const Move& mv) {
         return false;
     }
     
-    /*
-     * Swap the pieces back since check verification is done, and the main
-     * move method will handle all the complex data changes
-     */
-    std::swap(*mv.fromSq, *mv.toSq);
+    const bool castleDirectionChosen = getCastleDirectionBool(fromPieceType, fromPieceColour, *selectedOffset);
     
+    // Prevent king from jumpng 2 spaces if not castling
+    if (fromPieceType == PieceTypes::KING && std::abs(*selectedOffset) == 2 && !castleDirectionChosen) {
+#ifdef DEBUG
+        std::cout << "Move is not legal9\n";
+#else
+        std::cout << "Move is not legal\n";
+#endif
+        return false;
+    }
     
+    if (fromPieceType == PieceTypes::KING && std::abs(*selectedOffset) == 2) {
+        for (int i = 1; !firstSquare[i]->getPiece() || firstSquare[i]->getPiece()->getType() == PieceTypes::ROOK; ++i) {
+            std::cout << firstSquare[i]->getOffset() << std::endl;
+            const auto currIndex = std::distance(board.vectorTable.cbegin(), 
+                    std::find_if(board.vectorTable.cbegin(), 
+                    board.vectorTable.cend(), 
+                    [&mv](const auto& sq){
+                        return sq->getOffset() == mv.fromSq->getOffset();
+                    }));
+            const auto& currPiece = firstSquare[i]->getPiece();
+            if ((currPiece && currPiece->getType() != PieceTypes::ROOK) || inCheck(currIndex + i)) {
+#ifdef DEBUG
+                std::cout << "Move is not legal10\n";
+#else
+                std::cout << "Move is not legal\n";
+#endif
+                return false;
+            }
+        }
+    }
     return true;
 }
 
@@ -269,9 +272,10 @@ bool Board::MoveGenerator::inCheck(const int squareIndex) const {
      */
     Colour friendlyPieceColour;
     if (!board.vectorTable[squareIndex]->getPiece()) {
-        friendlyPieceColour = (squareIndex - cornerIndex >= 52) ? Colour::BLACK : Colour::WHITE;
+        friendlyPieceColour = (squareIndex - cornerIndex >= 52) ? Colour::WHITE : Colour::BLACK;
     } else {
         friendlyPieceColour = board.vectorTable[squareIndex]->getPiece()->getColour();
+        std::cout << "Friendly colour chosen" << std::endl;
     }
     
     int vectorLength = 7;
@@ -288,12 +292,23 @@ bool Board::MoveGenerator::inCheck(const int squareIndex) const {
             const auto currSquare = board.vectorTable[getOffsetIndex(offset, squareIndex, i)].get();
             const auto& currPiece = currSquare->getPiece();
             
+            std::cout << "Checking vector: " << offset << " at length: " << i << std::endl;
+            
             if (currPiece) {
                 const auto currPieceColour = currPiece->getColour();
-                if (currPieceColour == friendlyPieceColour) {
+                if (currPieceColour == friendlyPieceColour 
+                        || currPieceColour == Colour::UNKNOWN) {
                     break;
                 }
-                if (currPieceColour == Colour::UNKNOWN) {
+                
+                std::cout << "Friendly piece colour: " << static_cast<char>(friendlyPieceColour) << std::endl;
+                
+                std::cout << "Found enemy piece: " << *currSquare << std::endl;
+                
+                const auto& pieceVector = currPiece->getVectorList();
+                
+                if (std::find(pieceVector.cbegin(), pieceVector.cend(), offset) == pieceVector.cend()) {
+                    std::cout << "Piece can't cause check, ignoring" << std::endl;
                     break;
                 }
                 return true;
@@ -303,7 +318,60 @@ bool Board::MoveGenerator::inCheck(const int squareIndex) const {
     return false;
 }
 
-int Board::MoveGenerator::getOffsetIndex(const int offset, const int startIndex, const int vectorLen) const {
+bool Board::MoveGenerator::inCheck(const Move& mv) const {
+    const auto& checkVectors = Piece(PieceTypes::UNKNOWN, Colour::UNKNOWN).getVectorList();
+    Colour friendlyPieceColour = (board.isWhiteTurn) ? Colour::WHITE : Colour::BLACK;
+    
+    /*
+     * Temporarily make the move if one was provided to ensure validity 
+     * of board state for this method.
+     */
+    std::swap(*mv.fromSq, *mv.toSq);
+    
+    const int squareIndex = std::distance(board.vectorTable.cbegin(), 
+        std::find_if(board.vectorTable.cbegin(), board.vectorTable.cend(), 
+            [friendlyPieceColour](const auto& sq){
+                const auto& piece = sq->getPiece();
+                return piece && piece->getType() == PieceTypes::KING 
+                    && piece->getColour() == friendlyPieceColour;
+            }));
+    
+    int vectorLength = 7;
+    for (const auto& offset : checkVectors) {
+        const auto absOffset = std::abs(offset);
+        // Change depth if current offset is a knight offset
+        vectorLength = (absOffset == 13 || absOffset > 16) ? 1 : 7;
+        
+        for (int i = 1; i <= vectorLength; ++i) {
+            const auto realIndex = getOffsetIndex(offset, squareIndex, i);
+            if (realIndex < 0 || realIndex > OUTER_BOARD_SIZE * OUTER_BOARD_SIZE) {
+                break;
+            }
+            const auto currSquare = board.vectorTable[realIndex].get();
+            const auto& currPiece = currSquare->getPiece();
+            
+            if (currPiece) {
+                const auto currPieceColour = currPiece->getColour();
+                if (currPieceColour == friendlyPieceColour 
+                        || currPieceColour == Colour::UNKNOWN) {
+                    break;
+                }
+                const auto& pieceVector = currPiece->getVectorList();
+                
+                if (std::find(pieceVector.cbegin(), pieceVector.cend(), offset) == pieceVector.cend()) {
+                    break;
+                }
+                std::swap(*mv.fromSq, *mv.toSq);
+                return true;
+            }
+        }
+    }
+    std::swap(*mv.fromSq, *mv.toSq);
+    return false;
+}
+
+int Board::MoveGenerator::getOffsetIndex(const int offset, const int startIndex, 
+        const int vectorLen) const {
     if (offset > 0) {
         return (startIndex - (vectorLen * (((OUTER_BOARD_SIZE << 1) 
             * ((offset + INNER_BOARD_SIZE - 1) / OUTER_BOARD_SIZE)) - offset)));
@@ -311,4 +379,15 @@ int Board::MoveGenerator::getOffsetIndex(const int offset, const int startIndex,
     return (startIndex + (vectorLen * (((OUTER_BOARD_SIZE << 1) 
         * ((std::abs(offset) + INNER_BOARD_SIZE - 1) 
             / OUTER_BOARD_SIZE)) - std::abs(offset))));
+}
+
+bool Board::MoveGenerator::getCastleDirectionBool(const PieceTypes type, 
+        const Colour pieceColour, const int offset) const {
+    if (type == PieceTypes::KING && std::abs(offset) == 2) {
+        if (pieceColour == Colour::WHITE) {
+            return (offset < 0) ? board.whiteCastleQueen : board.whiteCastleKing;
+        }
+        return (offset < 0) ? board.blackCastleQueen : board.blackCastleKing;
+    }
+    return false;
 }

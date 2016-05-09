@@ -230,13 +230,45 @@ void Board::makeMove(std::string& input) {
     
     // Add en Passant target if pawn double move was made.
     if (std::abs(diff) == 30 && fromPieceType == PieceTypes::PAWN) {
-        
         const auto distToEndSquare = std::distance(vectorTable.cbegin(), 
             std::find_if(vectorTable.cbegin(), vectorTable.cend(), 
                 [&mv](const auto& sq){return (*sq == *mv.toSq);}));
                 
         enPassantActive = true;
         enPassantTarget = vectorTable[distToEndSquare + (diff >> 1)].get();
+    }
+    
+    const bool castleDirectionChosen = moveGen->getCastleDirectionBool(
+            mv.fromSq->getPiece()->getType(), 
+            mv.fromSq->getPiece()->getColour(), diff);
+    
+    //Perform castling
+    if (fromPieceType == PieceTypes::KING && std::abs(diff) == 2 && castleDirectionChosen) {
+        const auto& kingPosition = std::distance(vectorTable.cbegin(), 
+                std::find_if(vectorTable.cbegin(), vectorTable.cend(), 
+                [&mv](const auto& sq){
+                    return sq->getOffset() == mv.fromSq->getOffset();
+                }));
+        if (diff > 0) {
+            //kingside
+            std::swap(vectorTable[kingPosition + 3], vectorTable[kingPosition + 1]);
+            const auto temp = vectorTable[kingPosition + 3]->getOffset();
+            vectorTable[kingPosition + 3]->setOffset(vectorTable[kingPosition + 1]->getOffset());
+            vectorTable[kingPosition + 1]->setOffset(temp);
+        } else {
+            //queenside
+            std::swap(vectorTable[kingPosition - 4], vectorTable[kingPosition - 1]);
+            const auto temp = vectorTable[kingPosition - 4]->getOffset();
+            vectorTable[kingPosition - 4]->setOffset(vectorTable[kingPosition - 1]->getOffset());
+            vectorTable[kingPosition - 1]->setOffset(temp);
+        }
+        if (mv.fromSq->getPiece()->getColour() == Colour::WHITE) {
+            whiteCastleKing = false;
+            whiteCastleQueen = false;
+        } else {
+            blackCastleKing = false;
+            blackCastleQueen = false;
+        }
     }
     
     // If moving to an occupied square, capture the piece
