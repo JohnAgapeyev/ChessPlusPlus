@@ -22,11 +22,6 @@
  * IMPORTANT:
  * Positive x: (30 * ((x + 7) / 15)) - x
  * Negative x: -((30 * ((abs(x) + 7) / 15)) - abs(x))
- * 
- * Also, might have to replace std rotate in my board hifting methods to ensure
- * things all fit together nicely.
- * 
- * TODO: Add check to allow double pawn movement when selecting offset
  */
  
 constexpr auto genOffset = [](const auto a, const auto b){return 98 - (15 * a) + b;};
@@ -66,7 +61,7 @@ std::pair<int, int> Board::findCorner() const {
     vectorTable.cbegin(), vectorTable.cend(), 
     [](auto sq) {
         auto pc = sq->getPiece();
-        return (pc && pc->getColour() != Colour::UNKNOWN && pc->getType() != PieceTypes::UNKNOWN);
+        return (!pc || (pc->getColour() != Colour::UNKNOWN && pc->getType() != PieceTypes::UNKNOWN));
     });
     
     if (result != vectorTable.cend()) {
@@ -81,7 +76,7 @@ int Board::findCorner_1D() const {
     vectorTable.cbegin(), vectorTable.cend(), 
     [](auto sq) {
         auto pc = sq->getPiece();
-        return (pc && pc->getColour() != Colour::UNKNOWN && pc->getType() != PieceTypes::UNKNOWN);
+        return (!pc || (pc->getColour() != Colour::UNKNOWN && pc->getType() != PieceTypes::UNKNOWN));
     });
     
     if (result != vectorTable.cend()) {

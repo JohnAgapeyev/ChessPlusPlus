@@ -29,11 +29,11 @@ long_line_behaviour=1
 long_line_column=80
 
 [files]
-current_page=3
-FILE_NAME_0=50;Make;0;EUTF-8;1;1;0;C%3A%5CUsers%5CJohn%5CDocuments%5CGitHub%5CChessPlusPlus%5Cmakefile;0;4
-FILE_NAME_1=9611;C++;0;EUTF-8;0;1;0;C%3A%5CUsers%5CJohn%5CDocuments%5CGitHub%5CChessPlusPlus%5Csrc%5CBoard.cpp;0;4
+current_page=1
+FILE_NAME_0=177;Make;0;EUTF-8;1;1;0;C%3A%5CUsers%5CJohn%5CDocuments%5CGitHub%5CChessPlusPlus%5Cmakefile;0;4
+FILE_NAME_1=0;C++;0;EUTF-8;0;1;0;C%3A%5CUsers%5CJohn%5CDocuments%5CGitHub%5CChessPlusPlus%5Csrc%5CBoard.cpp;0;4
 FILE_NAME_2=363;C++;0;EUTF-8;0;1;0;C%3A%5CUsers%5CJohn%5CDocuments%5CGitHub%5CChessPlusPlus%5Csrc%5Cheaders%5Cboard.h;0;4
-FILE_NAME_3=12804;C++;0;EUTF-8;0;1;0;C%3A%5CUsers%5CJohn%5CDocuments%5CGitHub%5CChessPlusPlus%5Csrc%5CMoveGenerator.cpp;0;4
+FILE_NAME_3=10092;C++;0;EUTF-8;0;1;0;C%3A%5CUsers%5CJohn%5CDocuments%5CGitHub%5CChessPlusPlus%5Csrc%5CMoveGenerator.cpp;0;4
 FILE_NAME_4=370;C++;0;EUTF-8;0;1;0;C%3A%5CUsers%5CJohn%5CDocuments%5CGitHub%5CChessPlusPlus%5Csrc%5Cheaders%5Cmovegenerator.h;0;4
 FILE_NAME_5=625;C++;0;EUTF-8;0;1;0;C%3A%5CUsers%5CJohn%5CDocuments%5CGitHub%5CChessPlusPlus%5Csrc%5CSquare.cpp;0;4
 FILE_NAME_6=963;C++;0;EUTF-8;0;1;0;C%3A%5CUsers%5CJohn%5CDocuments%5CGitHub%5CChessPlusPlus%5Csrc%5Cheaders%5Csquare.h;0;4
@@ -41,6 +41,7 @@ FILE_NAME_7=912;C++;0;EUTF-8;0;1;0;C%3A%5CUsers%5CJohn%5CDocuments%5CGitHub%5CCh
 FILE_NAME_8=160;C++;0;EUTF-8;0;1;0;C%3A%5CUsers%5CJohn%5CDocuments%5CGitHub%5CChessPlusPlus%5Csrc%5Cheaders%5Cchessplusplus.h;0;4
 FILE_NAME_9=1627;C++;0;EUTF-8;0;1;0;C%3A%5CUsers%5CJohn%5CDocuments%5CGitHub%5CChessPlusPlus%5Csrc%5CPiece.cpp;0;4
 FILE_NAME_10=129;C++;0;EUTF-8;0;1;0;C%3A%5CUsers%5CJohn%5CDocuments%5CGitHub%5CChessPlusPlus%5Csrc%5Cheaders%5Cpiece.h;0;4
+FILE_NAME_11=98;C++;0;EUTF-8;0;1;0;C%3A%5CUsers%5CJohn%5CDocuments%5CGitHub%5CChessPlusPlus%5Csrc%5CMove.cpp;0;4
 
 [build-menu]
 NF_00_LB=_Make

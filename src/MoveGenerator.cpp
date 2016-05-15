@@ -275,7 +275,6 @@ bool Board::MoveGenerator::inCheck(const int squareIndex) const {
         friendlyPieceColour = (squareIndex - cornerIndex >= 52) ? Colour::WHITE : Colour::BLACK;
     } else {
         friendlyPieceColour = board.vectorTable[squareIndex]->getPiece()->getColour();
-        std::cout << "Friendly colour chosen" << std::endl;
     }
     
     int vectorLength = 7;
@@ -291,24 +290,14 @@ bool Board::MoveGenerator::inCheck(const int squareIndex) const {
             }
             const auto currSquare = board.vectorTable[getOffsetIndex(offset, squareIndex, i)].get();
             const auto& currPiece = currSquare->getPiece();
-            
-            std::cout << "Checking vector: " << offset << " at length: " << i << std::endl;
-            
             if (currPiece) {
                 const auto currPieceColour = currPiece->getColour();
                 if (currPieceColour == friendlyPieceColour 
                         || currPieceColour == Colour::UNKNOWN) {
                     break;
                 }
-                
-                std::cout << "Friendly piece colour: " << static_cast<char>(friendlyPieceColour) << std::endl;
-                
-                std::cout << "Found enemy piece: " << *currSquare << std::endl;
-                
                 const auto& pieceVector = currPiece->getVectorList();
-                
                 if (std::find(pieceVector.cbegin(), pieceVector.cend(), offset) == pieceVector.cend()) {
-                    std::cout << "Piece can't cause check, ignoring" << std::endl;
                     break;
                 }
                 return true;

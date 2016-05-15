@@ -27,6 +27,9 @@
 *.out
 *.app
 
+# Project File
+*.geany
+
 # Object folder
 bin/
 
