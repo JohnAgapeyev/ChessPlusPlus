@@ -1,4 +1,4 @@
-CXXFLAGS = -Wall -pedantic -std=c++14 -O3 -D DEBUG
+CXXFLAGS = -Wall -Wextra -pedantic -std=c++14 -O3 -D DEBUG
 APPNAME := Chess
 ODIR := bin
 SRC := src

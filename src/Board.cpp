@@ -207,7 +207,9 @@ void Board::makeMove(std::string& input) {
     ensureEnPassantValid();
     
     const auto diff = mv.toSq->getOffset() - mv.fromSq->getOffset();
-    const auto& fromPieceType = mv.fromSq->getPiece()->getType();
+    const auto& fromPiece = mv.fromSq->getPiece();
+    const auto& fromPieceType = fromPiece->getType();
+    const auto& fromPieceColour = fromPiece->getColour();
     
     // If en passant move is made, capture the appropriate pawn
     if (enPassantActive && fromPieceType == PieceTypes::PAWN 
@@ -234,8 +236,7 @@ void Board::makeMove(std::string& input) {
     }
     
     const bool castleDirectionChosen = moveGen->getCastleDirectionBool(
-            mv.fromSq->getPiece()->getType(), 
-            mv.fromSq->getPiece()->getColour(), diff);
+            fromPieceType, fromPieceColour, diff);
     
     //Perform castling
     if (fromPieceType == PieceTypes::KING && std::abs(diff) == 2 && castleDirectionChosen) {
@@ -257,12 +258,35 @@ void Board::makeMove(std::string& input) {
             vectorTable[kingPosition - 4]->setOffset(vectorTable[kingPosition - 1]->getOffset());
             vectorTable[kingPosition - 1]->setOffset(temp);
         }
-        if (mv.fromSq->getPiece()->getColour() == Colour::WHITE) {
+        if (fromPieceColour == Colour::WHITE) {
             whiteCastleKing = false;
             whiteCastleQueen = false;
         } else {
             blackCastleKing = false;
             blackCastleQueen = false;
+        }
+    }
+    
+    // Disable castling if the appropriate rook moves
+    if (fromPieceType == PieceTypes::ROOK) {
+        if (fromPieceColour == Colour::WHITE && (whiteCastleKing || whiteCastleQueen)) {
+            const int backRankIndex = findCorner_1D() + (7 * OUTER_BOARD_SIZE);
+            const auto& fromSquare = *mv.fromSq;
+            if (*(vectorTable[backRankIndex].get()) == fromSquare) {
+                whiteCastleQueen = false;
+            }
+            if (*(vectorTable[backRankIndex + 7].get()) == fromSquare) {
+                whiteCastleKing = false;
+            }
+        } else if (fromPieceColour == Colour::BLACK && (blackCastleKing || blackCastleQueen)) {
+            const int backRankIndex = findCorner_1D();
+            const auto& fromSquare = *mv.fromSq;
+            if (*(vectorTable[backRankIndex].get()) == fromSquare) {
+                blackCastleQueen = false;
+            }
+            if (*(vectorTable[backRankIndex + 7].get()) == fromSquare) {
+                blackCastleKing = false;
+            }
         }
     }
     
