@@ -13,6 +13,7 @@
 #include <iterator>
 #include <cstdlib>
 #include <stdexcept>
+#include <regex>
 
 /*
  * Try to remove index from squares and instead calculate it based off the index
@@ -211,14 +212,17 @@ void Board::makeMove(std::string& input) {
     const auto& fromPieceType = fromPiece->getType();
     const auto& fromPieceColour = fromPiece->getColour();
     
-    // If en passant move is made, capture the appropriate pawn
-    if (enPassantActive && fromPieceType == PieceTypes::PAWN 
-            && (diff % 15) && *mv.toSq == *enPassantTarget) {
-                
-        const auto distToFromSquare = std::distance(vectorTable.cbegin(), 
+    const auto distToFromSquare = std::distance(vectorTable.cbegin(), 
             std::find_if(vectorTable.cbegin(), vectorTable.cend(), 
                 [&mv](const auto& sq){return (*sq == *mv.fromSq);}));
                 
+    const auto distToEndSquare = std::distance(vectorTable.cbegin(), 
+            std::find_if(vectorTable.cbegin(), vectorTable.cend(), 
+                [&mv](const auto& sq){return (*sq == *mv.toSq);}));
+    
+    // If en passant move is made, capture the appropriate pawn
+    if (enPassantActive && fromPieceType == PieceTypes::PAWN 
+            && (diff % 15) && *mv.toSq == *enPassantTarget) {
         vectorTable[distToFromSquare + (diff % 15)]->setPiece(nullptr);
     }
     
@@ -227,10 +231,6 @@ void Board::makeMove(std::string& input) {
     
     // Add en Passant target if pawn double move was made.
     if (std::abs(diff) == 30 && fromPieceType == PieceTypes::PAWN) {
-        const auto distToEndSquare = std::distance(vectorTable.cbegin(), 
-            std::find_if(vectorTable.cbegin(), vectorTable.cend(), 
-                [&mv](const auto& sq){return (*sq == *mv.toSq);}));
-                
         enPassantActive = true;
         enPassantTarget = vectorTable[distToEndSquare + (diff >> 1)].get();
     }
@@ -240,23 +240,18 @@ void Board::makeMove(std::string& input) {
     
     //Perform castling
     if (fromPieceType == PieceTypes::KING && std::abs(diff) == 2 && castleDirectionChosen) {
-        const auto& kingPosition = std::distance(vectorTable.cbegin(), 
-                std::find_if(vectorTable.cbegin(), vectorTable.cend(), 
-                [&mv](const auto& sq){
-                    return sq->getOffset() == mv.fromSq->getOffset();
-                }));
         if (diff > 0) {
             //kingside
-            std::swap(vectorTable[kingPosition + 3], vectorTable[kingPosition + 1]);
-            const auto temp = vectorTable[kingPosition + 3]->getOffset();
-            vectorTable[kingPosition + 3]->setOffset(vectorTable[kingPosition + 1]->getOffset());
-            vectorTable[kingPosition + 1]->setOffset(temp);
+            std::swap(vectorTable[distToFromSquare + 3], vectorTable[distToFromSquare + 1]);
+            const auto temp = vectorTable[distToFromSquare + 3]->getOffset();
+            vectorTable[distToFromSquare + 3]->setOffset(vectorTable[distToFromSquare + 1]->getOffset());
+            vectorTable[distToFromSquare + 1]->setOffset(temp);
         } else {
             //queenside
-            std::swap(vectorTable[kingPosition - 4], vectorTable[kingPosition - 1]);
-            const auto temp = vectorTable[kingPosition - 4]->getOffset();
-            vectorTable[kingPosition - 4]->setOffset(vectorTable[kingPosition - 1]->getOffset());
-            vectorTable[kingPosition - 1]->setOffset(temp);
+            std::swap(vectorTable[distToFromSquare - 4], vectorTable[distToFromSquare - 1]);
+            const auto temp = vectorTable[distToFromSquare - 4]->getOffset();
+            vectorTable[distToFromSquare - 4]->setOffset(vectorTable[distToFromSquare - 1]->getOffset());
+            vectorTable[distToFromSquare - 1]->setOffset(temp);
         }
         if (fromPieceColour == Colour::WHITE) {
             whiteCastleKing = false;
@@ -287,6 +282,31 @@ void Board::makeMove(std::string& input) {
             if (*(vectorTable[backRankIndex + 7].get()) == fromSquare) {
                 blackCastleKing = false;
             }
+        }
+    }
+    
+    if (fromPieceType == PieceTypes::PAWN) {
+        const auto cornerIndex =  findCorner_1D();
+        const auto distFromStartToCorner = distToEndSquare - cornerIndex;
+        const auto& rowPairs = (fromPieceColour == Colour::WHITE) ? std::make_pair(0, 14) : std::make_pair(105, 119);
+        
+        if (distFromStartToCorner >= rowPairs.first && distFromStartToCorner <= rowPairs.second) {
+            //Prompt for promotion
+            std::string input;
+            std::regex reg("[NBRQ]");
+            
+            for (;;) {
+                std::cout << "Pawn promotion detected\n";
+                std::cout << "Knight = [n/N], Bishop = [b/B], Rook = [r/R], Queen = [q/Q]\n";
+                std::cout << "Enter choice for promotion:\n";
+                std::getline(std::cin, input);
+                std::transform(input.begin(), input.end(), input.begin(), ::toupper);
+                if (input.length() == 1 && std::regex_match(input, reg)) {
+                    break;
+                }
+                std::cout << "Invalid input\n";
+            }
+            mv.fromSq->setPiece(std::make_unique<Piece>(static_cast<PieceTypes>(input.front()), fromPieceColour));
         }
     }
     

@@ -4,6 +4,7 @@
 class Board::MoveGenerator {
         const Board& board;
         std::vector<Move> moveList;
+        void logMoveFailure(const int failureNum) const;
         
     public:
         MoveGenerator(const Board& b) : board(b) {}

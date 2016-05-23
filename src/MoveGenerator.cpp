@@ -51,11 +51,11 @@ Move Board::MoveGenerator::createMove(std::string& input) {
 bool Board::MoveGenerator::validateMove(const Move& mv) {
     const auto& firstSquare = std::find_if(board.vectorTable.cbegin(), 
             board.vectorTable.cend(), [&mv](const auto& sq){
-        return (sq->getOffset() == mv.fromSq->getOffset());
+        return (*sq == *mv.fromSq);
         });
     const auto& secondSquare = std::find_if(board.vectorTable.cbegin(), 
             board.vectorTable.cend(), [&mv](const auto& sq){
-        return (sq->getOffset() == mv.toSq->getOffset());
+        return (*sq == *mv.toSq);
         });
     // Try to find the start and end points
     if (firstSquare == board.vectorTable.cend() || secondSquare == board.vectorTable.cend()) {
@@ -71,7 +71,7 @@ bool Board::MoveGenerator::validateMove(const Move& mv) {
     const auto& fromPiece = mv.fromSq->getPiece();
     
     if (!fromPiece || (fromPiece->getType() == PieceTypes::UNKNOWN 
-                  && fromPiece->getColour() == Colour::UNKNOWN)) {
+                    && fromPiece->getColour() == Colour::UNKNOWN)) {
         std::cout << "Cannot start a move on an empty square" << std::endl;
         return false;
     }
@@ -104,11 +104,7 @@ bool Board::MoveGenerator::validateMove(const Move& mv) {
     
     // Check if the move offset was found
     if (selectedOffset == vectorOffsets.cend()) {
-#ifdef DEBUG
-        std::cout << "Move is not legal1\n";
-#else
-        std::cout << "Move is not legal\n";
-#endif
+        logMoveFailure(1);
         return false;
     }
     
@@ -117,11 +113,7 @@ bool Board::MoveGenerator::validateMove(const Move& mv) {
      * is the same colour as the piece on the ending square.
      */
     if (toPiece && fromPieceColour == toPiece->getColour()) {
-#ifdef DEBUG
-        std::cout << "Move is not legal2\n";
-#else
-        std::cout << "Move is not legal\n";
-#endif
+        logMoveFailure(2);
         return false;
     }
     
@@ -144,32 +136,21 @@ bool Board::MoveGenerator::validateMove(const Move& mv) {
     // Iterate through to ensure sliding pieces aren't being blocked
     for (int i = 1; i < moveLen; ++i) {
         currSquare = board.vectorTable[getOffsetIndex(*selectedOffset, ZERO_LOCATION_1D, i)].get();
-        
         if (currSquare->getOffset() == mv.toSq->getOffset()) {
             foundToSquare = true;
             break;
         }
         // Check if the square has a piece on it or is a sentinel
         if (currSquare->getPiece()) {
-#ifdef DEBUG
-        std::cout << "Move is not legal3\n";
-#else
-        std::cout << "Move is not legal\n";
-#endif
+            logMoveFailure(3);
             return false;
         }
     }
-    
     // Check if square was found in previous loop
     if (!foundToSquare) {
-#ifdef DEBUG
-        std::cout << "Move is not legal4\n";
-#else
-        std::cout << "Move is not legal\n";
-#endif
+        logMoveFailure(4);
         return false;
     }
-    
     /* 
      * Check that pawns don't double move except on their starting rows.
      * Since board is 1D array, finding the pawn row can be done by counting
@@ -182,48 +163,30 @@ bool Board::MoveGenerator::validateMove(const Move& mv) {
         const auto distFromStartToCorner = dist - cornerIndex;
         const auto& rowPairs = (fromPieceColour == Colour::WHITE) ? std::make_pair(90, 104) : std::make_pair(15, 29);
         if (distFromStartToCorner < rowPairs.first || distFromStartToCorner > rowPairs.second) {
-#ifdef DEBUG
-            std::cout << "Move is not legal5\n";
-#else
-            std::cout << "Move is not legal\n";
-#endif
+            logMoveFailure(5);
             return false;
         }
     }
-    
     board.ensureEnPassantValid();
-    
     // Pawn related validation checks
     if (fromPieceType == PieceTypes::PAWN) {
         // Ensure pawns only move diagonally if they capture a piece, including en passant
         if ((*selectedOffset % 15) 
                 && !board.vectorTable[secondSquareIndex]->getPiece() 
                 && !board.enPassantActive) {
-#ifdef DEBUG
-            std::cout << "Move is not legal6\n";
-#else
-            std::cout << "Move is not legal\n";
-#endif
+            logMoveFailure(6);
             return false;
         }
         // Prevent pawns from capturing vertically
         if (!(*selectedOffset % 15) && board.vectorTable[secondSquareIndex]->getPiece()) {
-#ifdef DEBUG
-            std::cout << "Move is not legal7\n";
-#else
-            std::cout << "Move is not legal\n";
-#endif
+            logMoveFailure(7);
             return false;
         }
     }
     
     //Prevent players from placing their own king in check
     if (inCheck(mv)) {
-#ifdef DEBUG
-        std::cout << "Move is not legal8\n";
-#else
-        std::cout << "Move is not legal\n";
-#endif
+        logMoveFailure(8);
         return false;
     }
     
@@ -231,11 +194,7 @@ bool Board::MoveGenerator::validateMove(const Move& mv) {
     
     // Prevent king from jumpng 2 spaces if not castling
     if (fromPieceType == PieceTypes::KING && std::abs(*selectedOffset) == 2 && !castleDirectionChosen) {
-#ifdef DEBUG
-        std::cout << "Move is not legal9\n";
-#else
-        std::cout << "Move is not legal\n";
-#endif
+        logMoveFailure(9);
         return false;
     }
     
@@ -246,15 +205,11 @@ bool Board::MoveGenerator::validateMove(const Move& mv) {
                     std::find_if(board.vectorTable.cbegin(), 
                     board.vectorTable.cend(), 
                     [&mv](const auto& sq){
-                        return sq->getOffset() == mv.fromSq->getOffset();
+                        return *sq == *mv.fromSq;
                     }));
             const auto& currPiece = firstSquare[i]->getPiece();
             if ((currPiece && currPiece->getType() != PieceTypes::ROOK) || inCheck(currIndex + i)) {
-#ifdef DEBUG
-                std::cout << "Move is not legal10\n";
-#else
-                std::cout << "Move is not legal\n";
-#endif
+                logMoveFailure(10);
                 return false;
             }
         }
@@ -379,4 +334,12 @@ bool Board::MoveGenerator::getCastleDirectionBool(const PieceTypes type,
         return (offset < 0) ? board.blackCastleQueen : board.blackCastleKing;
     }
     return false;
+}
+
+void Board::MoveGenerator::logMoveFailure(const int failureNum) const {
+#ifdef DEBUG
+    std::cout << "Move is not legal" << failureNum << std::endl;
+#else
+    std::cout << "Move is not legal\n";
+#endif
 }
