@@ -16,6 +16,7 @@ public:
     auto getType() const {return type;}
     auto getColour() const {return pieceColour;}
     std::vector<int> getVectorList() const;
+    int getVectorLength() const;
     
     friend std::ostream& operator<<(std::ostream& os, const Piece& piece);
 };

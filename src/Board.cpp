@@ -201,7 +201,13 @@ void Board::makeMove(std::string& input) {
     
     shiftBoard(input[0], INNER_BOARD_SIZE - 1 - input[1]);
     
-    if (!moveGen->validateMove(mv)) {
+    moveGen->generateAll();
+    for (const auto& mo : moveGen->getMoveList()) {
+        std::cout << *mo.fromSq << ", " << *mo.toSq << std::endl;
+    }
+    std::cout << moveGen->getMoveList().size() << std::endl;
+    
+    if (!moveGen->validateMove(mv, false)) {
         return;
     }
     

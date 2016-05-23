@@ -1,5 +1,6 @@
 
 #include "headers/piece.h"
+#include "headers/consts.h"
 #include <algorithm>
 #include <cctype>
 #include <iostream>
@@ -56,4 +57,15 @@ std::ostream& operator<<(std::ostream& os, const Piece& piece) {
     os << ' ';
 #endif
     return os << static_cast<char>(piece.pieceColour) << static_cast<char>(piece.type);
+}
+
+int Piece::getVectorLength() const {
+    switch (this->type) {
+        case PieceTypes::KING:
+        case PieceTypes::PAWN:
+        case PieceTypes::KNIGHT:
+            return 2;
+        default:
+            return INNER_BOARD_SIZE;
+    }
 }

@@ -4,13 +4,13 @@
 class Board::MoveGenerator {
         const Board& board;
         std::vector<Move> moveList;
-        void logMoveFailure(const int failureNum) const;
+        void logMoveFailure(const int failureNum, const bool isSilent) const;
         
     public:
         MoveGenerator(const Board& b) : board(b) {}
         auto getMoveList() const {return moveList;}
         void generateAll();
-        bool validateMove(const Move& mv);
+        bool validateMove(const Move& mv, const bool isSilent);
         bool inCheck(const Move& mv) const;
         bool inCheck(const int squareIndex) const;
         Move createMove(std::string& input);
