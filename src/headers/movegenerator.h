@@ -2,12 +2,12 @@
 #define MOVEGEN_H
 
 class Board::MoveGenerator {
-        const Board& board;
+        Board& board;
         std::vector<Move> moveList;
         void logMoveFailure(const int failureNum, const bool isSilent) const;
         
     public:
-        MoveGenerator(const Board& b) : board(b) {}
+        MoveGenerator(Board& b) : board(b) {}
         auto getMoveList() const {return moveList;}
         void generateAll();
         bool validateMove(const Move& mv, const bool isSilent);

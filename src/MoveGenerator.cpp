@@ -353,33 +353,50 @@ void Board::MoveGenerator::logMoveFailure(const int failureNum, const bool isSil
  * For every valid move, generate user side move input
  */
 void Board::MoveGenerator::generateAll() {
-    Move mv = {nullptr, nullptr};
+    Move mv{nullptr, nullptr};
     const auto tableSize = static_cast<int>(board.vectorTable.size());
     const auto& currentPlayerColour = (board.isWhiteTurn) ? Colour::WHITE : Colour::BLACK;
-    for (int i = 0; i < tableSize; ++i) {
-        const auto& sq = board.vectorTable[i].get();
-        const auto& fromPiece = sq->getPiece();
-        if (fromPiece && fromPiece->getType() != PieceTypes::UNKNOWN && fromPiece->getColour() == currentPlayerColour) {
-            for (const auto& offset : fromPiece->getVectorList()) {
-                // Define number of squares to check along the selected vector
-                const int moveLen = fromPiece->getVectorLength();
-                
-                for (int j = 1; j < moveLen; ++j) {
-                    const auto toSquareIndex = getOffsetIndex(offset, i, j);
-                    if (toSquareIndex < 0 || toSquareIndex > tableSize) {
-                        break;
-                    }
-                    mv.fromSq = sq;
-                    mv.toSq = board.vectorTable[toSquareIndex].get();
-                    
-                    if (mv.toSq->checkSentinel()) {
-                        break;
-                    }
-                    if (!validateMove(mv, false)) {
-                        break;
-                    }
-                    moveList.push_back(mv);
+    
+    const std::vector<std::tuple<int, int, Piece*>> pieceCoords = [&]{
+        std::vector<std::tuple<int, int, Piece*>> internal;
+        for (int i = 0; i < OUTER_BOARD_SIZE; ++i) {
+            for (int j = 0; j < OUTER_BOARD_SIZE; ++j) {
+                const auto& sq = board.vectorTable[(i * OUTER_BOARD_SIZE) + j].get();
+                const auto& fromPiece = sq->getPiece();
+                if (fromPiece && fromPiece->getType() != PieceTypes::UNKNOWN 
+                        && fromPiece->getColour() == currentPlayerColour) {
+                    internal.push_back(std::make_tuple(i, j, fromPiece));
                 }
+            }
+        }
+        return internal;
+    }();
+    
+    const auto& startCoords = board.findCorner();
+    
+    moveList.clear();
+    
+    for (const auto& p : pieceCoords) {
+        board.shiftBoard(std::get<1>(p) - startCoords.second, std::get<0>(p) - startCoords.first);
+        for (const auto& offset : std::get<2>(p)->getVectorList()) {
+             //Define number of squares to check along the selected vector
+            const int moveLen = std::get<2>(p)->getVectorLength();
+        
+            for (int j = 1; j < moveLen; ++j) {
+                const auto toSquareIndex = getOffsetIndex(offset, ZERO_LOCATION_1D, j);
+                if (toSquareIndex < 0 || toSquareIndex > tableSize) {
+                    break;
+                }
+                mv.fromSq = board.vectorTable[ZERO_LOCATION_1D].get();
+                mv.toSq = board.vectorTable[toSquareIndex].get();
+                
+                if (mv.toSq->checkSentinel()) {
+                    break;
+                }
+                if (!validateMove(mv, true)) {
+                    break;
+                }
+                moveList.push_back(mv);
             }
         }
     }

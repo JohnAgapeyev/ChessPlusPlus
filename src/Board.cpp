@@ -60,7 +60,7 @@ Board::~Board() = default;
 std::pair<int, int> Board::findCorner() const {
     auto result = std::find_if(
     vectorTable.cbegin(), vectorTable.cend(), 
-    [](auto sq) {
+    [](const auto& sq) {
         auto pc = sq->getPiece();
         return (!pc || (pc->getColour() != Colour::UNKNOWN && pc->getType() != PieceTypes::UNKNOWN));
     });
@@ -75,7 +75,7 @@ std::pair<int, int> Board::findCorner() const {
 int Board::findCorner_1D() const {
     auto result = std::find_if(
     vectorTable.cbegin(), vectorTable.cend(), 
-    [](auto sq) {
+    [](const auto& sq) {
         auto pc = sq->getPiece();
         return (!pc || (pc->getColour() != Colour::UNKNOWN && pc->getType() != PieceTypes::UNKNOWN));
     });
@@ -201,16 +201,10 @@ void Board::makeMove(std::string& input) {
     
     shiftBoard(input[0], INNER_BOARD_SIZE - 1 - input[1]);
     
-    moveGen->generateAll();
-    for (const auto& mo : moveGen->getMoveList()) {
-        std::cout << *mo.fromSq << ", " << *mo.toSq << std::endl;
-    }
-    std::cout << moveGen->getMoveList().size() << std::endl;
-    
     if (!moveGen->validateMove(mv, false)) {
         return;
     }
-    
+
     ensureEnPassantValid();
     
     const auto diff = mv.toSq->getOffset() - mv.fromSq->getOffset();
@@ -342,6 +336,13 @@ void Board::makeMove(std::string& input) {
     
     blackInCheck = moveGen->inCheck(blackKingDist);
     whiteInCheck = moveGen->inCheck(whiteKingDist);
+    
+    // For testing purposes, display list of opponents legal moves
+    moveGen->generateAll();
+    for (const auto& mo : moveGen->getMoveList()) {
+        std::cout << *mo.fromSq << ", " << *mo.toSq << std::endl;
+    }
+    std::cout << moveGen->getMoveList().size() << std::endl;
 }
 
 void Board::ensureEnPassantValid() const {
