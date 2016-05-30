@@ -172,7 +172,7 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
         // Ensure pawns only move diagonally if they capture a piece, including en passant
         if ((*selectedOffset % 15) 
                 && !board.vectorTable[secondSquareIndex]->getPiece() 
-                && !board.enPassantActive) {
+                && !(board.enPassantActive && *board.vectorTable[secondSquareIndex] == *board.enPassantTarget)) {
             logMoveFailure(6, isSilent);
             return false;
         }
