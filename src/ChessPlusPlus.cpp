@@ -18,14 +18,13 @@ int main() {
 
 void mainLoop(Board& b) {
     std::string input;
-    while (gameActive) {
+    while (b.getGameState() == GameState::ACTIVE) {
         std::cout << "Enter your move: ";
         std::getline(std::cin, input);
         std::transform(input.begin(), input.end(), input.begin(), ::tolower);
-        // Input equals exit
+
         if (!input.compare("exit")) {
-            gameActive = false;
-            continue;
+            break;
         }
         if (!checkInputValid(input)) {
             std::cout << "Not a valid move format\n";

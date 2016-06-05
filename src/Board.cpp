@@ -349,6 +349,20 @@ void Board::makeMove(std::string& input) {
         }
     }
     std::cout << moveGen->getMoveList().size() << std::endl;
+    
+    //Opponent has no legal moves
+    if (!moveGen->getMoveList().size()) {
+        const auto& opponentCheck = (!isWhiteTurn) ? whiteInCheck : blackInCheck;
+        if (opponentCheck) {
+            //Checkmate
+            std::cout << "CHECKMATE" << std::endl;
+            currentGameState = GameState::MATE;
+        } else {
+            //Stalemate
+            std::cout << "STALEMATE" << std::endl;
+            currentGameState = GameState::DRAWN;
+        }
+    }
 }
 
 void Board::ensureEnPassantValid() const {

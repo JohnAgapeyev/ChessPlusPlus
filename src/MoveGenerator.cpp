@@ -351,12 +351,6 @@ void Board::MoveGenerator::logMoveFailure(const int failureNum, const bool isSil
 #endif
 }
 
-/*
- * Iterate through every square
- * For each piece, go through its list of offsets
- * For each offset, validate it, repeat until reached end of vector
- * For every valid move, generate user side move input
- */
 void Board::MoveGenerator::generateAll() {
     Move mv{nullptr, nullptr, PieceTypes::UNKNOWN};
     const auto tableSize = static_cast<int>(board.vectorTable.size());
@@ -395,22 +389,20 @@ void Board::MoveGenerator::generateAll() {
                 mv.fromSq = board.vectorTable[ZERO_LOCATION_1D].get();
                 mv.toSq = board.vectorTable[toSquareIndex].get();
                 
-                if (mv.fromSq->getPiece()) {
-                    mv.promotionType = mv.fromSq->getPiece()->getType();
-                } else {
-                    mv.promotionType = PieceTypes::UNKNOWN;
-                }
+                mv.promotionType = (mv.fromSq->getPiece()) ? mv.fromSq->getPiece()->getType() : PieceTypes::UNKNOWN;
                 
+                //Promotion check
                 if (mv.promotionType == PieceTypes::PAWN) {
                     const auto distToEndSquare = std::distance(board.vectorTable.cbegin(), 
                         std::find_if(board.vectorTable.cbegin(), board.vectorTable.cend(), 
                             [&mv](const auto& sq){return (*sq == *mv.toSq);}));
                             
+                    //Calculate the corner index based on the above board shift to prevent a linear search
                     const auto cornerIndex = ((7 - std::get<0>(p) + startCoords.first) * 15) + (7 - std::get<1>(p) + startCoords.second);
                     const auto distFromStartToCorner = distToEndSquare - cornerIndex;
                     const auto& rowPairs = (mv.fromSq->getPiece()->getColour() == Colour::WHITE) ? std::make_pair(0, 14) : std::make_pair(105, 119);
                     
-                    //Promotion
+                    //Promotion validity
                     if (distFromStartToCorner >= rowPairs.first && distFromStartToCorner <= rowPairs.second) {
                         if (mv.toSq->checkSentinel()) {
                             break;

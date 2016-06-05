@@ -17,4 +17,10 @@ enum class Colour {
     BLACK = 'B'
 };
 
+enum class GameState {
+    ACTIVE,
+    DRAWN,
+    MATE
+};
+
 #endif

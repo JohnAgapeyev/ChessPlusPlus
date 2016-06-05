@@ -4,6 +4,7 @@
 #include "square.h"
 #include "consts.h"
 #include "move.h"
+#include "enums.h"
 #include <vector>
 #include <array>
 #include <memory>
@@ -12,6 +13,7 @@ class Board {
     class MoveGenerator;
     std::unique_ptr<MoveGenerator> moveGen;
     std::array<std::shared_ptr<Square>, OUTER_BOARD_SIZE * OUTER_BOARD_SIZE> vectorTable;
+    GameState currentGameState = GameState::ACTIVE;
     bool whiteCastleKing = true;
     bool whiteCastleQueen = true;
     bool blackCastleKing = true;
@@ -30,6 +32,7 @@ public:
     ~Board();
     void printBoardState() const;
     auto getBoard() const {return vectorTable;}
+    auto getGameState() const {return currentGameState;}
     std::pair<int, int> findCorner() const;
     int findCorner_1D() const;
     void shiftBoard(const int col, const int row);
