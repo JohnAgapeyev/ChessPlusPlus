@@ -17,6 +17,7 @@ public:
     auto getColour() const {return pieceColour;}
     std::vector<int> getVectorList() const;
     int getVectorLength() const;
+    void promote(PieceTypes newType);
     
     friend std::ostream& operator<<(std::ostream& os, const Piece& piece);
 };

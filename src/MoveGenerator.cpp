@@ -34,6 +34,11 @@ Move Board::MoveGenerator::createMove(std::string& input) {
             + topLeftCornerIndex + input[0]].get();
     result.toSq = board.vectorTable[((INNER_BOARD_SIZE - 1 - input[3]) * OUTER_BOARD_SIZE) 
             + topLeftCornerIndex + input[2]].get();
+    if (result.fromSq->getPiece()) {
+        result.promotionType = result.fromSq->getPiece()->getType();
+    } else {
+        result.promotionType = PieceTypes::UNKNOWN;
+    }
     return result;
 }
  /*
@@ -353,7 +358,7 @@ void Board::MoveGenerator::logMoveFailure(const int failureNum, const bool isSil
  * For every valid move, generate user side move input
  */
 void Board::MoveGenerator::generateAll() {
-    Move mv{nullptr, nullptr};
+    Move mv{nullptr, nullptr, PieceTypes::UNKNOWN};
     const auto tableSize = static_cast<int>(board.vectorTable.size());
     const auto& currentPlayerColour = (board.isWhiteTurn) ? Colour::WHITE : Colour::BLACK;
     
@@ -390,6 +395,40 @@ void Board::MoveGenerator::generateAll() {
                 mv.fromSq = board.vectorTable[ZERO_LOCATION_1D].get();
                 mv.toSq = board.vectorTable[toSquareIndex].get();
                 
+                if (mv.fromSq->getPiece()) {
+                    mv.promotionType = mv.fromSq->getPiece()->getType();
+                } else {
+                    mv.promotionType = PieceTypes::UNKNOWN;
+                }
+                
+                if (mv.promotionType == PieceTypes::PAWN) {
+                    const auto distToEndSquare = std::distance(board.vectorTable.cbegin(), 
+                        std::find_if(board.vectorTable.cbegin(), board.vectorTable.cend(), 
+                            [&mv](const auto& sq){return (*sq == *mv.toSq);}));
+                            
+                    const auto cornerIndex = ((7 - std::get<0>(p) + startCoords.first) * 15) + (7 - std::get<1>(p) + startCoords.second);
+                    const auto distFromStartToCorner = distToEndSquare - cornerIndex;
+                    const auto& rowPairs = (mv.fromSq->getPiece()->getColour() == Colour::WHITE) ? std::make_pair(0, 14) : std::make_pair(105, 119);
+                    
+                    //Promotion
+                    if (distFromStartToCorner >= rowPairs.first && distFromStartToCorner <= rowPairs.second) {
+                        if (mv.toSq->checkSentinel()) {
+                            break;
+                        }
+                        if (!validateMove(mv, true)) {
+                            break;
+                        }
+                        mv.promotionType = PieceTypes::KNIGHT;
+                        moveList.push_back(mv);
+                        mv.promotionType = PieceTypes::BISHOP;
+                        moveList.push_back(mv);
+                        mv.promotionType = PieceTypes::ROOK;
+                        moveList.push_back(mv);
+                        mv.promotionType = PieceTypes::QUEEN;
+                        moveList.push_back(mv);
+                        continue;
+                    }
+                }
                 if (mv.toSq->checkSentinel()) {
                     break;
                 }

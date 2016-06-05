@@ -8,6 +8,7 @@ typedef struct Move Move;
 struct Move {
     Square *fromSq;
     Square *toSq;
+    PieceTypes promotionType;
 };
 
 void swapOffsets(const Move& mv);

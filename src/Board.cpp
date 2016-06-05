@@ -306,7 +306,7 @@ void Board::makeMove(std::string& input) {
                 }
                 std::cout << "Invalid input\n";
             }
-            mv.fromSq->setPiece(std::make_unique<Piece>(static_cast<PieceTypes>(input.front()), fromPieceColour));
+            mv.fromSq->getPiece()->promote(static_cast<PieceTypes>(input.front()));
         }
     }
     
@@ -340,7 +340,13 @@ void Board::makeMove(std::string& input) {
     // For testing purposes, display list of opponents legal moves
     moveGen->generateAll();
     for (const auto& mo : moveGen->getMoveList()) {
-        std::cout << *mo.fromSq << ", " << *mo.toSq << std::endl;
+        if (mo.fromSq->getPiece() 
+                && mo.fromSq->getPiece()->getType() == PieceTypes::PAWN 
+                    && mo.promotionType != mo.fromSq->getPiece()->getType()) {
+            std::cout << *mo.fromSq << ", " << *mo.toSq << " Promoting to: " << static_cast<char>(mo.promotionType) << std::endl;
+        } else {
+            std::cout << *mo.fromSq << ", " << *mo.toSq << std::endl;
+        }
     }
     std::cout << moveGen->getMoveList().size() << std::endl;
 }

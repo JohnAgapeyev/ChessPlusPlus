@@ -69,3 +69,10 @@ int Piece::getVectorLength() const {
             return INNER_BOARD_SIZE;
     }
 }
+
+void Piece::promote(PieceTypes newType) {
+    if (this->type != PieceTypes::PAWN) {
+        return;
+    }
+    this->type = newType;
+}
