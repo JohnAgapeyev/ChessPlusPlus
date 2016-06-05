@@ -40,4 +40,4 @@ $(OBJS): $(SRCOBJS)
 
 # Deletes the executable and all .o files in the bin folder
 clean:
-	$(RM) $(ODIR)/*
+	$(RM) $(EXEC).exe $(wildcard $(ODIR)/*.d*) $(wildcard $(ODIR)/*.o)
