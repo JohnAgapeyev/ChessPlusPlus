@@ -204,7 +204,6 @@ void Board::makeMove(std::string& input) {
     if (!moveGen->validateMove(mv, false)) {
         return;
     }
-
     ensureEnPassantValid();
     
     const auto diff = mv.toSq->getOffset() - mv.fromSq->getOffset();
@@ -228,7 +227,6 @@ void Board::makeMove(std::string& input) {
     
     enPassantActive = false;
     enPassantTarget = nullptr;
-    
     // Add en Passant target if pawn double move was made.
     if (std::abs(diff) == 30 && fromPieceType == PieceTypes::PAWN) {
         enPassantActive = true;
@@ -261,7 +259,6 @@ void Board::makeMove(std::string& input) {
             blackCastleQueen = false;
         }
     }
-    
     // Disable castling if the appropriate rook moves
     if (fromPieceType == PieceTypes::ROOK) {
         if (fromPieceColour == Colour::WHITE && (whiteCastleKing || whiteCastleQueen)) {
@@ -309,7 +306,6 @@ void Board::makeMove(std::string& input) {
             mv.fromSq->getPiece()->promote(static_cast<PieceTypes>(input.front()));
         }
     }
-    
     // If moving to an occupied square, capture the piece
     if (mv.toSq->getPiece()) {
         mv.toSq->setPiece(nullptr);
@@ -336,6 +332,7 @@ void Board::makeMove(std::string& input) {
     
     blackInCheck = moveGen->inCheck(blackKingDist);
     whiteInCheck = moveGen->inCheck(whiteKingDist);
+    
     
     // For testing purposes, display list of opponents legal moves
     moveGen->generateAll();

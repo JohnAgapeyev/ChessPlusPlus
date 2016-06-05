@@ -195,7 +195,6 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
     }
     
     const bool castleDirectionChosen = getCastleDirectionBool(fromPieceType, fromPieceColour, *selectedOffset);
-    
     // Prevent king from jumpng 2 spaces if not castling
     if (fromPieceType == PieceTypes::KING && std::abs(*selectedOffset) == 2 && !castleDirectionChosen) {
         logMoveFailure(9, isSilent);
@@ -247,7 +246,11 @@ bool Board::MoveGenerator::inCheck(const int squareIndex) const {
                     || squareIndex + (i * -offset) >= OUTER_BOARD_SIZE * OUTER_BOARD_SIZE) {
                 break;
             }
-            const auto currSquare = board.vectorTable[getOffsetIndex(offset, squareIndex, i)].get();
+            const auto realIndex = getOffsetIndex(offset, squareIndex, i);
+            if (realIndex < 0 || realIndex >= OUTER_BOARD_SIZE * OUTER_BOARD_SIZE) {
+                break;
+            }
+            const auto currSquare = board.vectorTable[realIndex].get();
             const auto& currPiece = currSquare->getPiece();
             if (currPiece) {
                 const auto currPieceColour = currPiece->getColour();
@@ -292,7 +295,7 @@ bool Board::MoveGenerator::inCheck(const Move& mv) const {
         
         for (int i = 1; i <= vectorLength; ++i) {
             const auto realIndex = getOffsetIndex(offset, squareIndex, i);
-            if (realIndex < 0 || realIndex > OUTER_BOARD_SIZE * OUTER_BOARD_SIZE) {
+            if (realIndex < 0 || realIndex >= OUTER_BOARD_SIZE * OUTER_BOARD_SIZE) {
                 break;
             }
             const auto currSquare = board.vectorTable[realIndex].get();
@@ -374,7 +377,6 @@ void Board::MoveGenerator::generateAll() {
     const auto& startCoords = board.findCorner();
     
     moveList.clear();
-    
     for (const auto& p : pieceCoords) {
         board.shiftBoard(std::get<1>(p) - startCoords.second, std::get<0>(p) - startCoords.first);
         for (const auto& offset : std::get<2>(p)->getVectorList()) {
