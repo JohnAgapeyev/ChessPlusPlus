@@ -30,15 +30,15 @@ Move Board::MoveGenerator::createMove(std::string& input) {
     }
     Move result;
     const auto topLeftCornerIndex = board.findCorner_1D();
+    
     result.fromSq = board.vectorTable[((INNER_BOARD_SIZE - 1 - input[1]) * OUTER_BOARD_SIZE) 
             + topLeftCornerIndex + input[0]].get();
+            
     result.toSq = board.vectorTable[((INNER_BOARD_SIZE - 1 - input[3]) * OUTER_BOARD_SIZE) 
             + topLeftCornerIndex + input[2]].get();
-    if (result.fromSq->getPiece()) {
-        result.promotionType = result.fromSq->getPiece()->getType();
-    } else {
-        result.promotionType = PieceTypes::UNKNOWN;
-    }
+            
+    result.promotionType = (result.fromSq->getPiece()) ? result.fromSq->getPiece()->getType() : PieceTypes::UNKNOWN;
+    
     return result;
 }
  /*
@@ -81,7 +81,7 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
     const auto& fromPiece = mv.fromSq->getPiece();
     
     if (!fromPiece || (fromPiece->getType() == PieceTypes::UNKNOWN 
-                    && fromPiece->getColour() == Colour::UNKNOWN)) {
+            && fromPiece->getColour() == Colour::UNKNOWN)) {
         if (!isSilent) {
             std::cout << "Cannot start a move on an empty square" << std::endl;
         }
@@ -161,7 +161,7 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
      * the number of squares between the top left corner and the starting square
      * of the selected move.
      */
-    if (*selectedOffset == 30) {
+    if (std::abs(*selectedOffset) == 30) {
         const auto& dist = std::distance(board.vectorTable.cbegin(), firstSquare);
         const auto cornerIndex =  board.findCorner_1D();
         const auto distFromStartToCorner = dist - cornerIndex;
@@ -273,12 +273,15 @@ bool Board::MoveGenerator::inCheck(const Move& mv) const {
     const auto& checkVectors = Piece(PieceTypes::UNKNOWN, Colour::UNKNOWN).getVectorList();
     Colour friendlyPieceColour = (board.isWhiteTurn) ? Colour::WHITE : Colour::BLACK;
     
-    /*
-     * Temporarily make the move if one was provided to ensure validity 
-     * of board state for this method.
-     */
-    std::swap(*mv.fromSq, *mv.toSq);
+    const auto toPiece = mv.toSq->getPiece();
+    auto toPieceCopy = Piece(PieceTypes::UNKNOWN, Colour::UNKNOWN);
+    if (toPiece) {
+        toPieceCopy = Piece(toPiece->getType(), toPiece->getColour());
+    }
     
+    mv.toSq->setPiece(nullptr);
+    std::swap(*mv.fromSq, *mv.toSq);
+
     const int squareIndex = std::distance(board.vectorTable.cbegin(), 
         std::find_if(board.vectorTable.cbegin(), board.vectorTable.cend(), 
             [friendlyPieceColour](const auto& sq){
@@ -313,11 +316,17 @@ bool Board::MoveGenerator::inCheck(const Move& mv) const {
                     break;
                 }
                 std::swap(*mv.fromSq, *mv.toSq);
+                if (toPiece) {
+                    mv.toSq->setPiece(toPieceCopy);
+                }
                 return true;
             }
         }
     }
     std::swap(*mv.fromSq, *mv.toSq);
+    if (toPiece) {
+        mv.toSq->setPiece(toPieceCopy);
+    }
     return false;
 }
 
