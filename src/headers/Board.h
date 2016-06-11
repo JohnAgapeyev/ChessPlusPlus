@@ -23,6 +23,7 @@ class Board {
     bool isWhiteTurn = true;
     bool enPassantActive = false;
     Square *enPassantTarget = nullptr;
+    int halfMoveClock = 0;
     void shiftVertical(const int count);
     void shiftHorizontal(const int count);
     void ensureEnPassantValid() const;

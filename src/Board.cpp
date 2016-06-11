@@ -206,6 +206,8 @@ void Board::makeMove(std::string& input) {
     }
     ensureEnPassantValid();
     
+    halfMoveClock++;
+    
     const auto diff = mv.toSq->getOffset() - mv.fromSq->getOffset();
     const auto& fromPiece = mv.fromSq->getPiece();
     const auto& fromPieceType = fromPiece->getType();
@@ -283,6 +285,7 @@ void Board::makeMove(std::string& input) {
     }
     
     if (fromPieceType == PieceTypes::PAWN) {
+        halfMoveClock = 0;
         const auto cornerIndex =  findCorner_1D();
         const auto distFromStartToCorner = distToEndSquare - cornerIndex;
         const auto& rowPairs = (fromPieceColour == Colour::WHITE) ? std::make_pair(0, 14) : std::make_pair(105, 119);
@@ -309,6 +312,7 @@ void Board::makeMove(std::string& input) {
     // If moving to an occupied square, capture the piece
     if (mv.toSq->getPiece()) {
         mv.toSq->setPiece(nullptr);
+        halfMoveClock = 0;
     }
     std::swap(*mv.fromSq, *mv.toSq);
     swapOffsets(mv);
@@ -333,9 +337,9 @@ void Board::makeMove(std::string& input) {
     blackInCheck = moveGen->inCheck(blackKingDist);
     whiteInCheck = moveGen->inCheck(whiteKingDist);
     
+    moveGen->generateAll();
     
     // For testing purposes, display list of opponents legal moves
-    moveGen->generateAll();
     for (const auto& mo : moveGen->getMoveList()) {
         if (mo.fromSq->getPiece() 
                 && mo.fromSq->getPiece()->getType() == PieceTypes::PAWN 
@@ -346,6 +350,7 @@ void Board::makeMove(std::string& input) {
         }
     }
     std::cout << moveGen->getMoveList().size() << std::endl;
+    std::cout << "Halfmove: " << halfMoveClock << std::endl;
     
     //Opponent has no legal moves
     if (!moveGen->getMoveList().size()) {
@@ -354,11 +359,19 @@ void Board::makeMove(std::string& input) {
             //Checkmate
             std::cout << "CHECKMATE" << std::endl;
             currentGameState = GameState::MATE;
-        } else {
-            //Stalemate
-            std::cout << "STALEMATE" << std::endl;
-            currentGameState = GameState::DRAWN;
+            return;
         }
+        //Stalemate
+        std::cout << "STALEMATE" << std::endl;
+        currentGameState = GameState::DRAWN;
+        return;
+    }
+    if (halfMoveClock >= 100) {
+        //Stalemate
+        std::cout << "DRAW" << std::endl;
+        std::cout << "50 move rule" << std::endl;
+        currentGameState = GameState::DRAWN;
+        return;
     }
 }
 
