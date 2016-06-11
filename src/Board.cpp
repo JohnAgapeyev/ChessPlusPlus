@@ -352,6 +352,8 @@ void Board::makeMove(std::string& input) {
     std::cout << moveGen->getMoveList().size() << std::endl;
     std::cout << "Halfmove: " << halfMoveClock << std::endl;
     
+    std::cout << generateFEN() << std::endl;
+    
     //Opponent has no legal moves
     if (!moveGen->getMoveList().size()) {
         const auto& opponentCheck = (!isWhiteTurn) ? whiteInCheck : blackInCheck;
@@ -384,4 +386,84 @@ void Board::ensureEnPassantValid() const {
         std::cerr << "FATAL ERROR: " << e.what() << std::endl;
         throw e;
     }
+}
+
+std::string Board::generateFEN() const {
+    std::string output;
+    int emptySquareCounter = 0;
+    int rowCount = 1;
+    bool rowContainsGameBoard = false;
+    for (size_t i = 0; i < vectorTable.size(); ++i) {
+        const auto& sq = vectorTable[i].get();
+        if (!sq->getPiece()) {
+            emptySquareCounter++;
+            rowContainsGameBoard = true;
+        } else if (!sq->checkSentinel()) {
+            rowContainsGameBoard = true;
+            const auto& squarePiece = sq->getPiece();
+            const auto& charCaseFunction = (squarePiece->getColour() == Colour::WHITE) ? toupper : tolower;
+            if (emptySquareCounter) {
+                output += std::to_string(emptySquareCounter);
+            }
+            output += charCaseFunction(static_cast<char>(squarePiece->getType()));
+            emptySquareCounter = 0;
+        }
+        if (i % 15 == 14) {
+            if (rowContainsGameBoard) {
+                if (emptySquareCounter) {
+                    output += std::to_string(emptySquareCounter);
+                }
+                if (rowCount < INNER_BOARD_SIZE) {
+                    output += '/';
+                }
+                emptySquareCounter = 0;
+                rowCount++;
+            }
+            rowContainsGameBoard = false;
+        }
+    }
+    output += ' ';
+    output += (isWhiteTurn) ? 'w' : 'b';
+    output += ' ';
+    bool castleFlagsActive = false;
+    if (whiteCastleKing) {
+        output += 'K';
+        castleFlagsActive = true;
+    }
+    if (whiteCastleQueen) {
+        output += 'Q';
+        castleFlagsActive = true;
+    }
+    if (blackCastleKing) {
+        output += 'k';
+        castleFlagsActive = true;
+    }
+    if (blackCastleQueen) {
+        output += 'q';
+        castleFlagsActive = true;
+    } 
+    if (!castleFlagsActive) {
+        output += '-';
+    }
+    output += ' ';
+    if (enPassantActive) {
+        const auto distToCurrSquare = std::distance(vectorTable.cbegin(), 
+            std::find_if(vectorTable.cbegin(), vectorTable.cend(), 
+            [this](const auto& currSquare){
+                return *enPassantTarget == *currSquare;
+            })
+        );
+        const auto cornerDist = findCorner_1D();
+        const auto distToTarget = distToCurrSquare - cornerDist;
+        output += static_cast<char>(97 + (distToTarget % OUTER_BOARD_SIZE));
+        output += std::to_string(INNER_BOARD_SIZE - (distToTarget / OUTER_BOARD_SIZE));
+    } else {
+        output += '-';
+    }
+    output += ' ';
+    output += std::to_string(halfMoveClock);
+    output += ' ';
+    //Temporary, to be replaced with full move number when implemented
+    output += std::to_string(10);
+    return output;
 }

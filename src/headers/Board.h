@@ -24,6 +24,7 @@ class Board {
     bool enPassantActive = false;
     Square *enPassantTarget = nullptr;
     int halfMoveClock = 0;
+    std::array<std::string, 5> repititionList;
     void shiftVertical(const int count);
     void shiftHorizontal(const int count);
     void ensureEnPassantValid() const;
@@ -38,6 +39,7 @@ public:
     int findCorner_1D() const;
     void shiftBoard(const int col, const int row);
     void makeMove(std::string& input);
+    std::string generateFEN() const;
 };
 
 #endif

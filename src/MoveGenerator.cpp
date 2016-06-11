@@ -116,6 +116,8 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
         }
     );
     
+    const auto absOffset = std::abs(*selectedOffset);
+    
     // Check if the move offset was found
     if (selectedOffset == vectorOffsets.cend()) {
         logMoveFailure(1, isSilent);
@@ -161,7 +163,7 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
      * the number of squares between the top left corner and the starting square
      * of the selected move.
      */
-    if (std::abs(*selectedOffset) == 30) {
+    if (absOffset == 30) {
         const auto& dist = std::distance(board.vectorTable.cbegin(), firstSquare);
         const auto cornerIndex =  board.findCorner_1D();
         const auto distFromStartToCorner = dist - cornerIndex;
@@ -196,12 +198,12 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
     
     const bool castleDirectionChosen = getCastleDirectionBool(fromPieceType, fromPieceColour, *selectedOffset);
     // Prevent king from jumpng 2 spaces if not castling
-    if (fromPieceType == PieceTypes::KING && std::abs(*selectedOffset) == 2 && !castleDirectionChosen) {
+    if (fromPieceType == PieceTypes::KING && absOffset == 2 && !castleDirectionChosen) {
         logMoveFailure(9, isSilent);
         return false;
     }
     
-    if (fromPieceType == PieceTypes::KING && std::abs(*selectedOffset) == 2) {
+    if (fromPieceType == PieceTypes::KING && absOffset == 2) {
         for (int i = 1; !firstSquare[i]->getPiece() || firstSquare[i]->getPiece()->getType() == PieceTypes::ROOK; ++i) {
             std::cout << firstSquare[i]->getOffset() << std::endl;
             const auto currIndex = std::distance(board.vectorTable.cbegin(), 
@@ -332,13 +334,13 @@ bool Board::MoveGenerator::inCheck(const Move& mv) const {
 
 int Board::MoveGenerator::getOffsetIndex(const int offset, const int startIndex, 
         const int vectorLen) const {
-    if (offset > 0) {
-        return (startIndex - (vectorLen * (((OUTER_BOARD_SIZE << 1) 
-            * ((offset + INNER_BOARD_SIZE - 1) / OUTER_BOARD_SIZE)) - offset)));
-    }
-    return (startIndex + (vectorLen * (((OUTER_BOARD_SIZE << 1) 
-        * ((std::abs(offset) + INNER_BOARD_SIZE - 1) 
-            / OUTER_BOARD_SIZE)) - std::abs(offset))));
+    constexpr auto THIRTY = OUTER_BOARD_SIZE << 1;
+    const auto absOffset = std::abs(offset);
+    const auto addSubtract = [=](const auto a, const auto b){
+        return (offset > 0) ? a - b : a + b;
+    };
+    return addSubtract(startIndex, (vectorLen * ((THIRTY 
+        * ((absOffset + INNER_BOARD_SIZE - 1) / OUTER_BOARD_SIZE)) - absOffset)));
 }
 
 bool Board::MoveGenerator::getCastleDirectionBool(const PieceTypes type, 
