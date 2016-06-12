@@ -318,6 +318,10 @@ void Board::makeMove(std::string& input) {
     swapOffsets(mv);
     isWhiteTurn = !isWhiteTurn;
     
+    if (isWhiteTurn) {
+        moveCounter++;
+    }
+    
     const auto blackKingDist = std::distance(vectorTable.cbegin(), 
         std::find_if(vectorTable.cbegin(), vectorTable.cend(), 
             [](const auto& sq){
@@ -464,6 +468,6 @@ std::string Board::generateFEN() const {
     output += std::to_string(halfMoveClock);
     output += ' ';
     //Temporary, to be replaced with full move number when implemented
-    output += std::to_string(10);
+    output += std::to_string(moveCounter);
     return output;
 }
