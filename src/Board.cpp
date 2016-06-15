@@ -43,6 +43,7 @@ Board::Board() {
             }
         }
     }
+    repititionList.fill(generateFEN());
 }
 
 /*
@@ -358,6 +359,10 @@ void Board::makeMove(std::string& input) {
     
     std::cout << generateFEN() << std::endl;
     
+    std::rotate(repititionList.begin(), repititionList.begin() + 1, repititionList.end());
+    // Change FEN to current zobrist hash when implemented
+    repititionList[repititionList.size() - 1] = generateFEN();
+    
     //Opponent has no legal moves
     if (!moveGen->getMoveList().size()) {
         const auto& opponentCheck = (!isWhiteTurn) ? whiteInCheck : blackInCheck;
@@ -373,9 +378,19 @@ void Board::makeMove(std::string& input) {
         return;
     }
     if (halfMoveClock >= 100) {
-        //Stalemate
+        //50 move rule
         std::cout << "DRAW" << std::endl;
         std::cout << "50 move rule" << std::endl;
+        currentGameState = GameState::DRAWN;
+        return;
+    }
+    
+    //Currently won't work, but will be fixed when zobrist hashing implemented
+    if (!(repititionList[0].compare(repititionList[4]) 
+            || repititionList[4].compare(repititionList[8]))) {
+        //Three move Repitition
+        std::cout << "DRAW" << std::endl;
+        std::cout << "Three move repitition" << std::endl;
         currentGameState = GameState::DRAWN;
         return;
     }
@@ -467,7 +482,6 @@ std::string Board::generateFEN() const {
     output += ' ';
     output += std::to_string(halfMoveClock);
     output += ' ';
-    //Temporary, to be replaced with full move number when implemented
     output += std::to_string(moveCounter);
     return output;
 }

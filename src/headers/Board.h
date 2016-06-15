@@ -25,7 +25,7 @@ class Board {
     Square *enPassantTarget = nullptr;
     int halfMoveClock = 0;
     int moveCounter = 1;
-    std::array<std::string, 5> repititionList;
+    std::array<std::string, 9> repititionList;
     void shiftVertical(const int count);
     void shiftHorizontal(const int count);
     void ensureEnPassantValid() const;
