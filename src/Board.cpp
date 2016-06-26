@@ -494,18 +494,19 @@ size_t std::hash<Board>::operator()(const Board& b) const {
     if (b.currHash) {
         return b.currHash;
     }
-    const int startIndex = b.findCorner_1D();
-    size_t newHash = HASH_VALUES[startIndex];
-    const int tableSize = b.vectorTable.size();
-    for (int i = startIndex + 1; i < tableSize; ++i) {
-        //Black is (white hash + 6) for equivalent piece types
-        if (!b.vectorTable[i]->getPiece()) {
-            newHash ^= HASH_VALUES[13 * i];
-        } else {
-            const auto& currPiece = b.vectorTable[i]->getPiece();
-            newHash ^= HASH_VALUES[13 * i 
-                + pieceLookupTable[currPiece->getType()] 
-                + ((currPiece->getColour() == Colour::WHITE) ? 0 : 6)];
+    const auto& cornerCoords = b.findCorner();
+    size_t newHash = HASH_VALUES[(cornerCoords.first * 15) + cornerCoords.second];
+    for (int i = cornerCoords.first; i < cornerCoords.first + INNER_BOARD_SIZE; ++i) {
+        for (int j = cornerCoords.second; j < cornerCoords.second + INNER_BOARD_SIZE; ++j) {
+            //Black is (white hash + 6) for equivalent piece types
+            if (!b.vectorTable[i * 15 + j]->getPiece()) {
+                newHash ^= HASH_VALUES[13 * i * 15 + j];
+            } else {
+                const auto& currPiece = b.vectorTable[i * 15 + j]->getPiece();
+                newHash ^= HASH_VALUES[13 * i * 15 + j 
+                    + pieceLookupTable[currPiece->getType()] 
+                    + ((currPiece->getColour() == Colour::WHITE) ? 0 : 6)];
+            }
         }
     }
     if (b.isWhiteTurn) {
