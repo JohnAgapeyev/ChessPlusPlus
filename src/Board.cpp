@@ -44,6 +44,8 @@ Board::Board() {
         }
     }
     repititionList.fill(generateFEN());
+    //currHash = std::hash<Board>()(*this);
+    //std::cout << "Testing: " << currHash << std::endl;
 }
 
 /*
@@ -319,6 +321,8 @@ void Board::makeMove(std::string& input) {
     swapOffsets(mv);
     isWhiteTurn = !isWhiteTurn;
     
+    currHash ^= HASH_VALUES[static_cast<int>(SquareState::WHITE_MOVE)];
+    
     if (isWhiteTurn) {
         moveCounter++;
     }
@@ -346,9 +350,9 @@ void Board::makeMove(std::string& input) {
     
     // For testing purposes, display list of opponents legal moves
     for (const auto& mo : moveGen->getMoveList()) {
-        if (mo.fromSq->getPiece() 
-                && mo.fromSq->getPiece()->getType() == PieceTypes::PAWN 
-                    && mo.promotionType != mo.fromSq->getPiece()->getType()) {
+        const auto& moveFromPiece = mo.fromSq->getPiece();
+        if (moveFromPiece && moveFromPiece->getType() == PieceTypes::PAWN 
+                && mo.promotionType != moveFromPiece->getType()) {
             std::cout << *mo.fromSq << ", " << *mo.toSq << " Promoting to: " << static_cast<char>(mo.promotionType) << std::endl;
         } else {
             std::cout << *mo.fromSq << ", " << *mo.toSq << std::endl;
@@ -484,4 +488,52 @@ std::string Board::generateFEN() const {
     output += ' ';
     output += std::to_string(moveCounter);
     return output;
+}
+
+size_t std::hash<Board>::operator()(const Board& b) const {
+    if (b.currHash) {
+        return b.currHash;
+    }
+    const int startIndex = b.findCorner_1D();
+    size_t newHash = HASH_VALUES[startIndex];
+    const int tableSize = b.vectorTable.size();
+    for (int i = startIndex + 1; i < tableSize; ++i) {
+        //Black is (white hash + 6) for equivalent piece types
+        if (!b.vectorTable[i]->getPiece()) {
+            newHash ^= HASH_VALUES[13 * i];
+        } else {
+            const auto& currPiece = b.vectorTable[i]->getPiece();
+            newHash ^= HASH_VALUES[13 * i 
+                + pieceLookupTable[currPiece->getType()] 
+                + ((currPiece->getColour() == Colour::WHITE) ? 0 : 6)];
+        }
+    }
+    if (b.isWhiteTurn) {
+        newHash ^= HASH_VALUES[static_cast<int>(SquareState::WHITE_MOVE)];
+    }
+    if (b.whiteCastleKing) {
+        newHash ^= HASH_VALUES[static_cast<int>(SquareState::WHITE_CASTLE_KING)];
+    }
+    if (b.whiteCastleQueen) {
+        newHash ^= HASH_VALUES[static_cast<int>(SquareState::WHITE_CASTLE_QUEEN)];
+    }
+    if (b.blackCastleKing) {
+        newHash ^= HASH_VALUES[static_cast<int>(SquareState::BLACK_CASTLE_KING)];
+    }
+    if (b.blackCastleQueen) {
+        newHash ^= HASH_VALUES[static_cast<int>(SquareState::BLACK_CASTLE_QUEEN)];
+    }
+    if (b.enPassantActive) {
+         //Calculate en passant file
+        const auto& cornerCoords = b.findCorner();
+        const auto targetIndex = std::distance(b.vectorTable.cbegin(), 
+            std::find_if(b.vectorTable.cbegin(), b.vectorTable.cend(), 
+            [&b](const auto& sq){
+                return *sq == *b.enPassantTarget;
+            }
+        ));
+        const int fileNum = (targetIndex % 15) - cornerCoords.second;
+        newHash ^= HASH_VALUES[static_cast<int>(SquareState::EN_PASSANT_FILE) + fileNum];
+    }
+    return newHash;
 }

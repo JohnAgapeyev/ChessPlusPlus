@@ -3,6 +3,8 @@
 #include <memory>
 #include <vector>
 #include <algorithm>
+#include <random>
+#include <chrono>
 #include <unordered_map>
 #include "headers/square.h"
 #include "headers/enums.h"
@@ -47,6 +49,16 @@ std::array<std::array<std::shared_ptr<Square>, 8>, 8> fillInitBoard() {
             }
         }
         result[i] = std::move(row);
+    }
+    return result;
+}
+
+std::array<uint_fast64_t, HASH_BOARD_LENGTH> populateHashTable() {
+    std::array<uint_fast64_t, HASH_BOARD_LENGTH> result;
+    const auto seed = std::chrono::system_clock::now().time_since_epoch().count();
+    std::mt19937_64 gen(seed);
+    for (int i = 0; i < HASH_BOARD_LENGTH; ++i) {
+        result[i] = gen();
     }
     return result;
 }

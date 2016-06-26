@@ -8,6 +8,7 @@
 #include <vector>
 #include <array>
 #include <memory>
+#include <algorithm>
 
 class Board {
     class MoveGenerator;
@@ -25,6 +26,7 @@ class Board {
     Square *enPassantTarget = nullptr;
     int halfMoveClock = 0;
     int moveCounter = 1;
+    size_t currHash = 0;
     std::array<std::string, 9> repititionList;
     void shiftVertical(const int count);
     void shiftHorizontal(const int count);
@@ -41,6 +43,17 @@ public:
     void shiftBoard(const int col, const int row);
     void makeMove(std::string& input);
     std::string generateFEN() const;
+    
+    friend class std::hash<Board>;
 };
+
+namespace std {
+    template<>
+    class hash<Board> {
+    public:
+        size_t operator() (const Board& b) const;
+    };
+}
+
 
 #endif
