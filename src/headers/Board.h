@@ -27,10 +27,11 @@ class Board {
     int halfMoveClock = 0;
     int moveCounter = 1;
     size_t currHash = 0;
-    std::array<std::string, 9> repititionList;
+    std::array<size_t, 9> repititionList;
     void shiftVertical(const int count);
     void shiftHorizontal(const int count);
     void ensureEnPassantValid() const;
+    int convertOuterBoardIndex(const int outerIndex, const int cornerIndex) const;
     
 public:
     Board();
@@ -38,6 +39,7 @@ public:
     void printBoardState() const;
     auto getBoard() const {return vectorTable;}
     auto getGameState() const {return currentGameState;}
+    auto getCurrHash() const {return currHash;}
     std::pair<int, int> findCorner() const;
     int findCorner_1D() const;
     void shiftBoard(const int col, const int row);

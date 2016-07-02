@@ -8,15 +8,17 @@
 #include "square.h"
 #include "enums.h"
 
+static constexpr auto NUM_SQUARE_STATES = 12;
+
 /*
  * Value meaning:
  * 64 squares in a chess board
- * 13 states for each square, 12 pieces plus one for empty
+ * 12 states for each square
  * 1 for side to move
  * 4 for castling rights
  * 8 for en passant target file
  */
-static constexpr auto HASH_BOARD_LENGTH = (13 * 64) + 1 + 4 + 8;
+static constexpr auto HASH_BOARD_LENGTH = (NUM_SQUARE_STATES * 64) + 1 + 4 + 9;
 
 
 std::array<std::array<std::shared_ptr<Square>, 8>, 8> fillInitBoard();

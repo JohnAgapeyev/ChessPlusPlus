@@ -26,7 +26,6 @@ enum class GameState {
 };
 
 enum class SquareState {
-    EMPTY,
     WHITE_PAWN,
     WHITE_KNIGHT,
     WHITE_BISHOP,
@@ -39,12 +38,12 @@ enum class SquareState {
     BLACK_ROOK,
     BLACK_QUEEN,
     BLACK_KING,
-    WHITE_MOVE = (13 * 64),
+    WHITE_MOVE = (12 * 64),
     WHITE_CASTLE_KING,
     WHITE_CASTLE_QUEEN,
     BLACK_CASTLE_KING,
     BLACK_CASTLE_QUEEN,
-    //Start at A and add 1-7 for B-H respectively
+    //Start at none and add 1-8 for A-H respectively
     EN_PASSANT_FILE
 };
 
@@ -59,12 +58,12 @@ namespace std {
 }
 
 static std::unordered_map<PieceTypes, int> pieceLookupTable = {
-    {PieceTypes::PAWN, 1},
-    {PieceTypes::KNIGHT, 2},
-    {PieceTypes::BISHOP, 3},
-    {PieceTypes::ROOK, 4},
-    {PieceTypes::QUEEN, 5},
-    {PieceTypes::KING, 6}
+    {PieceTypes::PAWN, 0},
+    {PieceTypes::KNIGHT, 1},
+    {PieceTypes::BISHOP, 2},
+    {PieceTypes::ROOK, 3},
+    {PieceTypes::QUEEN, 4},
+    {PieceTypes::KING, 5}
 };
 
 #endif
