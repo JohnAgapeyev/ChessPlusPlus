@@ -46,6 +46,7 @@ public:
     void shiftBoard(const int col, const int row);
     void makeMove(std::string& input);
     std::string generateFEN() const;
+    bool drawByMaterial() const;
     
     friend class std::hash<Board>;
     friend bool operator==(const Board& first, const Board& second);

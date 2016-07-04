@@ -442,6 +442,14 @@ void Board::makeMove(std::string& input) {
         currentGameState = GameState::DRAWN;
         return;
     }
+    
+    if (drawByMaterial()) {
+        //Insufficient Material
+        std::cout << "DRAW" << std::endl;
+        std::cout << "Insufficient Material" << std::endl;
+        currentGameState = GameState::DRAWN;
+        return;
+    }
 }
 
 void Board::ensureEnPassantValid() const {
@@ -605,4 +613,50 @@ int Board::convertOuterBoardIndex(const int outerIndex, const int cornerIndex) c
 
 bool operator==(const Board& first, const Board& second) {
     return (first.currHash == second.currHash);
+}
+
+bool Board::drawByMaterial() const {
+    const int cornerIndex = findCorner_1D();
+    int minorCount = 0;
+    bool whiteBishopFound = false;
+    bool blackBishopFound = false;
+    std::pair<int, int> whiteBishopCoords = {0,0};
+    std::pair<int, int> blackBishopCoords = {0,0};
+    for (int i = 0; i < INNER_BOARD_SIZE; ++i) {
+        for (int j = 0; j < INNER_BOARD_SIZE; ++j) {
+            const auto& currPiece = vectorTable[cornerIndex + (i * OUTER_BOARD_SIZE) + j]->getPiece();
+            if (currPiece) {
+                const PieceTypes type = currPiece->getType();
+                if (type == PieceTypes::PAWN || type == PieceTypes::ROOK || type == PieceTypes::QUEEN) {
+                    return false;
+                }
+                if (type == PieceTypes::KNIGHT || type == PieceTypes::BISHOP) {
+                    minorCount++;
+                    if (type == PieceTypes::BISHOP) {
+                        if (currPiece->getColour() == Colour::WHITE) {
+                            whiteBishopFound = true;
+                            whiteBishopCoords = {i, j};
+                        } else {
+                            blackBishopFound = true;
+                            blackBishopCoords = {i, j};
+                        }
+                    }
+                }
+            }
+        }
+    }
+    if (minorCount < 2) {
+        return true;
+    }
+    if (minorCount > 2) {
+        return false;
+    }
+    if (whiteBishopFound && blackBishopFound) {
+        //perform bishop colour check, returns 0 if white, 1 if black and checks if they are equal
+        if ((((whiteBishopCoords.first & 1) + (whiteBishopCoords.second & 1)) & 1) 
+            == (((blackBishopCoords.first & 1) + (blackBishopCoords.second & 1)) & 1)) {
+            return true;
+        }
+    }
+    return false;
 }
