@@ -3,6 +3,7 @@
 #include "headers/piece.h"
 #include "headers/chessplusplus.h"
 #include "headers/consts.h"
+#include "headers/tt.h"
 #include <iostream>
 #include <string>
 #include <algorithm>
@@ -27,7 +28,7 @@ void mainLoop(Board& b) {
             break;
         }
         if (!checkInputValid(input)) {
-            std::cout << "Not a valid move format\n";
+            std::cout << "Not a valid move format" << std::endl;
             continue;
         }
         b.makeMove(input);

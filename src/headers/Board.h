@@ -35,6 +35,7 @@ class Board {
     
 public:
     Board();
+    Board(const Board&) : Board() {}
     ~Board();
     void printBoardState() const;
     auto getBoard() const {return vectorTable;}
@@ -47,6 +48,7 @@ public:
     std::string generateFEN() const;
     
     friend class std::hash<Board>;
+    friend bool operator==(const Board& first, const Board& second);
 };
 
 namespace std {

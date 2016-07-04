@@ -602,3 +602,7 @@ int Board::convertOuterBoardIndex(const int outerIndex, const int cornerIndex) c
     return ((remain / OUTER_BOARD_SIZE) * INNER_BOARD_SIZE) 
         + (outerIndex % OUTER_BOARD_SIZE) - (cornerIndex % OUTER_BOARD_SIZE);
 }
+
+bool operator==(const Board& first, const Board& second) {
+    return (first.currHash == second.currHash);
+}
