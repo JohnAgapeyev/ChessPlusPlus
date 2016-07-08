@@ -204,8 +204,7 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
     }
     
     if (fromPieceType == PieceTypes::KING && absOffset == 2) {
-        for (int i = 1; !firstSquare[i]->getPiece() || firstSquare[i]->getPiece()->getType() == PieceTypes::ROOK; ++i) {
-            std::cout << firstSquare[i]->getOffset() << std::endl;
+        for (int i = 1; i <= 2; ++i) {
             const auto currIndex = std::distance(board.vectorTable.cbegin(), 
                     std::find_if(board.vectorTable.cbegin(), 
                     board.vectorTable.cend(), 
