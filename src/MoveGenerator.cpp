@@ -36,8 +36,24 @@ Move Board::MoveGenerator::createMove(std::string& input) {
             
     result.toSq = board.vectorTable[((INNER_BOARD_SIZE - 1 - input[3]) * OUTER_BOARD_SIZE) 
             + topLeftCornerIndex + input[2]].get();
-            
+    
+    result.fromPiece = result.fromSq->getPiece();
+    result.toPiece = result.toSq->getPiece();
+    
+    if (result.toPiece) {
+        result.toPieceType = result.toPiece->getType();
+        result.toPieceColour = result.toPiece->getColour();
+    } else {
+        result.toPieceType = PieceTypes::UNKNOWN;
+        result.toPieceColour = Colour::UNKNOWN;
+    }
+    
     result.promotionType = (result.fromSq->getPiece()) ? result.fromSq->getPiece()->getType() : PieceTypes::UNKNOWN;
+    
+    result.isCastle = false;
+    result.castleRights = board.castleRights;
+    result.isEnPassant = false;
+    result.enPassantCaptureTarget = nullptr;
     
     return result;
 }
@@ -72,25 +88,23 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
     }
     
     // Check for either square being a sentinel
-    if ((*firstSquare)->checkSentinel() || (*secondSquare)->checkSentinel()) {
+    if (mv.fromSq->checkSentinel() || mv.toSq->checkSentinel()) {
         if (!isSilent) {
-            std::cerr << "You somehow referenced a sentinel square for your move. GJ\n";
+            std::cerr << "You somehow referenced a sentinel square for your move. GJ" << std::endl;
         }
         return false;
     }
-    const auto& fromPiece = mv.fromSq->getPiece();
     
-    if (!fromPiece || (fromPiece->getType() == PieceTypes::UNKNOWN 
-            && fromPiece->getColour() == Colour::UNKNOWN)) {
+    if (!mv.fromPiece || (mv.fromPiece->getType() == PieceTypes::UNKNOWN 
+            && mv.fromPiece->getColour() == Colour::UNKNOWN)) {
         if (!isSilent) {
             std::cout << "Cannot start a move on an empty square" << std::endl;
         }
         return false;
     }
     
-    const auto& fromPieceType = fromPiece->getType();
-    const auto& fromPieceColour = fromPiece->getColour();
-    const auto& toPiece = mv.toSq->getPiece();
+    const auto& fromPieceType = mv.fromPiece->getType();
+    const auto& fromPieceColour = mv.fromPiece->getColour();
     
     // Check if piece being moved matches the current player's colour
     if ((fromPieceColour == Colour::WHITE && !board.isWhiteTurn) 
@@ -105,8 +119,8 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
         return false;
     }
     
-    const auto& vectorOffsets = fromPiece->getVectorList();
-    const auto diff = (*secondSquare)->getOffset() - (*firstSquare)->getOffset();
+    const auto& vectorOffsets = mv.fromPiece->getVectorList();
+    const auto diff = mv.toSq->getOffset() - mv.fromSq->getOffset();
     const auto& secondSquareIndex = std::distance(board.vectorTable.cbegin(), secondSquare);
     
     // Find the offset that the move uses
@@ -116,32 +130,36 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
         }
     );
     
-    const auto absOffset = std::abs(*selectedOffset);
-    
     // Check if the move offset was found
     if (selectedOffset == vectorOffsets.cend()) {
         logMoveFailure(1, isSilent);
         return false;
     }
     
+    const auto absOffset = std::abs(*selectedOffset);
+    
     /*
      * Check if the colour of the piece on the starting square 
      * is the same colour as the piece on the ending square.
      */
-    if (toPiece && fromPieceColour == toPiece->getColour()) {
+    if (mv.toPiece && fromPieceColour == mv.toPiece->getColour()) {
         logMoveFailure(2, isSilent);
         return false;
     }
     
     // Define number of squares to check along the selected vector
-    const int moveLen = fromPiece->getVectorLength();
+    const int moveLen = mv.fromPiece->getVectorLength();
     
     auto currSquare = board.vectorTable[0].get();
     auto foundToSquare = false;
     
     // Iterate through to ensure sliding pieces aren't being blocked
     for (int i = 1; i < moveLen; ++i) {
-        currSquare = board.vectorTable[getOffsetIndex(*selectedOffset, ZERO_LOCATION_1D, i)].get();
+        const auto realIndex = getOffsetIndex(*selectedOffset, ZERO_LOCATION_1D, i);
+        if (realIndex < 0 || realIndex >= OUTER_BOARD_SIZE * OUTER_BOARD_SIZE) {
+            break;
+        }
+        currSquare = board.vectorTable[realIndex].get();
         if (*currSquare == *mv.toSq) {
             foundToSquare = true;
             break;
@@ -164,7 +182,7 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
      * of the selected move.
      */
     if (absOffset == 30) {
-        const auto& dist = std::distance(board.vectorTable.cbegin(), firstSquare);
+        const auto dist = std::distance(board.vectorTable.cbegin(), firstSquare);
         const auto cornerIndex =  board.findCorner_1D();
         const auto distFromStartToCorner = dist - cornerIndex;
         const auto& rowPairs = (fromPieceColour == Colour::WHITE) ? std::make_pair(90, 104) : std::make_pair(15, 29);
@@ -204,15 +222,12 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
     }
     
     if (fromPieceType == PieceTypes::KING && absOffset == 2) {
+        const auto currIndex = std::distance(board.vectorTable.cbegin(), firstSquare);
         for (int i = 1; i <= 2; ++i) {
-            const auto currIndex = std::distance(board.vectorTable.cbegin(), 
-                    std::find_if(board.vectorTable.cbegin(), 
-                    board.vectorTable.cend(), 
-                    [&mv](const auto& sq){
-                        return *sq == *mv.fromSq;
-                    }));
-            const auto& currPiece = firstSquare[i]->getPiece();
-            if ((currPiece && currPiece->getType() != PieceTypes::ROOK) || inCheck(currIndex + i)) {
+            const auto index = ((*selectedOffset > 0) ? i : -i);
+            const Piece *currPiece = (firstSquare[index]) ? firstSquare[index]->getPiece() : nullptr;
+            const auto checkIndex = currIndex + index;
+            if ((currPiece && currPiece->getType() != PieceTypes::ROOK) || inCheck(checkIndex)) {
                 logMoveFailure(10, isSilent);
                 return false;
             }
@@ -346,9 +361,9 @@ bool Board::MoveGenerator::getCastleDirectionBool(const PieceTypes type,
         const Colour pieceColour, const int offset) const {
     if (type == PieceTypes::KING && std::abs(offset) == 2) {
         if (pieceColour == Colour::WHITE) {
-            return (offset < 0) ? board.whiteCastleQueen : board.whiteCastleKing;
+            return board.castleRights & ((offset < 0) ? WHITE_CASTLE_QUEEN_FLAG : WHITE_CASTLE_KING_FLAG);
         }
-        return (offset < 0) ? board.blackCastleQueen : board.blackCastleKing;
+        return board.castleRights & ((offset < 0) ? BLACK_CASTLE_QUEEN_FLAG : BLACK_CASTLE_KING_FLAG);
     }
     return false;
 }
@@ -365,7 +380,9 @@ void Board::MoveGenerator::logMoveFailure(const int failureNum, const bool isSil
 }
 
 void Board::MoveGenerator::generateAll() {
-    Move mv{nullptr, nullptr, PieceTypes::UNKNOWN};
+    Move mv{nullptr, nullptr, nullptr, nullptr, PieceTypes::UNKNOWN, 
+        Colour::UNKNOWN, PieceTypes::UNKNOWN, false, 0, false, nullptr};
+        
     const auto tableSize = static_cast<int>(board.vectorTable.size());
     const auto& currentPlayerColour = (board.isWhiteTurn) ? Colour::WHITE : Colour::BLACK;
     
@@ -400,6 +417,17 @@ void Board::MoveGenerator::generateAll() {
                 }
                 mv.fromSq = board.vectorTable[ZERO_LOCATION_1D].get();
                 mv.toSq = board.vectorTable[toSquareIndex].get();
+                
+                mv.fromPiece = mv.fromSq->getPiece();
+                mv.toPiece = mv.toSq->getPiece();
+                
+                if (mv.toPiece) {
+                    mv.toPieceType = mv.toPiece->getType();
+                    mv.toPieceColour = mv.toPiece->getColour();
+                } else {
+                    mv.toPieceType = PieceTypes::UNKNOWN;
+                    mv.toPieceColour = Colour::UNKNOWN;
+                }
                 
                 mv.promotionType = (mv.fromSq->getPiece()) ? mv.fromSq->getPiece()->getType() : PieceTypes::UNKNOWN;
                 
@@ -439,6 +467,23 @@ void Board::MoveGenerator::generateAll() {
                 if (!validateMove(mv, true)) {
                     break;
                 }
+                
+                // If en passant move is made, capture the appropriate pawn
+                if (board.enPassantActive && mv.fromPiece->getType() == PieceTypes::PAWN 
+                        && ((toSquareIndex - ZERO_LOCATION_1D) % 15) && *mv.toSq == *board.enPassantTarget) {
+                    mv.isEnPassant = true;
+                    mv.enPassantCaptureTarget = board.vectorTable[toSquareIndex + ((mv.fromPiece->getColour() == Colour::WHITE) ? 15 : -15)].get();
+                }
+                
+                //Perform castling
+                if (mv.fromPiece->getType() == PieceTypes::KING 
+                        && std::abs((toSquareIndex - ZERO_LOCATION_1D)) == 2 
+                        && getCastleDirectionBool(mv.fromPiece->getType(), 
+                            mv.fromPiece->getColour(), (toSquareIndex - ZERO_LOCATION_1D))) {
+                    mv.isCastle = true;
+                    mv.castleRights = board.castleRights;
+                }
+                
                 moveList.push_back(mv);
             }
         }

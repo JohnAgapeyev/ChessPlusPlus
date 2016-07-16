@@ -15,10 +15,7 @@ class Board {
     std::unique_ptr<MoveGenerator> moveGen;
     std::array<std::shared_ptr<Square>, OUTER_BOARD_SIZE * OUTER_BOARD_SIZE> vectorTable;
     GameState currentGameState = GameState::ACTIVE;
-    bool whiteCastleKing = true;
-    bool whiteCastleQueen = true;
-    bool blackCastleKing = true;
-    bool blackCastleQueen = true;
+    unsigned char castleRights = 0x0F;
     bool blackInCheck = false;
     bool whiteInCheck = false;
     bool isWhiteTurn = true;
@@ -45,6 +42,7 @@ public:
     int findCorner_1D() const;
     void shiftBoard(const int col, const int row);
     void makeMove(std::string& input);
+    void unmakeMove(const Move& mv);
     std::string generateFEN() const;
     bool drawByMaterial() const;
     

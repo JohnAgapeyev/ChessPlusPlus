@@ -37,4 +37,11 @@ static constexpr auto ZERO_LOCATION_1D = (ZERO_LOCATION.first * OUTER_BOARD_SIZE
 
 static const std::array<uint_fast64_t, HASH_BOARD_LENGTH> HASH_VALUES = populateHashTable();
 
+static const unsigned char BLACK_CASTLE_FLAG = 0b1100;
+static const unsigned char WHITE_CASTLE_FLAG = 0b0011;
+static const unsigned char WHITE_CASTLE_QUEEN_FLAG = 0b0010;
+static const unsigned char WHITE_CASTLE_KING_FLAG = 0b0001;
+static const unsigned char BLACK_CASTLE_QUEEN_FLAG = 0b1000;
+static const unsigned char BLACK_CASTLE_KING_FLAG = 0b0100;
+
 #endif
