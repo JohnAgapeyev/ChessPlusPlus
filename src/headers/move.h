@@ -3,6 +3,7 @@
 
 #include "square.h"
 #include "piece.h"
+#include "enums.h"
 
 typedef struct Move Move;
 struct Move {
@@ -15,8 +16,9 @@ struct Move {
     PieceTypes promotionType;
     bool isCastle;
     unsigned char castleRights;
-    bool isEnPassant;
-    Square* enPassantCaptureTarget;
+    bool enPassantActive;
+    Square* enPassantTarget;
+    unsigned char enPassantFileNum;
 };
 
 void swapOffsets(const Move& mv);

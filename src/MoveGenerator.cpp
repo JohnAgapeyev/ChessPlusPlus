@@ -52,8 +52,9 @@ Move Board::MoveGenerator::createMove(std::string& input) {
     
     result.isCastle = false;
     result.castleRights = board.castleRights;
-    result.isEnPassant = false;
-    result.enPassantCaptureTarget = nullptr;
+    result.enPassantActive = false;
+    result.enPassantTarget = nullptr;
+    result.enPassantFileNum = 0;
     
     return result;
 }
@@ -381,7 +382,7 @@ void Board::MoveGenerator::logMoveFailure(const int failureNum, const bool isSil
 
 void Board::MoveGenerator::generateAll() {
     Move mv{nullptr, nullptr, nullptr, nullptr, PieceTypes::UNKNOWN, 
-        Colour::UNKNOWN, PieceTypes::UNKNOWN, false, 0, false, nullptr};
+        Colour::UNKNOWN, PieceTypes::UNKNOWN, false, 0, false, nullptr, 0};
         
     const auto tableSize = static_cast<int>(board.vectorTable.size());
     const auto& currentPlayerColour = (board.isWhiteTurn) ? Colour::WHITE : Colour::BLACK;
@@ -468,12 +469,21 @@ void Board::MoveGenerator::generateAll() {
                     break;
                 }
                 
-                // If en passant move is made, capture the appropriate pawn
-                if (board.enPassantActive && mv.fromPiece->getType() == PieceTypes::PAWN 
-                        && ((toSquareIndex - ZERO_LOCATION_1D) % 15) && *mv.toSq == *board.enPassantTarget) {
-                    mv.isEnPassant = true;
-                    mv.enPassantCaptureTarget = board.vectorTable[toSquareIndex + ((mv.fromPiece->getColour() == Colour::WHITE) ? 15 : -15)].get();
+                if (mv.fromPiece->getType() == PieceTypes::PAWN && !((toSquareIndex - ZERO_LOCATION_1D) % 30)) {
+                    mv.enPassantFileNum = std::get<1>(p) - startCoords.second;
+                } else {
+                    mv.enPassantFileNum = 0;
                 }
+                
+                mv.enPassantActive = board.enPassantActive;
+                mv.enPassantTarget = board.enPassantTarget;
+                
+                // If en passant move is made, capture the appropriate pawn
+                //if (board.enPassantActive && mv.fromPiece->getType() == PieceTypes::PAWN 
+                        //&& ((toSquareIndex - ZERO_LOCATION_1D) % 15) && *mv.toSq == *board.enPassantTarget) {
+                    //mv.enPassantActive = true;
+                    //mv.enPassantTarget = board.vectorTable[toSquareIndex + ((mv.fromPiece->getColour() == Colour::WHITE) ? 15 : -15)].get();
+                //}
                 
                 //Perform castling
                 if (mv.fromPiece->getType() == PieceTypes::KING 

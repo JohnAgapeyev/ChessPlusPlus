@@ -15,10 +15,10 @@ static constexpr auto NUM_SQUARE_STATES = 12;
  * 64 squares in a chess board
  * 12 states for each square
  * 1 for side to move
- * 4 for castling rights
- * 8 for en passant target file
+ * 16 for castling rights
+ * 9 for en passant target file including empty
  */
-static constexpr auto HASH_BOARD_LENGTH = (NUM_SQUARE_STATES * 64) + 1 + 4 + 9;
+static constexpr auto HASH_BOARD_LENGTH = (NUM_SQUARE_STATES * 64) + 1 + 16 + 9;
 
 
 std::array<std::array<std::shared_ptr<Square>, 8>, 8> fillInitBoard();

@@ -39,12 +39,10 @@ enum class SquareState {
     BLACK_QUEEN,
     BLACK_KING,
     WHITE_MOVE = (12 * 64),
-    WHITE_CASTLE_KING,
-    WHITE_CASTLE_QUEEN,
-    BLACK_CASTLE_KING,
-    BLACK_CASTLE_QUEEN,
+    //Add current castle rights to this to get each combination
+    CASTLE_RIGHTS,
     //Start at none and add 1-8 for A-H respectively
-    EN_PASSANT_FILE
+    EN_PASSANT_FILE = (12 * 64) + 16 + 1
 };
 
 namespace std {

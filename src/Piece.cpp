@@ -38,7 +38,7 @@ std::vector<int> Piece::getVectorList() const {
             return std::vector<int>();
     }
     
-    std::sort(rtn.begin(), rtn.end(), [](const auto& first, const auto& second){
+    std::sort(rtn.begin(), rtn.end(), [](const auto first, const auto second){
         return std::abs(first) > std::abs(second);
     });
     
@@ -71,8 +71,7 @@ int Piece::getVectorLength() const {
 }
 
 void Piece::promote(PieceTypes newType) {
-    if (this->type != PieceTypes::PAWN) {
-        return;
+    if (this->type == PieceTypes::PAWN) {
+        this->type = newType;
     }
-    this->type = newType;
 }
