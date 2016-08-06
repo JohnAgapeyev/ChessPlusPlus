@@ -15,6 +15,11 @@ all: $(patsubst $(SRCOBJS), $(OBJS), $(SRCWILD))
 # Command takes all bin .o files and creates an executable called chess in the bin folder
 	$(CXX) $^ -o $(EXEC)
 
+directories: $(ODIR)
+
+$(ODIR):
+	mkdir $(ODIR)
+
 # Create dependency file for make and manually adjust it silently to work with other directories
 $(DEPS): $(SRCWILD) $(HEADWILD)
 # Compile the non-system dependencies and store it in outputdir/execname.d
@@ -41,3 +46,4 @@ $(OBJS): $(SRCOBJS)
 # Deletes the executable and all .o files in the bin folder
 clean:
 	$(RM) $(EXEC).exe $(wildcard $(ODIR)/*.d*) $(wildcard $(ODIR)/*.o)
+
