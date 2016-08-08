@@ -47,6 +47,7 @@ public:
     bool drawByMaterial() const;
     
     friend class std::hash<Board>;
+    friend class AI;
     friend bool operator==(const Board& first, const Board& second);
 };
 

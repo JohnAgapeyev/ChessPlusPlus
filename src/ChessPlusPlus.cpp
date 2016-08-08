@@ -4,6 +4,7 @@
 #include "headers/chessplusplus.h"
 #include "headers/consts.h"
 #include "headers/tt.h"
+#include "headers/ai.h"
 #include <iostream>
 #include <string>
 #include <algorithm>
@@ -19,6 +20,7 @@ int main() {
 
 void mainLoop(Board& b) {
     std::string input;
+    AI comp(b);
     while (b.getGameState() == GameState::ACTIVE) {
         std::cout << "Enter your move: ";
         std::getline(std::cin, input);
@@ -36,6 +38,8 @@ void mainLoop(Board& b) {
             std::cout << std::endl;
         }
         b.printBoardState();
+        comp.evaluate();
+        std::cout << comp.getEval() << std::endl;
     }
 }
 
