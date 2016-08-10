@@ -16,6 +16,9 @@ class AI {
     Board& board;
     int eval = 0;
     
+    
+    int reduceKnightMobilityScore(const std::vector<Move>& moveList, const int cornerIndex) const;
+    
 public:
     AI(Board& b);
     void evaluate();
