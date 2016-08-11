@@ -12,6 +12,17 @@ class AI {
     
     static constexpr auto MOBILITY_VAL = 1;
     
+    static constexpr auto DOUBLED_PAWN_PENALTY = 40;
+    static constexpr auto ISOLATED_PAWN_PENALTY = 50;
+    static constexpr auto BACKWARD_PAWN_PENALTY = 30;
+    static constexpr auto PAWN_SIX_VAL = 70;
+    static constexpr auto PAWN_SEVEN_VAL = 100;
+    
+    static constexpr auto OPEN_FILE_VAL = 20;
+    static constexpr auto HALF_OPEN_FILE_VAL = 10;
+    static constexpr auto ROOK_SEVEN_VAL = 10;
+    
+    
     class MoveGenerator;
     Board& board;
     int eval = 0;

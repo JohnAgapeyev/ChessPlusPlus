@@ -14,9 +14,10 @@ AI::AI(Board& b) : board(b) {
  */
 void AI::evaluate() {
     auto currScore = 0;
-    
     std::vector<Move> whiteMoveList;
     std::vector<Move> blackMoveList;
+    
+    int filePawnCount[16] = {0};
     
     if (board.isWhiteTurn) {
         board.moveGen->generateAll();
@@ -53,9 +54,41 @@ void AI::evaluate() {
                     && currPiece->getType() != PieceTypes::KING) {
                 if (currPiece->getColour() == Colour::WHITE) {
                     currScore += getPieceValue(currPiece->getType());
+                    if (i == 1 && currPiece->getType() == PieceTypes::ROOK) {
+                        currScore += ROOK_SEVEN_VAL;
+                    }
+                    if (currPiece->getType() == PieceTypes::PAWN) {
+                        ++filePawnCount[j];
+                        if (i == 1) {
+                            currScore += PAWN_SEVEN_VAL;
+                        } else if (i == 2) {
+                            currScore += PAWN_SIX_VAL;
+                        }
+                    }
                 } else {
                     currScore -= getPieceValue(currPiece->getType());
+                    if (i == 6 && currPiece->getType() == PieceTypes::ROOK) {
+                        currScore -= ROOK_SEVEN_VAL;
+                    }
+                    if (currPiece->getType() == PieceTypes::PAWN) {
+                        ++filePawnCount[j + INNER_BOARD_SIZE];
+                        if (i == 6) {
+                            currScore -= PAWN_SEVEN_VAL;
+                        } else if (i == 5) {
+                            currScore -= PAWN_SIX_VAL;
+                        }
+                    }
                 }
+            }
+        }
+    }
+    
+    for (int i = 0; i < 16; ++i) {
+        if (filePawnCount[i] > 1) {
+            if (i > 7) {
+                currScore += DOUBLED_PAWN_PENALTY * (filePawnCount[i] - 1);
+            } else {
+                currScore -= DOUBLED_PAWN_PENALTY * (filePawnCount[i] - 1);
             }
         }
     }
@@ -64,12 +97,13 @@ void AI::evaluate() {
 }
 
 int AI::reduceKnightMobilityScore(const std::vector<Move>& moveList, const int cornerIndex) const {
-    static constexpr int pawnThreatOffsets[] = {14, 16, -14, 16};
+    static constexpr int pawnThreatOffsets[] = {14, 16, -14, -16};
     auto totalToRemove = 0;
     auto cornerCheckIndex = 0;
     
     for(const Move& mv : moveList) {
         if (mv.fromPiece->getType() == PieceTypes::KNIGHT) {
+            
             //Calculate index of destination square without requiring linear search
             const auto cornerToSqDiff = board.moveGen->getOffsetIndex(
                 mv.toSq->getOffset() - board.vectorTable[cornerIndex]->getOffset(), cornerIndex);
@@ -79,7 +113,7 @@ int AI::reduceKnightMobilityScore(const std::vector<Move>& moveList, const int c
                 if (cornerCheckIndex < 0 || cornerCheckIndex >= OUTER_BOARD_SIZE * OUTER_BOARD_SIZE) {
                     continue;
                 }
-
+                
                 const auto& knightMoveNeighbour = board.vectorTable[cornerCheckIndex]->getPiece();
                 
                 if (knightMoveNeighbour && knightMoveNeighbour->getType() == PieceTypes::PAWN
