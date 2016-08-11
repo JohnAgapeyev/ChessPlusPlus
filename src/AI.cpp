@@ -17,6 +17,8 @@ void AI::evaluate() {
     std::vector<Move> whiteMoveList;
     std::vector<Move> blackMoveList;
     
+    std::vector<int> whiteRookFiles;
+    std::vector<int> blackRookFiles;
     int filePawnCount[16] = {0};
     
     if (board.isWhiteTurn) {
@@ -54,8 +56,11 @@ void AI::evaluate() {
                     && currPiece->getType() != PieceTypes::KING) {
                 if (currPiece->getColour() == Colour::WHITE) {
                     currScore += getPieceValue(currPiece->getType());
-                    if (i == 1 && currPiece->getType() == PieceTypes::ROOK) {
-                        currScore += ROOK_SEVEN_VAL;
+                    if (currPiece->getType() == PieceTypes::ROOK) {
+                        if (i == 1) {
+                            currScore += ROOK_SEVEN_VAL;
+                        }
+                        whiteRookFiles.push_back(j);
                     }
                     if (currPiece->getType() == PieceTypes::PAWN) {
                         ++filePawnCount[j];
@@ -67,8 +72,11 @@ void AI::evaluate() {
                     }
                 } else {
                     currScore -= getPieceValue(currPiece->getType());
-                    if (i == 6 && currPiece->getType() == PieceTypes::ROOK) {
-                        currScore -= ROOK_SEVEN_VAL;
+                    if (currPiece->getType() == PieceTypes::ROOK) {
+                        if (i == 6) {
+                            currScore -= ROOK_SEVEN_VAL;
+                        }
+                        blackRookFiles.push_back(j);
                     }
                     if (currPiece->getType() == PieceTypes::PAWN) {
                         ++filePawnCount[j + INNER_BOARD_SIZE];
@@ -89,6 +97,43 @@ void AI::evaluate() {
                 currScore += DOUBLED_PAWN_PENALTY * (filePawnCount[i] - 1);
             } else {
                 currScore -= DOUBLED_PAWN_PENALTY * (filePawnCount[i] - 1);
+            }
+        } else if (!filePawnCount[i]) {
+            if (i <= 13 && filePawnCount[i + 1] && !filePawnCount[i + 2]) {
+                if (i > 7) {
+                    currScore += ISOLATED_PAWN_PENALTY;
+                } else {
+                    currScore -= ISOLATED_PAWN_PENALTY;
+                }
+            }
+        }
+        if (i <= 7) {
+            if (!filePawnCount[i] || !filePawnCount[i + INNER_BOARD_SIZE]) {
+                if (!filePawnCount[i] && !filePawnCount[i + INNER_BOARD_SIZE]) {
+                    //Open file
+                    for (const int currFile : whiteRookFiles) {
+                        if (currFile == i) {
+                            currScore += OPEN_FILE_VAL;
+                        }
+                    }
+                    for (const int currFile : blackRookFiles) {
+                        if (currFile == i) {
+                            currScore -= OPEN_FILE_VAL;
+                        }
+                    }
+                } else {
+                    //Semi open
+                    for (const int currFile : whiteRookFiles) {
+                        if (currFile == i) {
+                            currScore += HALF_OPEN_FILE_VAL;
+                        }
+                    }
+                    for (const int currFile : blackRookFiles) {
+                        if (currFile == i) {
+                            currScore -= HALF_OPEN_FILE_VAL;
+                        }
+                    }
+                }
             }
         }
     }
