@@ -22,6 +22,8 @@ void mainLoop(Board& b) {
     std::string input;
     AI comp(b);
     while (b.getGameState() == GameState::ACTIVE) {
+        //comp.evaluate();
+        //std::cout << "Pre move: " << comp.getEval() << std::endl;
         std::cout << "Enter your move: ";
         std::getline(std::cin, input);
         std::transform(input.begin(), input.end(), input.begin(), ::tolower);
@@ -38,8 +40,9 @@ void mainLoop(Board& b) {
             std::cout << std::endl;
         }
         b.printBoardState();
-        comp.evaluate();
-        std::cout << comp.getEval() << std::endl;
+        //comp.evaluate();
+        //std::cout << "Post move: " << comp.getEval() << std::endl;
+        comp.search();
     }
 }
 

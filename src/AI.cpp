@@ -3,6 +3,8 @@
 #include "headers/consts.h"
 #include "headers/movegenerator.h"
 #include "headers/enums.h"
+#include <climits>
+#include <algorithm>
 
 AI::AI(Board& b) : board(b) {
     
@@ -171,7 +173,6 @@ int AI::reduceKnightMobilityScore(const std::vector<Move>& moveList, const int c
     return totalToRemove;
 }
 
-
 int AI::getPieceValue(const PieceTypes type) const {
     switch(type) {
         case PieceTypes::PAWN:
@@ -187,4 +188,84 @@ int AI::getPieceValue(const PieceTypes type) const {
         default:
             return 0;
     }
+}
+
+void AI::search() {
+    std::cout << "Search result: " << iterativeDeepening() << std::endl;
+}
+
+int AI::iterativeDeepening() {
+    int firstGuess = 0;
+    for (int i = 0; i < DEPTH; ++i) {
+        firstGuess = MTD(firstGuess, i);
+    }
+    return firstGuess;
+}
+
+int AI::MTD(const int firstGuess, const int depth) {
+    int currGuess = firstGuess;
+    int upper = INT_MAX;
+    int lower = INT_MIN;
+    int beta = 0;
+    
+    while (upper > lower) {
+        beta = currGuess + (currGuess == lower);
+        currGuess = AlphaBeta(beta - 1, beta, depth);
+        if (currGuess < beta) {
+            upper = currGuess;
+        } else {
+            lower = currGuess;
+        }
+    }
+    return currGuess;
+}
+
+int AI::AlphaBeta(const int alpha, const int beta, const int depth) {
+    int rtn = 0;
+    if (depth == 0) {
+        evaluate();
+        rtn = eval;
+    } else if (board.isWhiteTurn) {
+        rtn = INT_MIN;
+        int a = alpha;
+        board.moveGen->generateAll();
+        const auto moveList = board.moveGen->getMoveList();
+        const auto moveListSize = moveList.size();
+        
+        for (size_t i = 0; rtn < beta && i < moveListSize; ++i) {
+            board.makeMove(moveList[i]);
+            rtn = std::max(rtn, AlphaBeta(a, beta, depth - 1));
+            a = std::max(a, rtn);
+            board.unmakeMove(moveList[i]);
+        }
+    } else {
+        rtn = INT_MAX;
+        int b = beta;
+        board.moveGen->generateAll();
+        const auto moveList = board.moveGen->getMoveList();
+        const auto moveListSize = moveList.size();
+        
+        for (size_t i = 0; rtn > alpha && i < moveListSize; ++i) {
+            board.makeMove(moveList[i]);
+            rtn = std::min(rtn, AlphaBeta(alpha, b, depth - 1));
+            b = std::min(b, rtn);
+            board.unmakeMove(moveList[i]);
+        }
+    }
+    
+    int upper;
+    int lower;
+    if (rtn <= alpha) {
+        //Store rtn as upper bound
+        upper = rtn;
+    }
+    if (rtn > alpha && rtn < beta) {
+        //Should not happen if using null window, but if it does, store rtn as both upper and lower
+    }
+    if (rtn >= beta ) {
+        //Store rtn as lower bound
+        lower = rtn;
+    }
+    
+    return rtn;
 }

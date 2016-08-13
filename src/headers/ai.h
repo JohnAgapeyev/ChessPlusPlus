@@ -2,8 +2,12 @@
 #define AI_H
 
 #include "board.h"
+#include <climits>
 
 class AI {
+    static constexpr auto MATE = SHRT_MAX;
+    static constexpr auto DRAW = 0;
+    
     static constexpr auto PAWN_VAL = 100;
     static constexpr auto KNIGHT_VAL = 300;
     static constexpr auto BISHOP_VAL = 300;
@@ -22,6 +26,7 @@ class AI {
     static constexpr auto HALF_OPEN_FILE_VAL = 10;
     static constexpr auto ROOK_SEVEN_VAL = 10;
     
+    const int DEPTH = 5;
     
     class MoveGenerator;
     Board& board;
@@ -29,10 +34,14 @@ class AI {
     
     
     int reduceKnightMobilityScore(const std::vector<Move>& moveList, const int cornerIndex) const;
+    int iterativeDeepening();
+    int MTD(const int guess, const int depth);
+    int AlphaBeta(const int alpha, const int beta, const int depth);
     
 public:
     AI(Board& b);
     void evaluate();
+    void search();
     auto getEval() const {return static_cast<double>(eval) / 100;}
     int getPieceValue(const PieceTypes type) const;
 };

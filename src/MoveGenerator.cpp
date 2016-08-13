@@ -176,6 +176,7 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
         logMoveFailure(4, isSilent);
         return false;
     }
+    
     /* 
      * Check that pawns don't double move except on their starting rows.
      * Since board is 1D array, finding the pawn row can be done by counting
@@ -192,13 +193,18 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
             return false;
         }
     }
+    
     board.ensureEnPassantValid();
     // Pawn related validation checks
     if (fromPieceType == PieceTypes::PAWN) {
         // Ensure pawns only move diagonally if they capture a piece, including en passant
+        const int captureOffset = (fromPieceColour == Colour::WHITE) ? -15 : 15;
+        
         if ((*selectedOffset % 15) 
                 && !board.vectorTable[secondSquareIndex]->getPiece() 
-                && !(board.enPassantActive && *board.vectorTable[secondSquareIndex] == *board.enPassantTarget)) {
+                && !(board.enPassantActive && *board.vectorTable[secondSquareIndex] == *board.enPassantTarget 
+                    && board.vectorTable[secondSquareIndex + captureOffset]->getPiece()
+                    && board.vectorTable[secondSquareIndex + captureOffset]->getPiece()->getColour() != fromPieceColour)) {
             logMoveFailure(6, isSilent);
             return false;
         }
@@ -401,10 +407,10 @@ void Board::MoveGenerator::generateAll() {
         }
         return internal;
     }();
-    
     const auto& startCoords = board.findCorner();
     
     moveList.clear();
+    
     for (const auto& p : pieceCoords) {
         board.shiftBoard(std::get<1>(p) - startCoords.second, std::get<0>(p) - startCoords.first);
         for (const auto& offset : std::get<2>(p)->getVectorList()) {
@@ -462,13 +468,14 @@ void Board::MoveGenerator::generateAll() {
                         continue;
                     }
                 }
+                
                 if (mv.toSq->checkSentinel()) {
                     break;
                 }
+                
                 if (!validateMove(mv, true)) {
                     break;
                 }
-                
                 if (mv.fromPiece->getType() == PieceTypes::PAWN && !((toSquareIndex - ZERO_LOCATION_1D) % 30)) {
                     mv.enPassantFileNum = std::get<1>(p) - startCoords.second;
                 } else {
@@ -486,6 +493,7 @@ void Board::MoveGenerator::generateAll() {
                 //}
                 
                 //Perform castling
+                
                 if (mv.fromPiece->getType() == PieceTypes::KING 
                         && std::abs((toSquareIndex - ZERO_LOCATION_1D)) == 2 
                         && getCastleDirectionBool(mv.fromPiece->getType(), 
