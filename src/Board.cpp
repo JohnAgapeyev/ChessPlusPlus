@@ -478,11 +478,13 @@ void Board::makeMove(Move mv) {
         std::find_if(vectorTable.cbegin(), vectorTable.cend(), 
             [&mv](const auto& sq){return (*sq == *mv.toSq);}));
     
+    const int captureIndex = distToEndSquare + ((isWhiteTurn) ? 15: -15);
     // If en passant move is made, capture the appropriate pawn
     if (enPassantActive && fromPieceType == PieceTypes::PAWN 
-            && (diff % 15) && *mv.toSq == *enPassantTarget) {
+            && (diff % 15) && *mv.toSq == *enPassantTarget
+            && vectorTable[captureIndex]->getPiece() 
+            && vectorTable[captureIndex]->getPiece()->getColour() != fromPieceColour) {
         
-        const int captureIndex = distToEndSquare + ((isWhiteTurn) ? 15: -15);
         vectorTable[captureIndex]->setPiece(nullptr);
         
         //xor out the captured pawn
@@ -584,6 +586,7 @@ void Board::makeMove(Move mv) {
         }
     }
     
+    //Promote pawns on the end ranks
     if (fromPieceType == PieceTypes::PAWN) {
         halfMoveClock = 0;
         const auto distFromStartToCorner = distToEndSquare - cornerIndex;
@@ -690,7 +693,12 @@ void Board::unmakeMove(const Move& mv) {
     }
 
     //En passant Capture was made.
-    if (mv.enPassantActive && mv.enPassantTarget && fromPieceType == PieceTypes::PAWN && (diff % 15) && !mv.toPiece) {
+    if (mv.enPassantActive 
+            && mv.enPassantTarget 
+            && fromPieceType == PieceTypes::PAWN 
+            && (diff % 15) 
+            && !mv.toPiece
+            && mv.toSq->getOffset() == mv.enPassantTarget->getOffset()) {
         const auto capturedColour = (mv.fromPiece->getColour() == Colour::WHITE) ? Colour::BLACK : Colour::WHITE;
         
         //Calculate the square containing the captured pawn and put it back

@@ -201,7 +201,7 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
     // Pawn related validation checks
     if (fromPieceType == PieceTypes::PAWN) {
         // Ensure pawns only move diagonally if they capture a piece, including en passant
-        const int captureOffset = (fromPieceColour == Colour::WHITE) ? -15 : 15;
+        const int captureOffset = (fromPieceColour == Colour::WHITE) ? 15 : -15;
         
         if ((*selectedOffset % 15) 
                 && !board.vectorTable[secondSquareIndex]->getPiece() 
@@ -332,13 +332,32 @@ bool Board::MoveGenerator::inCheck(const Move& mv) const {
             
             if (currPiece) {
                 const auto currPieceColour = currPiece->getColour();
+                const auto currPieceType = currPiece->getType();
+                
                 if (currPieceColour == friendlyPieceColour 
                         || currPieceColour == Colour::UNKNOWN) {
                     break;
                 }
+                //Prevent single space mover pieces from being treated as sliding pieces
+                if (i > 1 && (currPieceType == PieceTypes::KING 
+                        || currPieceType == PieceTypes::PAWN 
+                        || currPieceType == PieceTypes::KNIGHT)) {
+                    break;
+                }
+                
                 const auto& pieceVector = currPiece->getVectorList();
                 
-                if (std::find(pieceVector.cbegin(), pieceVector.cend(), offset) == pieceVector.cend()) {
+                if (std::find_if(pieceVector.cbegin(), pieceVector.cend(), 
+                        [currPieceType, offset](const auto off){
+                            if (currPieceType == PieceTypes::PAWN) {
+                                if (off % 15) {
+                                    return off == -offset;
+                                }
+                                return false;
+                            }
+                            return off == offset;
+                        }
+                    ) == pieceVector.cend()) {
                     break;
                 }
                 std::swap(*mv.fromSq, *mv.toSq);
