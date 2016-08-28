@@ -225,7 +225,7 @@ int AI::AlphaBeta(const int alpha, const int beta, const int depth) {
     if (depth == 0) {
         evaluate();
         rtn = eval;
-    } else if (board.isWhiteTurn) {
+    } else if (isWhitePlayer == board.isWhiteTurn) {
         rtn = INT_MIN;
         int a = alpha;
         board.moveGen->generateAll();

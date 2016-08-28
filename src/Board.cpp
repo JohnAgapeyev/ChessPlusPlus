@@ -690,7 +690,7 @@ void Board::unmakeMove(const Move& mv) {
     }
 
     //En passant Capture was made.
-    if (fromPieceType == PieceTypes::PAWN && (diff % 15) && !mv.toPiece) {
+    if (mv.enPassantActive && mv.enPassantTarget && fromPieceType == PieceTypes::PAWN && (diff % 15) && !mv.toPiece) {
         const auto capturedColour = (mv.fromPiece->getColour() == Colour::WHITE) ? Colour::BLACK : Colour::WHITE;
         
         //Calculate the square containing the captured pawn and put it back

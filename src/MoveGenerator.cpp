@@ -148,19 +148,22 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
         return false;
     }
     
+    const auto isDoublePawnMove = (fromPieceType == PieceTypes::PAWN && absOffset == 30);
+    
     // Define number of squares to check along the selected vector
-    const int moveLen = mv.fromPiece->getVectorLength();
+    const int moveLen = mv.fromPiece->getVectorLength() + isDoublePawnMove;
     
     auto currSquare = board.vectorTable[0].get();
     auto foundToSquare = false;
     
     // Iterate through to ensure sliding pieces aren't being blocked
     for (int i = 1; i < moveLen; ++i) {
-        const auto realIndex = getOffsetIndex(*selectedOffset, ZERO_LOCATION_1D, i);
+        const auto realIndex = getOffsetIndex(*selectedOffset >> isDoublePawnMove, ZERO_LOCATION_1D, i);
         if (realIndex < 0 || realIndex >= OUTER_BOARD_SIZE * OUTER_BOARD_SIZE) {
             break;
         }
         currSquare = board.vectorTable[realIndex].get();
+        
         if (*currSquare == *mv.toSq) {
             foundToSquare = true;
             break;
@@ -484,15 +487,6 @@ void Board::MoveGenerator::generateAll() {
                 
                 mv.enPassantActive = board.enPassantActive;
                 mv.enPassantTarget = board.enPassantTarget;
-                
-                // If en passant move is made, capture the appropriate pawn
-                //if (board.enPassantActive && mv.fromPiece->getType() == PieceTypes::PAWN 
-                        //&& ((toSquareIndex - ZERO_LOCATION_1D) % 15) && *mv.toSq == *board.enPassantTarget) {
-                    //mv.enPassantActive = true;
-                    //mv.enPassantTarget = board.vectorTable[toSquareIndex + ((mv.fromPiece->getColour() == Colour::WHITE) ? 15 : -15)].get();
-                //}
-                
-                //Perform castling
                 
                 if (mv.fromPiece->getType() == PieceTypes::KING 
                         && std::abs((toSquareIndex - ZERO_LOCATION_1D)) == 2 

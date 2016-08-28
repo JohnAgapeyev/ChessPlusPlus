@@ -28,6 +28,8 @@ class AI {
     
     const int DEPTH = 5;
     
+    bool isWhitePlayer = false;
+    
     class MoveGenerator;
     Board& board;
     int eval = 0;
