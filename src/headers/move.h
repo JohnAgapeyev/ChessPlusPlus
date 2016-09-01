@@ -9,8 +9,9 @@ typedef struct Move Move;
 struct Move {
     Square *fromSq;
     Square *toSq;
-    Piece *fromPiece;
-    Piece *toPiece;
+    PieceTypes fromPieceType;
+    Colour fromPieceColour;
+    bool captureMade;
     PieceTypes toPieceType;
     Colour toPieceColour;
     PieceTypes promotionType;

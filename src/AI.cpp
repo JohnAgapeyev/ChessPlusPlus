@@ -24,18 +24,14 @@ void AI::evaluate() {
     int filePawnCount[16] = {0};
     
     if (board.isWhiteTurn) {
-        board.moveGen->generateAll();
-        whiteMoveList = board.moveGen->getMoveList();
+        whiteMoveList = board.moveGen->generateAll();
         board.isWhiteTurn = false;
-        board.moveGen->generateAll();
-        blackMoveList = board.moveGen->getMoveList();
+        blackMoveList = board.moveGen->generateAll();
         board.isWhiteTurn = true;
     } else {
-        board.moveGen->generateAll();
-        blackMoveList = board.moveGen->getMoveList();
+        blackMoveList = board.moveGen->generateAll();
         board.isWhiteTurn = true;
-        board.moveGen->generateAll();
-        whiteMoveList = board.moveGen->getMoveList();
+        whiteMoveList = board.moveGen->generateAll();
         board.isWhiteTurn = false;
     }
 
@@ -149,7 +145,7 @@ int AI::reduceKnightMobilityScore(const std::vector<Move>& moveList, const int c
     auto cornerCheckIndex = 0;
     
     for(const Move& mv : moveList) {
-        if (mv.fromPiece->getType() == PieceTypes::KNIGHT) {
+        if (mv.fromPieceType == PieceTypes::KNIGHT) {
             
             //Calculate index of destination square without requiring linear search
             const auto cornerToSqDiff = board.moveGen->getOffsetIndex(
@@ -164,7 +160,7 @@ int AI::reduceKnightMobilityScore(const std::vector<Move>& moveList, const int c
                 const auto& knightMoveNeighbour = board.vectorTable[cornerCheckIndex]->getPiece();
                 
                 if (knightMoveNeighbour && knightMoveNeighbour->getType() == PieceTypes::PAWN
-                        && knightMoveNeighbour->getColour() != mv.fromPiece->getColour()) {
+                        && knightMoveNeighbour->getColour() != mv.fromPieceColour) {
                     totalToRemove += MOBILITY_VAL;
                 }
             }
@@ -228,8 +224,7 @@ int AI::AlphaBeta(const int alpha, const int beta, const int depth) {
     } else if (isWhitePlayer == board.isWhiteTurn) {
         rtn = INT_MIN;
         int a = alpha;
-        board.moveGen->generateAll();
-        const auto moveList = board.moveGen->getMoveList();
+        const auto moveList = board.moveGen->generateAll();
         const auto moveListSize = moveList.size();
         
         for (size_t i = 0; rtn < beta && i < moveListSize; ++i) {
@@ -241,8 +236,7 @@ int AI::AlphaBeta(const int alpha, const int beta, const int depth) {
     } else {
         rtn = INT_MAX;
         int b = beta;
-        board.moveGen->generateAll();
-        const auto moveList = board.moveGen->getMoveList();
+        const auto moveList = board.moveGen->generateAll();
         const auto moveListSize = moveList.size();
         
         for (size_t i = 0; rtn > alpha && i < moveListSize; ++i) {
