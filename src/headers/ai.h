@@ -34,7 +34,6 @@ class AI {
     Board& board;
     int eval = 0;
     
-    
     int reduceKnightMobilityScore(const std::vector<Move>& moveList, const int cornerIndex) const;
     int iterativeDeepening();
     int MTD(const int guess, const int depth);

@@ -11,7 +11,7 @@ public:
     bool validateMove(const Move& mv, const bool isSilent);
     bool inCheck(const Move& mv) const;
     bool inCheck(const int squareIndex) const;
-    Move createMove(std::string& input);
+    Move createMove(std::string& input) const;
     int getOffsetIndex(const int offset, const int startIndex = 0, const int vectorLen = 1) const;
     bool getCastleDirectionBool(const PieceTypes type, const Colour pieceColour, const int offset) const;
 };

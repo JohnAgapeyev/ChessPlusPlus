@@ -15,7 +15,7 @@
 #include <stdexcept>
 #include <functional>
 
-Move Board::MoveGenerator::createMove(std::string& input) {
+Move Board::MoveGenerator::createMove(std::string& input) const {
     // If the characters are letters, convert them to digit chars
     if (input[0] > 8 && input[2] > 8) {
         input[0] -= 49;
