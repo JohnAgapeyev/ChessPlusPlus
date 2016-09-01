@@ -4,6 +4,7 @@
 #include "headers/movegenerator.h"
 #include "headers/enums.h"
 #include <climits>
+#include <utility>
 #include <algorithm>
 
 AI::AI(Board& b) : board(b) {
@@ -230,8 +231,21 @@ int AI::MTD(const int firstGuess, const int depth) {
     return currGuess;
 }
 
-int AI::AlphaBeta(const int alpha, const int beta, const int depth) {
+int AI::AlphaBeta(int alpha, int beta, const int depth) {
     int rtn = 0;
+    
+    if (boardCache.retrieve(board)) {
+        const std::pair<int, int>& cachePair = boardCache[board];
+        if (cachePair.first >= beta) {
+            return cachePair.first;
+        }
+        if (cachePair.second <= alpha) {
+            return cachePair.second;
+        }
+        alpha = std::max(alpha, cachePair.first);
+        beta = std::min(beta, cachePair.second);
+    }
+    
     if (depth == 0) {
         evaluate();
         rtn = eval;
@@ -261,18 +275,17 @@ int AI::AlphaBeta(const int alpha, const int beta, const int depth) {
         }
     }
     
-    int upper;
-    int lower;
     if (rtn <= alpha) {
         //Store rtn as upper bound
-        upper = rtn;
+        boardCache.add(board, std::make_pair(alpha, rtn));
     }
     if (rtn > alpha && rtn < beta) {
         //Should not happen if using null window, but if it does, store rtn as both upper and lower
+        boardCache.add(board, std::make_pair(rtn, rtn));
     }
     if (rtn >= beta ) {
         //Store rtn as lower bound
-        lower = rtn;
+        boardCache.add(board, std::make_pair(rtn, beta));
     }
     
     return rtn;

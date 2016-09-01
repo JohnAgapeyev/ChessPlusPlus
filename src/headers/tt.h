@@ -3,6 +3,7 @@
 
 #include <unordered_map>
 #include <list>
+#include <iterator>
 #include <utility>
 
 template<typename Key, typename Value, size_t maxSize>
@@ -47,8 +48,13 @@ public:
     }
     
     Value& operator[](const Key& k) {
-        return *internalMap[k];
+        return internalMap[k]->second;
     }
+    
+    bool retrieve(const Key& k) const {
+        return internalMap.find(k) != internalMap.end();
+    }
+    
 };
 
 #endif

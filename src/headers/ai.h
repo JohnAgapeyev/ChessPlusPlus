@@ -2,7 +2,9 @@
 #define AI_H
 
 #include "board.h"
+#include "tt.h"
 #include <climits>
+#include <utility>
 
 class AI {
     static constexpr auto MATE = SHRT_MAX;
@@ -32,6 +34,9 @@ class AI {
     
     class MoveGenerator;
     Board& board;
+    
+    Cache<Board, std::pair<int, int>, 1024> boardCache;
+    
     int eval = 0;
     
     int reduceKnightMobilityScore(const std::vector<Move>& moveList, const int cornerIndex) const;
