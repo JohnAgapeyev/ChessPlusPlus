@@ -136,6 +136,20 @@ void AI::evaluate() {
         }
     }
     
+    //End game eval conditions
+    if (!whiteMoveList.size()) {
+        eval = -MATE * board.whiteInCheck;
+    } else if (!blackMoveList.size()) {
+        eval = MATE * board.blackInCheck;
+    } else if (board.halfMoveClock >= 100) {
+        eval = 0;
+    } else if (board.repititionList[0] == board.repititionList[4] 
+            && board.repititionList[4] == board.repititionList[8]) {
+        eval = 0;
+    } else if (board.drawByMaterial()) {
+        eval = 0;
+    }
+    
     eval = currScore;
 }
 
