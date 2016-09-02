@@ -55,6 +55,10 @@ public:
         return internalMap.find(k) != internalMap.end();
     }
     
+    size_t size() const {
+        return currSize;
+    }
+    
 };
 
 #endif

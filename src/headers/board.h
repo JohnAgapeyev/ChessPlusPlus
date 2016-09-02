@@ -34,7 +34,7 @@ class Board {
     
 public:
     Board();
-    Board(const Board&) : Board() {}
+    Board(const Board& b);
     ~Board();
     void printBoardState() const;
     auto getBoard() const {return vectorTable;}

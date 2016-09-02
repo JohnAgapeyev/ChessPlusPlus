@@ -47,6 +47,19 @@ Board::Board() {
     currHash = repititionList[0];
 }
 
+Board::Board(const Board& b) : Board() {
+    currentGameState = b.currentGameState;
+    castleRights = b.castleRights;
+    blackInCheck = b.blackInCheck;
+    whiteInCheck = b.whiteInCheck;
+    isWhiteTurn = b.isWhiteTurn;
+    enPassantActive = b.enPassantActive;
+    enPassantTarget = b.enPassantTarget;
+    halfMoveClock = b.halfMoveClock;
+    moveCounter = b.moveCounter;
+    currHash = b.currHash;
+}
+
 /*
  * Board contains a unique_ptr<MoveGenerator> where MoveGenerator
  * is an inner class defined outside of board's header. This results in
