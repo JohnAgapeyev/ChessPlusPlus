@@ -220,7 +220,7 @@ int AI::MTD(const int firstGuess, const int depth) {
     int beta = 0;
     
     while (upper > lower) {
-        beta = currGuess + (currGuess == lower);
+        beta = std::max(currGuess, lower + 1);
         currGuess = AlphaBeta(beta - 1, beta, depth);
         if (currGuess < beta) {
             upper = currGuess;
