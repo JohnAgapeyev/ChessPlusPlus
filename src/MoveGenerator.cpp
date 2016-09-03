@@ -61,6 +61,7 @@ Move Board::MoveGenerator::createMove(std::string& input) const {
     result.enPassantActive = false;
     result.enPassantTarget = nullptr;
     result.enPassantFileNum = 0;
+    result.halfMoveClock = 0;
     
     return result;
 }
@@ -413,7 +414,7 @@ void Board::MoveGenerator::logMoveFailure(const int failureNum, const bool isSil
 
 std::vector<Move> Board::MoveGenerator::generateAll() {
     Move mv{nullptr, nullptr, PieceTypes::UNKNOWN, Colour::UNKNOWN, false, PieceTypes::UNKNOWN, 
-        Colour::UNKNOWN, PieceTypes::UNKNOWN, false, 0, false, nullptr, 0};
+        Colour::UNKNOWN, PieceTypes::UNKNOWN, false, 0, false, nullptr, 0, 0};
         
     std::vector<Move> moveList;
         
@@ -469,6 +470,8 @@ std::vector<Move> Board::MoveGenerator::generateAll() {
                 }
                 
                 mv.promotionType = (mv.fromSq->getPiece()) ? mv.fromPieceType : PieceTypes::UNKNOWN;
+                
+                mv.halfMoveClock = 0;
                 
                 //Promotion check
                 if (mv.promotionType == PieceTypes::PAWN) {

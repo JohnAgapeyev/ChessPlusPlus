@@ -392,6 +392,8 @@ void Board::makeMove(std::string& input) {
     swapOffsets(mv);
     isWhiteTurn = !isWhiteTurn;
     
+    mv.halfMoveClock = halfMoveClock;
+    
     //xor the change in turn
     currHash ^= HASH_VALUES[static_cast<int>(SquareState::WHITE_MOVE)];
     
@@ -649,6 +651,8 @@ void Board::makeMove(Move mv) {
     swapOffsets(mv);
     isWhiteTurn = !isWhiteTurn;
     
+    mv.halfMoveClock = halfMoveClock;
+    
     //xor the change in turn
     currHash ^= HASH_VALUES[static_cast<int>(SquareState::WHITE_MOVE)];
     
@@ -782,6 +786,12 @@ void Board::unmakeMove(const Move& mv) {
     repititionList[0] = currHash;
     
     updateCheckStatus();
+    
+    if (mv.fromPieceColour == Colour::WHITE) {
+        moveCounter--;
+    }
+    
+    halfMoveClock = mv.halfMoveClock;
 }
 
 void Board::ensureEnPassantValid() const {

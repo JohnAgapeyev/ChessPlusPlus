@@ -20,6 +20,7 @@ struct Move {
     bool enPassantActive;
     Square* enPassantTarget;
     unsigned char enPassantFileNum;
+    int halfMoveClock;
 };
 
 void swapOffsets(const Move& mv);
