@@ -234,8 +234,8 @@ int AI::MTD(const int firstGuess, const int depth) {
 int AI::AlphaBeta(int alpha, int beta, const int depth) {
     int rtn = 0;
     
-    if (boardCache.retrieve(board)) {
-        const std::pair<int, int>& cachePair = boardCache[board];
+    if (boardCache.retrieve(board.currHash)) {
+        const std::pair<int, int>& cachePair = boardCache[board.currHash];
         if (cachePair.first >= beta) {
             return cachePair.first;
         }
@@ -277,15 +277,15 @@ int AI::AlphaBeta(int alpha, int beta, const int depth) {
     
     if (rtn <= alpha) {
         //Store rtn as upper bound
-        boardCache.add(board, std::make_pair(alpha, rtn));
+        boardCache.add(board.currHash, std::make_pair(alpha, rtn));
     }
     if (rtn > alpha && rtn < beta) {
         //Should not happen if using null window, but if it does, store rtn as both upper and lower
-        boardCache.add(board, std::make_pair(rtn, rtn));
+        boardCache.add(board.currHash, std::make_pair(rtn, rtn));
     }
     if (rtn >= beta ) {
         //Store rtn as lower bound
-        boardCache.add(board, std::make_pair(rtn, beta));
+        boardCache.add(board.currHash, std::make_pair(rtn, beta));
     }
     
     return rtn;

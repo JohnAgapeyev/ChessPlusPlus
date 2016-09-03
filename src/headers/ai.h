@@ -35,7 +35,7 @@ class AI {
     class MoveGenerator;
     Board& board;
     
-    Cache<Board, std::pair<int, int>, 1024 * 100> boardCache;
+    Cache<size_t, std::pair<int, int>, 1024 * 1024 * 20> boardCache;
     
     int eval = 0;
     
