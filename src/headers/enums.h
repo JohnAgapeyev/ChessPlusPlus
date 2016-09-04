@@ -45,6 +45,12 @@ enum class SquareState {
     EN_PASSANT_FILE = (12 * 64) + 16 + 1
 };
 
+enum class SearchBoundary {
+    UPPER,
+    LOWER,
+    EXACT
+};
+
 namespace std {
     template<>
     class hash<PieceTypes> {

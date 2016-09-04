@@ -4,8 +4,8 @@
 #include "headers/movegenerator.h"
 #include "headers/enums.h"
 #include <climits>
-#include <utility>
 #include <algorithm>
+#include <tuple>
 
 AI::AI(Board& b) : board(b) {
     
@@ -235,15 +235,23 @@ int AI::AlphaBeta(int alpha, int beta, const int depth) {
     int rtn = 0;
     
     if (boardCache.retrieve(board.currHash)) {
-        const std::pair<int, int>& cachePair = boardCache[board.currHash];
-        if (cachePair.first >= beta) {
-            return cachePair.first;
+        int entryDepth;
+        int entryValue;
+        SearchBoundary entryType;
+        std::tie(entryDepth, entryValue, entryType) = boardCache[board.currHash];
+        if (entryDepth >= depth) {
+            if (entryType == SearchBoundary::EXACT) {
+                return entryValue;
+            }
+            if (entryType == SearchBoundary::LOWER && entryValue > alpha) {
+                alpha = entryValue;
+            } else if (entryType == SearchBoundary::UPPER && entryValue < beta) {
+                beta = entryValue;
+            }
+            if (alpha >= beta) {
+                return entryValue;
+            }
         }
-        if (cachePair.second <= alpha) {
-            return cachePair.second;
-        }
-        alpha = std::max(alpha, cachePair.first);
-        beta = std::min(beta, cachePair.second);
     }
     
     if (depth == 0) {
@@ -277,15 +285,13 @@ int AI::AlphaBeta(int alpha, int beta, const int depth) {
     
     if (rtn <= alpha) {
         //Store rtn as upper bound
-        boardCache.add(board.currHash, std::make_pair(alpha, rtn));
-    }
-    if (rtn > alpha && rtn < beta) {
+        boardCache.add(board.currHash, std::make_tuple(depth, rtn, SearchBoundary::UPPER));
+    } else if (rtn > alpha && rtn < beta) {
         //Should not happen if using null window, but if it does, store rtn as both upper and lower
-        boardCache.add(board.currHash, std::make_pair(rtn, rtn));
-    }
-    if (rtn >= beta ) {
+        boardCache.add(board.currHash, std::make_tuple(depth, rtn, SearchBoundary::EXACT));
+    } else if (rtn >= beta ) {
         //Store rtn as lower bound
-        boardCache.add(board.currHash, std::make_pair(rtn, beta));
+        boardCache.add(board.currHash, std::make_tuple(depth, rtn, SearchBoundary::LOWER));
     }
     
     return rtn;

@@ -4,7 +4,7 @@
 #include "board.h"
 #include "tt.h"
 #include <climits>
-#include <utility>
+#include <tuple>
 
 class AI {
     static constexpr auto MATE = SHRT_MAX;
@@ -35,7 +35,7 @@ class AI {
     class MoveGenerator;
     Board& board;
     
-    Cache<size_t, std::pair<int, int>, 1024 * 1024 * 20> boardCache;
+    Cache<size_t, std::tuple<int, int, SearchBoundary>, 1024 * 1024 * 20> boardCache;
     
     int eval = 0;
     
