@@ -43,13 +43,13 @@ class AI {
     int iterativeDeepening();
     int MTD(const int guess, const int depth);
     int AlphaBeta(const int alpha, const int beta, const int depth);
+    int getPieceValue(const PieceTypes type) const;
     
 public:
     AI(Board& b);
     void evaluate();
     void search();
     auto getEval() const {return static_cast<double>(eval) / 100;}
-    int getPieceValue(const PieceTypes type) const;
 };
 
 #endif
