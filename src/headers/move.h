@@ -7,6 +7,8 @@
 
 typedef struct Move Move;
 struct Move {
+    Move();
+    
     Square *fromSq;
     Square *toSq;
     PieceTypes fromPieceType;

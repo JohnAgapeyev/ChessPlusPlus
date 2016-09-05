@@ -413,8 +413,7 @@ void Board::MoveGenerator::logMoveFailure(const int failureNum, const bool isSil
 }
 
 std::vector<Move> Board::MoveGenerator::generateAll() {
-    Move mv{nullptr, nullptr, PieceTypes::UNKNOWN, Colour::UNKNOWN, false, PieceTypes::UNKNOWN, 
-        Colour::UNKNOWN, PieceTypes::UNKNOWN, false, 0, false, nullptr, 0, 0};
+    Move mv;
         
     std::vector<Move> moveList;
         

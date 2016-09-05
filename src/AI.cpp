@@ -6,6 +6,7 @@
 #include <climits>
 #include <algorithm>
 #include <tuple>
+#include <utility>
 
 AI::AI(Board& b) : board(b) {
     
@@ -202,97 +203,139 @@ int AI::getPieceValue(const PieceTypes type) const {
 }
 
 void AI::search() {
-    std::cout << "Search result: " << iterativeDeepening() << std::endl;
+    //const auto result = iterativeDeepening();
+    //board.makeMove(board.moveGen->generateAll()[result.first]);
+    for (int i = 0; i <= 6; ++i) {
+        std::cout << "Perft at depth " << i << ": " << perft(i) << std::endl;
+    }
 }
 
-int AI::iterativeDeepening() {
-    int firstGuess = 0;
+std::pair<int, int> AI::iterativeDeepening() {
+    auto firstGuess = std::make_pair(INT_MIN, 0);
     for (int i = 0; i < DEPTH; ++i) {
-        firstGuess = MTD(firstGuess, i);
+        firstGuess = MTD(firstGuess.second, i);
     }
     return firstGuess;
 }
 
-int AI::MTD(const int firstGuess, const int depth) {
-    int currGuess = firstGuess;
+std::pair<int, int> AI::MTD(const int firstGuess, const int depth) {
+    auto currGuess = std::make_pair(INT_MIN, firstGuess);
     int upper = INT_MAX;
     int lower = INT_MIN;
     int beta = 0;
     
     while (upper > lower) {
-        beta = std::max(currGuess, lower + 1);
+        beta = std::max(currGuess.second, lower + 1);
         currGuess = AlphaBeta(beta - 1, beta, depth);
-        if (currGuess < beta) {
-            upper = currGuess;
+        if (currGuess.second < beta) {
+            upper = currGuess.second;
         } else {
-            lower = currGuess;
+            lower = currGuess.second;
         }
     }
     return currGuess;
 }
 
-int AI::AlphaBeta(int alpha, int beta, const int depth) {
-    int rtn = 0;
+std::pair<int, int> AI::AlphaBeta(int alpha, int beta, const int depth) {
+    auto rtn = std::make_pair(INT_MIN, 0);
+        
+    const auto moveList = board.moveGen->generateAll();
+    const auto moveListSize = moveList.size();
     
     if (boardCache.retrieve(board.currHash)) {
         int entryDepth;
         int entryValue;
         SearchBoundary entryType;
-        std::tie(entryDepth, entryValue, entryType) = boardCache[board.currHash];
+        std::tie(entryDepth, entryValue, entryType, rtn.first) = boardCache[board.currHash];
         if (entryDepth >= depth) {
             if (entryType == SearchBoundary::EXACT) {
-                return entryValue;
+                return std::make_pair(rtn.first, entryValue);
             }
+            //Update the best move based on the previous value, not sure how yet
             if (entryType == SearchBoundary::LOWER && entryValue > alpha) {
                 alpha = entryValue;
+                
             } else if (entryType == SearchBoundary::UPPER && entryValue < beta) {
                 beta = entryValue;
+                
             }
             if (alpha >= beta) {
-                return entryValue;
+                //Return the best move as well
+                return std::make_pair(rtn.first, entryValue);
             }
         }
     }
     
     if (depth == 0) {
         evaluate();
-        rtn = eval;
+        rtn.second = eval;
     } else if (isWhitePlayer == board.isWhiteTurn) {
-        rtn = INT_MIN;
+        rtn.first = 0;
+        rtn.second = INT_MIN;
         int a = alpha;
-        const auto moveList = board.moveGen->generateAll();
-        const auto moveListSize = moveList.size();
         
-        for (size_t i = 0; rtn < beta && i < moveListSize; ++i) {
+        auto cmp = std::make_pair(0, 0);
+        
+        for (size_t i = 0; rtn.second < beta && i < moveListSize; ++i) {
             board.makeMove(moveList[i]);
-            rtn = std::max(rtn, AlphaBeta(a, beta, depth - 1));
-            a = std::max(a, rtn);
+            
+            
+            cmp = AlphaBeta(a, beta, depth - 1);
+            if (cmp.second > rtn.second) {
+                rtn.first = i;
+                rtn.second = cmp.second;
+            }
+            a = std::max(a, rtn.second);
             board.unmakeMove(moveList[i]);
         }
     } else {
-        rtn = INT_MAX;
+        rtn.first = 0;
+        rtn.second = INT_MAX;
         int b = beta;
-        const auto moveList = board.moveGen->generateAll();
-        const auto moveListSize = moveList.size();
         
-        for (size_t i = 0; rtn > alpha && i < moveListSize; ++i) {
+        auto cmp = std::make_pair(0, 0);
+        
+        for (size_t i = 0; rtn.second > alpha && i < moveListSize; ++i) {
             board.makeMove(moveList[i]);
-            rtn = std::min(rtn, AlphaBeta(alpha, b, depth - 1));
-            b = std::min(b, rtn);
+            
+            
+            cmp = AlphaBeta(alpha, b, depth - 1);
+            if (cmp.second < rtn.second) {
+                rtn.first = i;
+                rtn.second = cmp.second;
+            }
+            b = std::min(b, rtn.second);
             board.unmakeMove(moveList[i]);
         }
     }
     
-    if (rtn <= alpha) {
+    if (rtn.second <= alpha) {
         //Store rtn as upper bound
-        boardCache.add(board.currHash, std::make_tuple(depth, rtn, SearchBoundary::UPPER));
-    } else if (rtn > alpha && rtn < beta) {
+        boardCache.add(board.currHash, std::make_tuple(depth, rtn.second, SearchBoundary::UPPER, rtn.first));
+    } else if (rtn.second > alpha && rtn.second < beta) {
         //Should not happen if using null window, but if it does, store rtn as both upper and lower
-        boardCache.add(board.currHash, std::make_tuple(depth, rtn, SearchBoundary::EXACT));
-    } else if (rtn >= beta ) {
+        boardCache.add(board.currHash, std::make_tuple(depth, rtn.second, SearchBoundary::EXACT, rtn.first));
+    } else if (rtn.second >= beta ) {
         //Store rtn as lower bound
-        boardCache.add(board.currHash, std::make_tuple(depth, rtn, SearchBoundary::LOWER));
+        boardCache.add(board.currHash, std::make_tuple(depth, rtn.second, SearchBoundary::LOWER, rtn.first));
     }
     
     return rtn;
+}
+
+unsigned long long AI::perft(int depth) {
+    if (!depth) {
+        return 1;
+    }
+    unsigned long long nodeCount = 0;
+    const auto& moveList = board.moveGen->generateAll();
+    const auto& moveListSize = moveList.size();
+    
+    for (size_t i = 0; i < moveListSize; ++i) {
+        board.makeMove(moveList[i]);
+        nodeCount += perft(depth - 1);
+        board.unmakeMove(moveList[i]);
+    }
+    return nodeCount;
+    return nodeCount;
 }

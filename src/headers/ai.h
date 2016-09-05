@@ -5,6 +5,7 @@
 #include "tt.h"
 #include <climits>
 #include <tuple>
+#include <utility>
 
 class AI {
     static constexpr auto MATE = SHRT_MAX;
@@ -35,15 +36,16 @@ class AI {
     class MoveGenerator;
     Board& board;
     
-    Cache<size_t, std::tuple<int, int, SearchBoundary>, 1024 * 1024 * 20> boardCache;
+    Cache<size_t, std::tuple<int, int, SearchBoundary, int>, 1024 * 1024 * 20> boardCache;
     
     int eval = 0;
     
     int reduceKnightMobilityScore(const std::vector<Move>& moveList, const int cornerIndex) const;
-    int iterativeDeepening();
-    int MTD(const int guess, const int depth);
-    int AlphaBeta(const int alpha, const int beta, const int depth);
+    std::pair<int, int> iterativeDeepening();
+    std::pair<int, int> MTD(const int guess, const int depth);
+    std::pair<int, int> AlphaBeta(const int alpha, const int beta, const int depth);
     int getPieceValue(const PieceTypes type) const;
+    unsigned long long perft(int depth);
     
 public:
     AI(Board& b);
