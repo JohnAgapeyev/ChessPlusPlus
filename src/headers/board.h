@@ -48,6 +48,7 @@ public:
     void unmakeMove(const Move& mv);
     std::string generateFEN() const;
     bool drawByMaterial() const;
+    void setPositionByFEN(const std::string& fen);
     
     friend class std::hash<Board>;
     friend class AI;

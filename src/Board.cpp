@@ -14,6 +14,9 @@
 #include <cstdlib>
 #include <stdexcept>
 #include <regex>
+#include <cctype>
+#include <cstring>
+#include <string>
 
 /*
  * Try to remove index from squares and instead calculate it based off the index
@@ -1028,4 +1031,142 @@ void Board::updateCheckStatus() {
     
     blackInCheck = moveGen->inCheck(blackKingDist);
     whiteInCheck = moveGen->inCheck(whiteKingDist);
+}
+
+//Currently no validation for this method as it is being built primarily for perft position testing
+void Board::setPositionByFEN(const std::string& fen) {
+    const auto cornerDist = findCorner_1D();
+    std::stringstream fenStream(fen);
+    std::array<std::string, 6> fenSections;
+    for (int i = 0; fenStream.good() && i < 6; ++i) {
+        fenStream >> fenSections[i];
+    }
+    
+    //Append a special character to detect the end of the string
+    fenSections[0].push_back('#');
+    
+    for (int i = 0, currStrPos = 0, currSquareIdx = 0; i < INNER_BOARD_SIZE; ++i) {
+        while (fenSections[0][currStrPos] != '/' && fenSections[0][currStrPos] != '#') {
+            if (std::isdigit(fenSections[0][currStrPos])) {
+                const auto jumpLength = fenSections[0][currStrPos] - '0';
+                for (int j = 0; j < jumpLength; ++j) {
+                    vectorTable[cornerDist + (OUTER_BOARD_SIZE * i) + currSquareIdx + j]->setPiece(nullptr);
+                }
+                currSquareIdx += jumpLength;
+                ++currStrPos;
+                continue;
+            }
+            if (std::isupper(fenSections[0][currStrPos])) {
+                //White piece
+                switch (fenSections[0][currStrPos]) {
+                    case 'P':
+                        vectorTable[cornerDist + (OUTER_BOARD_SIZE * i) 
+                            + currSquareIdx]->setPiece({PieceTypes::PAWN, Colour::WHITE});
+                        break;
+                    case 'N':
+                        vectorTable[cornerDist + (OUTER_BOARD_SIZE * i) 
+                                + currSquareIdx]->setPiece({PieceTypes::KNIGHT, Colour::WHITE});
+                        break;
+                    case 'B':
+                        vectorTable[cornerDist + (OUTER_BOARD_SIZE * i) 
+                                + currSquareIdx]->setPiece({PieceTypes::BISHOP, Colour::WHITE});
+                        break;
+                    case 'R':
+                        vectorTable[cornerDist + (OUTER_BOARD_SIZE * i) 
+                            + currSquareIdx]->setPiece({PieceTypes::ROOK, Colour::WHITE});
+                        break;
+                    case 'Q':
+                        vectorTable[cornerDist + (OUTER_BOARD_SIZE * i) 
+                            + currSquareIdx]->setPiece({PieceTypes::QUEEN, Colour::WHITE});
+                        break;
+                    case 'K':
+                        vectorTable[cornerDist + (OUTER_BOARD_SIZE * i) 
+                            + currSquareIdx]->setPiece({PieceTypes::KING, Colour::WHITE});
+                        break;
+                    default:
+                        break;
+                }
+            } else {
+                //Black piece
+                switch (fenSections[0][currStrPos]) {
+                    case 'p':
+                        vectorTable[cornerDist + (OUTER_BOARD_SIZE * i) 
+                            + currSquareIdx]->setPiece({PieceTypes::PAWN, Colour::BLACK});
+                        break;
+                    case 'n':
+                        vectorTable[cornerDist + (OUTER_BOARD_SIZE * i) 
+                                + currSquareIdx]->setPiece({PieceTypes::KNIGHT, Colour::BLACK});
+                        break;
+                    case 'b':
+                        vectorTable[cornerDist + (OUTER_BOARD_SIZE * i) 
+                                + currSquareIdx]->setPiece({PieceTypes::BISHOP, Colour::BLACK});
+                        break;
+                    case 'r':
+                        vectorTable[cornerDist + (OUTER_BOARD_SIZE * i) 
+                            + currSquareIdx]->setPiece({PieceTypes::ROOK, Colour::BLACK});
+                        break;
+                    case 'q':
+                        vectorTable[cornerDist + (OUTER_BOARD_SIZE * i) 
+                            + currSquareIdx]->setPiece({PieceTypes::QUEEN, Colour::BLACK});
+                        break;
+                    case 'k':
+                        vectorTable[cornerDist + (OUTER_BOARD_SIZE * i) 
+                            + currSquareIdx]->setPiece({PieceTypes::KING, Colour::BLACK});
+                        break;
+                    default:
+                        break;
+                }
+            }
+            ++currStrPos;
+            ++currSquareIdx;
+        }
+        ++currStrPos;
+        currSquareIdx = 0;
+    }
+    
+    isWhiteTurn = fenSections[1] == "w";
+    
+    castleRights = 0x00;
+    
+    //Castling rights are not empty
+    if (fenSections[2].find_first_of('-') == std::string::npos) {
+        if (fenSections[2].find_first_of('K') != std::string::npos) {
+            castleRights += WHITE_CASTLE_KING_FLAG;
+        }
+        if (fenSections[2].find_first_of('Q') != std::string::npos) {
+            castleRights += WHITE_CASTLE_QUEEN_FLAG;
+        }
+        if (fenSections[2].find_first_of('k') != std::string::npos) {
+            castleRights += BLACK_CASTLE_KING_FLAG;
+        }
+        if (fenSections[2].find_first_of('q') != std::string::npos) {
+            castleRights += BLACK_CASTLE_QUEEN_FLAG;
+        }
+    }
+    
+    if (fenSections[3].find_first_of('-') != std::string::npos) {
+        enPassantActive = false;
+        enPassantTarget = nullptr;
+    } else {
+        // Convert the letter to a digit
+        fenSections[3][0] -= 49;
+        // Change input to zero-indexed value
+        fenSections[3][1] -= 1;
+        // Change chars to digits
+        fenSections[3][0] -= '0';
+        fenSections[3][1] -= '0';
+        
+        enPassantActive = true;
+        enPassantTarget = vectorTable[((INNER_BOARD_SIZE - 1 
+            - fenSections[3][1]) * OUTER_BOARD_SIZE) + cornerDist 
+            + fenSections[3][0]].get();
+    }
+    
+    if (!fenSections[4].empty() && std::all_of(fenSections[4].begin(), fenSections[4].end(), ::isdigit)) {
+        halfMoveClock = std::atoi(fenSections[4].c_str());
+    }
+    if (!fenSections[5].empty()&& std::all_of(fenSections[5].begin(), fenSections[5].end(), ::isdigit)) {
+        moveCounter = std::atoi(fenSections[5].c_str());
+    }
+    
 }
