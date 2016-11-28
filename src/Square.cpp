@@ -5,7 +5,7 @@
 #include <iomanip>
 
 bool Square::checkSentinel() {
-    auto pc = this->getPiece();
+    const auto& pc = this->getPiece();
     return (pc && pc->getColour() == Colour::UNKNOWN && pc->getType() == PieceTypes::UNKNOWN);
 }
 

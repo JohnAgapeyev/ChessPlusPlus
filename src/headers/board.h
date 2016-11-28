@@ -31,6 +31,7 @@ class Board {
     int convertOuterBoardIndex(const int outerIndex, const int cornerIndex) const;
     std::string promptPromotionType() const;
     void updateCheckStatus();
+    bool checkBoardValidity();
     
 public:
     Board();

@@ -1168,5 +1168,32 @@ void Board::setPositionByFEN(const std::string& fen) {
     if (!fenSections[5].empty()&& std::all_of(fenSections[5].begin(), fenSections[5].end(), ::isdigit)) {
         moveCounter = std::atoi(fenSections[5].c_str());
     }
-    
+}
+
+//Testing method used to assert board state
+bool Board::checkBoardValidity() {
+    int cornerCoords;
+    if ((cornerCoords = findCorner_1D()) == -1) {
+        std::cerr << "Could not find corner\n";
+        return false;
+    }
+    for (int i = 0; i < OUTER_BOARD_SIZE; ++i) {
+        for (int j = 0; j < OUTER_BOARD_SIZE; ++j) {
+            if (!vectorTable[cornerCoords + (i * OUTER_BOARD_SIZE) + j]) {
+                std::cerr << "Board square is null\n";
+                return false;
+            }
+            if (vectorTable[cornerCoords + (i * OUTER_BOARD_SIZE) + j]->checkSentinel()) {
+                std::cerr << "Square is sentinel when it shouldn't be\n";
+                return false;
+            }
+        }
+    }
+    Board temp(*this);
+    temp.currHash = 0;
+    if (currHash != std::hash<Board>()(temp)) {
+        std::cerr << "Calculated hash does not match current board hash\n";
+        return false;
+    }
+    return true;
 }
