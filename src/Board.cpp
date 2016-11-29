@@ -926,7 +926,7 @@ size_t std::hash<Board>::operator()(const Board& b) const {
                 return *sq == *b.enPassantTarget;
             }
         ));
-        const int fileNum = (targetIndex % 15) - cornerCoords.second;
+        const int fileNum = (targetIndex % OUTER_BOARD_SIZE) - cornerCoords.second;
         newHash ^= HASH_VALUES[static_cast<int>(SquareState::EN_PASSANT_FILE) + fileNum];
     }
     return newHash;
@@ -939,8 +939,7 @@ size_t std::hash<Board>::operator()(const Board& b) const {
  * of a2 regardless of the current board shift state.
  */
 int Board::convertOuterBoardIndex(const int outerIndex, const int cornerIndex) const {
-    const auto remain = outerIndex - cornerIndex;
-    return ((remain / OUTER_BOARD_SIZE) * INNER_BOARD_SIZE) 
+    return (((outerIndex - cornerIndex) / OUTER_BOARD_SIZE) * INNER_BOARD_SIZE) 
         + (outerIndex % OUTER_BOARD_SIZE) - (cornerIndex % OUTER_BOARD_SIZE);
 }
 
@@ -1121,8 +1120,8 @@ bool Board::checkBoardValidity() {
         std::cerr << "Could not find corner\n";
         return false;
     }
-    for (int i = 0; i < OUTER_BOARD_SIZE; ++i) {
-        for (int j = 0; j < OUTER_BOARD_SIZE; ++j) {
+    for (int i = 0; i < INNER_BOARD_SIZE; ++i) {
+        for (int j = 0; j < INNER_BOARD_SIZE; ++j) {
             if (!vectorTable[cornerCoords + (i * OUTER_BOARD_SIZE) + j]) {
                 std::cerr << "Board square is null\n";
                 return false;
