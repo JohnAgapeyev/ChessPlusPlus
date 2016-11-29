@@ -105,7 +105,7 @@ int Board::findCorner_1D() const {
 }
 
 void Board::printBoardState() const {
-#ifndef DEBUG
+#ifdef NDEBUG
     auto range = INNER_BOARD_SIZE;
     std::array<std::shared_ptr<Square>, 64> outputTable;
     std::copy_if(vectorTable.begin(), vectorTable.end(), outputTable.begin(), [](const auto& sq) {
@@ -117,14 +117,14 @@ void Board::printBoardState() const {
 #endif
     for (auto i = 0; i < range; ++i) {
         for (int j = 0; j < range; ++j) {
-#ifdef DEBUG
+#ifndef NDEBUG
             std::cout << "--------";
 #else
             std::cout << "---";
 #endif
         }
         std::cout << "-\n|";
-#ifdef DEBUG
+#ifndef NDEBUG
         std::for_each(vectorTable.cbegin() + (i * range), vectorTable.cbegin() + ((i + 1) * range), 
                 [](const auto& sq){std::cout << *sq << '|';});
 #else
@@ -135,7 +135,7 @@ void Board::printBoardState() const {
     }
 
     for (int k = 0; k < range; ++k) {
-#ifdef DEBUG
+#ifndef NDEBUG
         std::cout << "--------";
 #else
         std::cout << "---";

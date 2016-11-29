@@ -405,8 +405,8 @@ void Board::MoveGenerator::logMoveFailure(const int failureNum, const bool isSil
     if (isSilent) {
         return;
     }
-#ifdef DEBUG
-    std::cout << "Move is not legal " << failureNum << std::endl;
+#ifndef NDEBUG
+    std::cout << "Move is not legal " << failureNum << '\n';
 #else
     std::cout << "Move is not legal\n";
 #endif
