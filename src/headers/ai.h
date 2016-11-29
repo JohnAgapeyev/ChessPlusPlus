@@ -48,7 +48,7 @@ class AI {
     unsigned long long perft(int depth);
     
 public:
-    AI(Board& b);
+    AI(Board& b) : board(b) {}
     void evaluate();
     void search();
     auto getEval() const {return static_cast<double>(eval) / 100;}

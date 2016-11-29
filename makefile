@@ -1,4 +1,4 @@
-CXXFLAGS = -Wall -Wextra -pedantic -pipe -std=c++14 -O3 -D DEBUG
+CXXFLAGS := -Wall -pedantic -pipe -std=c++14
 APPNAME := Chess
 ODIR := bin
 SRC := src
@@ -10,8 +10,10 @@ HEADWILD := $(wildcard $(HEAD)/*.h)
 EXEC := $(ODIR)/$(APPNAME)
 DEPS := $(EXEC).d
 
-# Prereqs are all .o files in the bin folder; assuming each source .cpp file is turned into a .o
-all: $(patsubst $(SRCOBJS), $(OBJS), $(SRCWILD))
+release: CXXFLAGS += -O3 -march=native -flto -DNDEBUG
+release: debug
+
+debug: $(patsubst $(SRCOBJS), $(OBJS), $(SRCWILD))
 # Command takes all bin .o files and creates an executable called chess in the bin folder
 	$(CXX) $^ $(CXXFLAGS) -o $(EXEC)
 

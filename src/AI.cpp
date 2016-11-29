@@ -8,10 +8,6 @@
 #include <tuple>
 #include <utility>
 
-AI::AI(Board& b) : board(b) {
-    
-}
-
 /**
  * Evaluates the current board state from the perspective of the current player
  * to move with a positive number favouring white, and a negative one favouring black.
@@ -48,9 +44,9 @@ void AI::evaluate() {
     currScore += reduceKnightMobilityScore(blackMoveList, cornerIndex);
     
     //Counting material values
-    for(int i = 0; i < 8; ++i) {
-        for(int j = 0; j < 8; ++j) {
-            const auto& currSquare = board.vectorTable[cornerIndex + (i * 15) + j].get();
+    for(int i = 0; i < INNER_BOARD_SIZE; ++i) {
+        for(int j = 0; j < INNER_BOARD_SIZE; ++j) {
+            const auto& currSquare = board.vectorTable[cornerIndex + (i * OUTER_BOARD_SIZE) + j].get();
             const auto& currPiece = currSquare->getPiece();
             if (currPiece && !currSquare->checkSentinel() 
                     && currPiece->getType() != PieceTypes::KING) {
@@ -151,7 +147,6 @@ void AI::evaluate() {
     } else if (board.drawByMaterial()) {
         eval = 0;
     }
-    
     eval = currScore;
 }
 

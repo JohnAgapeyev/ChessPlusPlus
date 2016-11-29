@@ -32,10 +32,10 @@ Move Board::MoveGenerator::createMove(std::string& input) const {
     const auto topLeftCornerIndex = board.findCorner_1D();
     
     result.fromSq = board.vectorTable[((INNER_BOARD_SIZE - 1 - input[1]) * OUTER_BOARD_SIZE) 
-            + topLeftCornerIndex + input[0]].get();
+        + topLeftCornerIndex + input[0]].get();
             
     result.toSq = board.vectorTable[((INNER_BOARD_SIZE - 1 - input[3]) * OUTER_BOARD_SIZE) 
-            + topLeftCornerIndex + input[2]].get();
+        + topLeftCornerIndex + input[2]].get();
     
     if (result.fromSq->getPiece()) {
         result.fromPieceType = result.fromSq->getPiece()->getType();
@@ -90,7 +90,7 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
     // Try to find the start and end points
     if (firstSquare == board.vectorTable.cend() || secondSquare == board.vectorTable.cend()) {
         if (!isSilent) {
-            std::cerr << "Could not find start or end squares" << std::endl;
+            std::cerr << "Could not find start or end squares\n";
         }
         return false;
     }
@@ -98,7 +98,7 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
     // Check for either square being a sentinel
     if (mv.fromSq->checkSentinel() || mv.toSq->checkSentinel()) {
         if (!isSilent) {
-            std::cerr << "You somehow referenced a sentinel square for your move. GJ" << std::endl;
+            std::cerr << "You somehow referenced a sentinel square for your move. GJ\n";
         }
         return false;
     }
@@ -106,7 +106,7 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
     if (!mv.fromSq->getPiece() || (mv.fromPieceType == PieceTypes::UNKNOWN 
             && mv.fromPieceColour == Colour::UNKNOWN)) {
         if (!isSilent) {
-            std::cout << "Cannot start a move on an empty square" << std::endl;
+            std::cout << "Cannot start a move on an empty square\n";
         }
         return false;
     }
@@ -207,7 +207,7 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
         // Ensure pawns only move diagonally if they capture a piece, including en passant
         const int captureOffset = (mv.fromPieceColour == Colour::WHITE) ? 15 : -15;
         
-        if ((*selectedOffset % 15) 
+        if ((*selectedOffset % OUTER_BOARD_SIZE) 
                 && !board.vectorTable[secondSquareIndex]->getPiece() 
                 && !(board.enPassantActive && *board.vectorTable[secondSquareIndex] == *board.enPassantTarget 
                     && board.vectorTable[secondSquareIndex + captureOffset]->getPiece()
@@ -216,7 +216,7 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
             return false;
         }
         // Prevent pawns from capturing vertically
-        if (!(*selectedOffset % 15) && board.vectorTable[secondSquareIndex]->getPiece()) {
+        if (!(*selectedOffset % OUTER_BOARD_SIZE) && board.vectorTable[secondSquareIndex]->getPiece()) {
             logMoveFailure(7, isSilent);
             return false;
         }
@@ -354,7 +354,7 @@ bool Board::MoveGenerator::inCheck(const Move& mv) const {
                 if (std::find_if(pieceVector.cbegin(), pieceVector.cend(), 
                         [currPieceType, offset](const auto off){
                             if (currPieceType == PieceTypes::PAWN) {
-                                if (off % 15) {
+                                if (off % OUTER_BOARD_SIZE) {
                                     return off == -offset;
                                 }
                                 return false;
@@ -479,9 +479,11 @@ std::vector<Move> Board::MoveGenerator::generateAll() {
                             [&mv](const auto& sq){return (*sq == *mv.toSq);}));
                             
                     //Calculate the corner index based on the above board shift to prevent a linear search
-                    const auto cornerIndex = ((7 - std::get<0>(p) + startCoords.first) * 15) + (7 - std::get<1>(p) + startCoords.second);
+                    const auto cornerIndex = ((7 - std::get<0>(p) + startCoords.first) 
+                        * OUTER_BOARD_SIZE) + (7 - std::get<1>(p) + startCoords.second);
                     const auto distFromStartToCorner = distToEndSquare - cornerIndex;
-                    const auto& rowPairs = (mv.fromPieceColour == Colour::WHITE) ? std::make_pair(0, 14) : std::make_pair(105, 119);
+                    const auto& rowPairs = (mv.fromPieceColour == Colour::WHITE) 
+                        ? std::make_pair(0, 14) : std::make_pair(105, 119);
                     
                     //Promotion validity
                     if (distFromStartToCorner >= rowPairs.first && distFromStartToCorner <= rowPairs.second) {
@@ -527,7 +529,6 @@ std::vector<Move> Board::MoveGenerator::generateAll() {
                     mv.isCastle = true;
                     mv.castleRights = board.castleRights;
                 }
-                
                 moveList.push_back(mv);
             }
         }

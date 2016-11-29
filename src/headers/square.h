@@ -1,10 +1,10 @@
 #ifndef SQUARE_H
 #define SQUARE_H
 
-#include "piece.h"
-#include "enums.h"
 #include <memory>
 #include <iostream>
+#include "piece.h"
+#include "enums.h"
 
 class Square {
 private:

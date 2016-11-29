@@ -1,12 +1,12 @@
+#include <iostream>
+#include <iomanip>
 #include "headers/piece.h"
 #include "headers/enums.h"
 #include "headers/square.h"
-#include <iostream>
-#include <iomanip>
 
 bool Square::checkSentinel() {
-    const auto& pc = this->getPiece();
-    return (pc && pc->getColour() == Colour::UNKNOWN && pc->getType() == PieceTypes::UNKNOWN);
+    return (this->getPiece() && this->getPiece()->getColour() == Colour::UNKNOWN 
+        && this->getPiece()->getType() == PieceTypes::UNKNOWN);
 }
 
 std::ostream& operator<<(std::ostream& os, const Square& square) {
