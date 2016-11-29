@@ -1,9 +1,3 @@
-#include "headers/square.h"
-#include "headers/board.h"
-#include "headers/consts.h"
-#include "headers/enums.h"
-#include "headers/move.h"
-#include "headers/movegenerator.h"
 #include <vector>
 #include <array>
 #include <iostream>
@@ -16,7 +10,14 @@
 #include <regex>
 #include <cctype>
 #include <cstring>
+#include <cassert>
 #include <string>
+#include "headers/square.h"
+#include "headers/board.h"
+#include "headers/consts.h"
+#include "headers/enums.h"
+#include "headers/move.h"
+#include "headers/movegenerator.h"
 
 /*
  * Try to remove index from squares and instead calculate it based off the index
@@ -202,19 +203,24 @@ void Board::shiftVertical(const int count) {
 }
 
 void Board::shiftBoard(const int col, const int row) {
+    assert(checkBoardValidity());
     const auto& startCoords = findCorner();
     const auto colDiff = ZERO_LOCATION.first - (startCoords.second + col);
     const auto rowDiff = ZERO_LOCATION.second - (startCoords.first + row);
     shiftHorizontal(colDiff);
+    assert(checkBoardValidity());
     shiftVertical(rowDiff);
+    assert(checkBoardValidity());
     for (int i = 0; i < OUTER_BOARD_SIZE; ++i) {
         for (int j = 0; j < OUTER_BOARD_SIZE; ++j) {
             vectorTable[(i* OUTER_BOARD_SIZE) + j]->setOffset(genOffset(i, j));
         }
     }
+    assert(checkBoardValidity());
 }
 
 void Board::makeMove(std::string& input) {
+    assert(checkBoardValidity());
     auto mv = moveGen->createMove(input);
     
     shiftBoard(input[0], INNER_BOARD_SIZE - 1 - input[1]);
@@ -222,7 +228,7 @@ void Board::makeMove(std::string& input) {
     if (!moveGen->validateMove(mv, false)) {
         return;
     }
-    ensureEnPassantValid();
+    assert(checkBoardValidity());
     
     halfMoveClock++;
     
@@ -457,9 +463,11 @@ void Board::makeMove(std::string& input) {
         currentGameState = GameState::DRAWN;
         return;
     }
+    assert(checkBoardValidity());
 }
 
 void Board::makeMove(Move mv) {
+    assert(checkBoardValidity());
     const auto& cornerCoords = findCorner_1D();
     const auto blackFromPieceHashOffset = ((mv.fromPieceColour == Colour::WHITE) ? 0 : 6);
     const auto blackToPieceHashOffset = ((mv.toPieceColour == Colour::WHITE) ? 0 : 6);
@@ -482,8 +490,8 @@ void Board::makeMove(Move mv) {
     if (!moveGen->validateMove(mv, true)) {
         return;
     }
-    
-    ensureEnPassantValid();
+
+    assert(checkBoardValidity());
     
     halfMoveClock++;
     
@@ -665,9 +673,11 @@ void Board::makeMove(Move mv) {
     
     std::rotate(repititionList.begin(), repititionList.begin() + 1, repititionList.end());
     repititionList[repititionList.size() - 1] = currHash;
+    assert(checkBoardValidity());
 }
 
 void Board::unmakeMove(const Move& mv) {
+    assert(checkBoardValidity());
     const auto distToFromSquare = std::distance(vectorTable.cbegin(), 
         std::find_if(vectorTable.cbegin(), vectorTable.cend(), 
             [&mv](const auto& sq){return (*sq == *mv.fromSq);}));
@@ -795,17 +805,7 @@ void Board::unmakeMove(const Move& mv) {
     }
     
     halfMoveClock = mv.halfMoveClock;
-}
-
-void Board::ensureEnPassantValid() const {
-    try {
-        if (enPassantActive && !enPassantTarget) {
-            throw std::logic_error("En passant target should never be null when en passant is active");
-        }
-    } catch (const std::exception& e) {
-        std::cerr << "FATAL ERROR: " << e.what() << std::endl;
-        throw e;
-    }
+    assert(checkBoardValidity());
 }
 
 std::string Board::generateFEN() const {
@@ -1132,6 +1132,11 @@ bool Board::checkBoardValidity() {
             }
         }
     }
+    if (enPassantActive && !enPassantTarget) {
+        std::cerr << "En passant target should never be null when en passant is active\n";
+        return false;
+    }
+    
     Board temp(*this);
     temp.currHash = 0;
     if (currHash != std::hash<Board>()(temp)) {

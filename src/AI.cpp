@@ -332,5 +332,4 @@ unsigned long long AI::perft(int depth) {
         board.unmakeMove(moveList[i]);
     }
     return nodeCount;
-    return nodeCount;
 }

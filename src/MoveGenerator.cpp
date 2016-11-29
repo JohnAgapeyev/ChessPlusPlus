@@ -14,6 +14,7 @@
 #include <cstdlib>
 #include <stdexcept>
 #include <functional>
+#include <cassert>
 
 Move Board::MoveGenerator::createMove(std::string& input) const {
     // If the characters are letters, convert them to digit chars
@@ -200,8 +201,7 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
             return false;
         }
     }
-    
-    board.ensureEnPassantValid();
+    assert(board.checkBoardValidity());
     // Pawn related validation checks
     if (mv.fromPieceType == PieceTypes::PAWN) {
         // Ensure pawns only move diagonally if they capture a piece, including en passant

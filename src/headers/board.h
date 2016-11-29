@@ -27,7 +27,6 @@ class Board {
     std::array<size_t, 9> repititionList;
     void shiftVertical(const int count);
     void shiftHorizontal(const int count);
-    void ensureEnPassantValid() const;
     int convertOuterBoardIndex(const int outerIndex, const int cornerIndex) const;
     std::string promptPromotionType() const;
     void updateCheckStatus();
