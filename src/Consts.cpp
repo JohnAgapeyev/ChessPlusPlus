@@ -55,10 +55,10 @@ std::array<std::array<std::shared_ptr<Square>, 8>, 8> fillInitBoard() {
 
 std::array<uint_fast64_t, HASH_BOARD_LENGTH> populateHashTable() {
     std::array<uint_fast64_t, HASH_BOARD_LENGTH> result;
-    const auto seed = std::chrono::system_clock::now().time_since_epoch().count();
-    std::mt19937_64 gen(seed);
+    std::mt19937_64 gen(std::random_device{}());
+    std::uniform_int_distribution<uint_fast64_t> uni;
     for (int i = 0; i < HASH_BOARD_LENGTH; ++i) {
-        result[i] = gen();
+        result[i] = uni(gen);
     }
     return result;
 }
