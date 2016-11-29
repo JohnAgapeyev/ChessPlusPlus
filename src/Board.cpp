@@ -1056,67 +1056,11 @@ void Board::setPositionByFEN(const std::string& fen) {
                 ++currStrPos;
                 continue;
             }
-            if (std::isupper(fenSections[0][currStrPos])) {
-                //White piece
-                switch (fenSections[0][currStrPos]) {
-                    case 'P':
-                        vectorTable[cornerDist + (OUTER_BOARD_SIZE * i) 
-                            + currSquareIdx]->setPiece({PieceTypes::PAWN, Colour::WHITE});
-                        break;
-                    case 'N':
-                        vectorTable[cornerDist + (OUTER_BOARD_SIZE * i) 
-                                + currSquareIdx]->setPiece({PieceTypes::KNIGHT, Colour::WHITE});
-                        break;
-                    case 'B':
-                        vectorTable[cornerDist + (OUTER_BOARD_SIZE * i) 
-                                + currSquareIdx]->setPiece({PieceTypes::BISHOP, Colour::WHITE});
-                        break;
-                    case 'R':
-                        vectorTable[cornerDist + (OUTER_BOARD_SIZE * i) 
-                            + currSquareIdx]->setPiece({PieceTypes::ROOK, Colour::WHITE});
-                        break;
-                    case 'Q':
-                        vectorTable[cornerDist + (OUTER_BOARD_SIZE * i) 
-                            + currSquareIdx]->setPiece({PieceTypes::QUEEN, Colour::WHITE});
-                        break;
-                    case 'K':
-                        vectorTable[cornerDist + (OUTER_BOARD_SIZE * i) 
-                            + currSquareIdx]->setPiece({PieceTypes::KING, Colour::WHITE});
-                        break;
-                    default:
-                        break;
-                }
-            } else {
-                //Black piece
-                switch (fenSections[0][currStrPos]) {
-                    case 'p':
-                        vectorTable[cornerDist + (OUTER_BOARD_SIZE * i) 
-                            + currSquareIdx]->setPiece({PieceTypes::PAWN, Colour::BLACK});
-                        break;
-                    case 'n':
-                        vectorTable[cornerDist + (OUTER_BOARD_SIZE * i) 
-                                + currSquareIdx]->setPiece({PieceTypes::KNIGHT, Colour::BLACK});
-                        break;
-                    case 'b':
-                        vectorTable[cornerDist + (OUTER_BOARD_SIZE * i) 
-                                + currSquareIdx]->setPiece({PieceTypes::BISHOP, Colour::BLACK});
-                        break;
-                    case 'r':
-                        vectorTable[cornerDist + (OUTER_BOARD_SIZE * i) 
-                            + currSquareIdx]->setPiece({PieceTypes::ROOK, Colour::BLACK});
-                        break;
-                    case 'q':
-                        vectorTable[cornerDist + (OUTER_BOARD_SIZE * i) 
-                            + currSquareIdx]->setPiece({PieceTypes::QUEEN, Colour::BLACK});
-                        break;
-                    case 'k':
-                        vectorTable[cornerDist + (OUTER_BOARD_SIZE * i) 
-                            + currSquareIdx]->setPiece({PieceTypes::KING, Colour::BLACK});
-                        break;
-                    default:
-                        break;
-                }
-            }
+            
+            vectorTable[cornerDist + (OUTER_BOARD_SIZE * i) + currSquareIdx]->setPiece(
+                {static_cast<PieceTypes>(std::toupper(fenSections[0][currStrPos])), 
+                    (std::isupper(fenSections[0][currStrPos])) ? Colour::WHITE : Colour::BLACK});
+                    
             ++currStrPos;
             ++currSquareIdx;
         }
