@@ -33,8 +33,8 @@ constexpr auto genOffset = [](const auto a, const auto b){return 98 - (15 * a) +
 
 Board::Board() {
     moveGen = std::make_unique<MoveGenerator>(*this);
-    for (int i = 0; i < 15; ++i) {
-        for (int j = 0; j < 15; ++j) {
+    for (int i = 0; i < OUTER_BOARD_SIZE; ++i) {
+        for (int j = 0; j < OUTER_BOARD_SIZE; ++j) {
             if (i >= 0 && i <= 7) {
                 if (j >= 0 && j <= 7) {
                     vectorTable[(i * OUTER_BOARD_SIZE) + j] = INIT_BOARD[i][j];
@@ -527,7 +527,7 @@ void Board::makeMove(Move mv) {
     const int captureIndex = distToEndSquare + ((isWhiteTurn) ? 15: -15);
     // If en passant move is made, capture the appropriate pawn
     if (enPassantActive && mv.fromPieceType == PieceTypes::PAWN 
-            && (diff % 15) && *mv.toSq == *enPassantTarget
+            && (diff % OUTER_BOARD_SIZE) && *mv.toSq == *enPassantTarget
             && vectorTable[captureIndex]->getPiece() 
             && vectorTable[captureIndex]->getPiece()->getColour() != mv.fromPieceColour) {
         vectorTable[captureIndex]->setPiece(nullptr);
@@ -599,31 +599,28 @@ void Board::makeMove(Move mv) {
             currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
         }
     }
-    
     // Disable castling if the appropriate rook moves
     if (mv.fromPieceType == PieceTypes::ROOK) {
         if (mv.fromPieceColour == Colour::WHITE && (castleRights & WHITE_CASTLE_FLAG)) {
             const int backRankIndex = findCorner_1D() + (7 * OUTER_BOARD_SIZE);
-            const auto& fromSquare = *mv.fromSq;
-            if (*(vectorTable[backRankIndex].get()) == fromSquare) {
+            if (*(vectorTable[backRankIndex].get()) == *mv.fromSq) {
                 currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
                 castleRights &= ~WHITE_CASTLE_QUEEN_FLAG;
                 currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
             }
-            if (*(vectorTable[backRankIndex + 7].get()) == fromSquare) {
+            if (*(vectorTable[backRankIndex + 7].get()) == *mv.fromSq) {
                 currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
                 castleRights &= ~WHITE_CASTLE_KING_FLAG;
                 currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
             }
         } else if (mv.fromPieceColour == Colour::BLACK && (castleRights & BLACK_CASTLE_FLAG)) {
             const int backRankIndex = findCorner_1D();
-            const auto& fromSquare = *mv.fromSq;
-            if (*(vectorTable[backRankIndex].get()) == fromSquare) {
+            if (*(vectorTable[backRankIndex].get()) == *mv.fromSq) {
                 currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
                 castleRights &= ~BLACK_CASTLE_QUEEN_FLAG;
                 currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
             }
-            if (*(vectorTable[backRankIndex + 7].get()) == fromSquare) {
+            if (*(vectorTable[backRankIndex + 7].get()) == *mv.fromSq) {
                 currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
                 castleRights &= ~BLACK_CASTLE_KING_FLAG;
                 currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
@@ -673,11 +670,13 @@ void Board::makeMove(Move mv) {
     
     std::rotate(repititionList.begin(), repititionList.begin() + 1, repititionList.end());
     repititionList[repititionList.size() - 1] = currHash;
+    
     assert(checkBoardValidity());
 }
 
 void Board::unmakeMove(const Move& mv) {
     assert(checkBoardValidity());
+    
     const auto distToFromSquare = std::distance(vectorTable.cbegin(), 
         std::find_if(vectorTable.cbegin(), vectorTable.cend(), 
             [&mv](const auto& sq){return (*sq == *mv.fromSq);}));
@@ -722,7 +721,7 @@ void Board::unmakeMove(const Move& mv) {
     }
     
     const auto innerBoardIndex = convertOuterBoardIndex(distToFromSquare 
-        + diff - 15 + (30 * (diff < 0)), cornerIndex);
+        + diff - OUTER_BOARD_SIZE + (30 * (diff < 0)), cornerIndex);
         
     if (enPassantActive) {
         if (mv.enPassantActive) {
@@ -730,29 +729,30 @@ void Board::unmakeMove(const Move& mv) {
             currHash ^= HASH_VALUES[static_cast<int>(SquareState::EN_PASSANT_FILE) 
                 + (convertOuterBoardIndex(distToOldTarget, cornerIndex) % 8)];
             currHash ^= HASH_VALUES[static_cast<int>(SquareState::EN_PASSANT_FILE) 
-                + (innerBoardIndex % 8)];
+                + (innerBoardIndex % INNER_BOARD_SIZE)];
         } else {
             //1-0, undo old file only
             currHash ^= HASH_VALUES[static_cast<int>(SquareState::EN_PASSANT_FILE) 
-                + (convertOuterBoardIndex(distToOldTarget, cornerIndex) % 8)];
+                + (convertOuterBoardIndex(distToOldTarget, cornerIndex) % INNER_BOARD_SIZE)];
         }
     } else if (mv.enPassantActive) {
         //0-1, add in new file only
         currHash ^= HASH_VALUES[static_cast<int>(SquareState::EN_PASSANT_FILE) 
-            + (innerBoardIndex % 8)];
+            + (innerBoardIndex % INNER_BOARD_SIZE)];
     }
 
     //En passant Capture was made.
     if (mv.enPassantActive 
             && mv.enPassantTarget 
             && mv.fromPieceType == PieceTypes::PAWN 
-            && (diff % 15) 
+            && (diff % OUTER_BOARD_SIZE) 
             && !mv.toSq->getPiece()
             && mv.toSq->getOffset() == mv.enPassantTarget->getOffset()) {
         
         //Calculate the square containing the captured pawn and put it back
         const auto capturedColour = (mv.fromPieceColour == Colour::WHITE) ? Colour::BLACK : Colour::WHITE;
-        vectorTable[distToFromSquare + diff - 15 + (30 * (diff < 0))]->setPiece({PieceTypes::PAWN, capturedColour});
+        vectorTable[distToFromSquare + diff - OUTER_BOARD_SIZE + (30 * (diff < 0))]
+            ->setPiece({PieceTypes::PAWN, capturedColour});
         
         //Hashing in the captured pawn
         currHash ^= HASH_VALUES[NUM_SQUARE_STATES 
@@ -828,7 +828,7 @@ std::string Board::generateFEN() const {
             output += charCaseFunction(static_cast<char>(squarePiece->getType()));
             emptySquareCounter = 0;
         }
-        if (i % 15 == 14) {
+        if (i % OUTER_BOARD_SIZE == 14) {
             if (rowContainsGameBoard) {
                 if (emptySquareCounter) {
                     output += std::to_string(emptySquareCounter);
@@ -888,7 +888,7 @@ size_t std::hash<Board>::operator()(const Board& b) const {
     }
     
     const auto& cornerCoords = b.findCorner();
-    const int cornerIndex = (cornerCoords.first * 15) + cornerCoords.second;
+    const int cornerIndex = (cornerCoords.first * OUTER_BOARD_SIZE) + cornerCoords.second;
     const auto& cornerPiece = b.vectorTable[cornerIndex]->getPiece();
     size_t newHash = 0;
     if (cornerPiece) {
@@ -938,13 +938,9 @@ size_t std::hash<Board>::operator()(const Board& b) const {
  * Eg. If outerIndex references a2, this method returns the relative position
  * of a2 regardless of the current board shift state.
  */
-int Board::convertOuterBoardIndex(const int outerIndex, const int cornerIndex) const {
+inline constexpr int Board::convertOuterBoardIndex(const int outerIndex, const int cornerIndex) {
     return (((outerIndex - cornerIndex) / OUTER_BOARD_SIZE) * INNER_BOARD_SIZE) 
         + (outerIndex % OUTER_BOARD_SIZE) - (cornerIndex % OUTER_BOARD_SIZE);
-}
-
-bool operator==(const Board& first, const Board& second) {
-    return (first.currHash == second.currHash);
 }
 
 bool Board::drawByMaterial() const {
@@ -1124,10 +1120,12 @@ bool Board::checkBoardValidity() {
         for (int j = 0; j < INNER_BOARD_SIZE; ++j) {
             if (!vectorTable[cornerCoords + (i * OUTER_BOARD_SIZE) + j]) {
                 std::cerr << "Board square is null\n";
+                printBoardState();
                 return false;
             }
             if (vectorTable[cornerCoords + (i * OUTER_BOARD_SIZE) + j]->checkSentinel()) {
                 std::cerr << "Square is sentinel when it shouldn't be\n";
+                printBoardState();
                 return false;
             }
         }
@@ -1137,11 +1135,16 @@ bool Board::checkBoardValidity() {
         return false;
     }
     
-    Board temp(*this);
-    temp.currHash = 0;
-    if (currHash != std::hash<Board>()(temp)) {
-        std::cerr << "Calculated hash does not match current board hash\n";
-        return false;
-    }
+    //Board temp(*this);
+    //temp.currHash = 0;
+    //if (currHash != std::hash<Board>()(temp)) {
+        //std::cout << "Original\n";
+        //printBoardState();
+        //std::cout << "\n\n\n\n\nCopy\n";
+        //temp.printBoardState();
+        //std::cerr << currHash << '\n' << std::hash<Board>()(temp) << '\n';
+        //std::cerr << "Calculated hash does not match current board hash\n";
+        //return false;
+    //}
     return true;
 }

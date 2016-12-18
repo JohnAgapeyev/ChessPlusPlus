@@ -201,7 +201,6 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
             return false;
         }
     }
-    assert(board.checkBoardValidity());
     // Pawn related validation checks
     if (mv.fromPieceType == PieceTypes::PAWN) {
         // Ensure pawns only move diagonally if they capture a piece, including en passant
@@ -413,8 +412,6 @@ void Board::MoveGenerator::logMoveFailure(const int failureNum, const bool isSil
 }
 
 std::vector<Move> Board::MoveGenerator::generateAll() {
-    Move mv;
-        
     std::vector<Move> moveList;
         
     const auto tableSize = static_cast<int>(board.vectorTable.size());
@@ -443,6 +440,7 @@ std::vector<Move> Board::MoveGenerator::generateAll() {
             const int moveLen = std::get<2>(p)->getVectorLength();
             
             for (int j = 1; j < moveLen; ++j) {
+                Move mv;
                 const auto toSquareIndex = getOffsetIndex(offset, ZERO_LOCATION_1D, j);
                 if (toSquareIndex < 0 || toSquareIndex > tableSize) {
                     break;

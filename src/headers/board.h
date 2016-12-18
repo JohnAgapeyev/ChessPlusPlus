@@ -1,16 +1,18 @@
 #ifndef BOARD_H
 #define BOARD_H
 
-#include "square.h"
-#include "consts.h"
-#include "move.h"
-#include "enums.h"
 #include <vector>
 #include <array>
 #include <memory>
 #include <algorithm>
+#include "square.h"
+#include "consts.h"
+#include "move.h"
+#include "enums.h"
 
 class Board {
+    static constexpr int convertOuterBoardIndex(const int outerIndex, const int cornerIndex);
+    
     class MoveGenerator;
     std::unique_ptr<MoveGenerator> moveGen;
     std::array<std::shared_ptr<Square>, OUTER_BOARD_SIZE * OUTER_BOARD_SIZE> vectorTable;
@@ -27,7 +29,6 @@ class Board {
     std::array<size_t, 9> repititionList;
     void shiftVertical(const int count);
     void shiftHorizontal(const int count);
-    int convertOuterBoardIndex(const int outerIndex, const int cornerIndex) const;
     std::string promptPromotionType() const;
     void updateCheckStatus();
     bool checkBoardValidity();
@@ -36,6 +37,9 @@ public:
     Board();
     Board(const Board& b);
     ~Board();
+    
+    bool operator==(const Board& second) const {return currHash == second.currHash;}
+    
     void printBoardState() const;
     auto getBoard() const {return vectorTable;}
     auto getGameState() const {return currentGameState;}
@@ -52,7 +56,6 @@ public:
     
     friend class std::hash<Board>;
     friend class AI;
-    friend bool operator==(const Board& first, const Board& second);
 };
 
 namespace std {

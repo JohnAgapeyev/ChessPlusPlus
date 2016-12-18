@@ -319,12 +319,13 @@ std::pair<int, int> AI::AlphaBeta(int alpha, int beta, const int depth) {
 }
 
 unsigned long long AI::perft(int depth) {
-    if (!depth) {
-        return 1;
-    }
     unsigned long long nodeCount = 0;
     const auto& moveList = board.moveGen->generateAll();
     const auto& moveListSize = moveList.size();
+    
+    if (depth == 1) {
+        return moveListSize;
+    }
     
     for (size_t i = 0; i < moveListSize; ++i) {
         board.makeMove(moveList[i]);
