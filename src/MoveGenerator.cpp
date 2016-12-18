@@ -1,9 +1,3 @@
-#include "headers/square.h"
-#include "headers/board.h"
-#include "headers/consts.h"
-#include "headers/enums.h"
-#include "headers/move.h"
-#include "headers/movegenerator.h"
 #include <vector>
 #include <array>
 #include <iostream>
@@ -15,6 +9,11 @@
 #include <stdexcept>
 #include <functional>
 #include <cassert>
+#include "headers/square.h"
+#include "headers/board.h"
+#include "headers/consts.h"
+#include "headers/enums.h"
+#include "headers/move.h"
 
 Move Board::MoveGenerator::createMove(std::string& input) const {
     // If the characters are letters, convert them to digit chars

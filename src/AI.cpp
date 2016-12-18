@@ -1,12 +1,11 @@
-#include "headers/ai.h"
-#include "headers/board.h"
-#include "headers/consts.h"
-#include "headers/movegenerator.h"
-#include "headers/enums.h"
 #include <climits>
 #include <algorithm>
 #include <tuple>
 #include <utility>
+#include "headers/ai.h"
+#include "headers/board.h"
+#include "headers/consts.h"
+#include "headers/enums.h"
 
 /**
  * Evaluates the current board state from the perspective of the current player
@@ -22,14 +21,14 @@ void AI::evaluate() {
     int filePawnCount[16] = {0};
     
     if (board.isWhiteTurn) {
-        whiteMoveList = board.moveGen->generateAll();
+        whiteMoveList = board.moveGen.generateAll();
         board.isWhiteTurn = false;
-        blackMoveList = board.moveGen->generateAll();
+        blackMoveList = board.moveGen.generateAll();
         board.isWhiteTurn = true;
     } else {
-        blackMoveList = board.moveGen->generateAll();
+        blackMoveList = board.moveGen.generateAll();
         board.isWhiteTurn = true;
-        whiteMoveList = board.moveGen->generateAll();
+        whiteMoveList = board.moveGen.generateAll();
         board.isWhiteTurn = false;
     }
 
@@ -159,11 +158,11 @@ int AI::reduceKnightMobilityScore(const std::vector<Move>& moveList, const int c
         if (mv.fromPieceType == PieceTypes::KNIGHT) {
             
             //Calculate index of destination square without requiring linear search
-            const auto cornerToSqDiff = board.moveGen->getOffsetIndex(
+            const auto cornerToSqDiff = board.moveGen.getOffsetIndex(
                 mv.toSq->getOffset() - board.vectorTable[cornerIndex]->getOffset(), cornerIndex);
                 
             for (int i = 0; i < 4; ++i) {
-                cornerCheckIndex = board.moveGen->getOffsetIndex(pawnThreatOffsets[i], cornerToSqDiff);
+                cornerCheckIndex = board.moveGen.getOffsetIndex(pawnThreatOffsets[i], cornerToSqDiff);
                 if (cornerCheckIndex < 0 || cornerCheckIndex >= OUTER_BOARD_SIZE * OUTER_BOARD_SIZE) {
                     continue;
                 }
@@ -234,7 +233,7 @@ std::pair<int, int> AI::MTD(const int firstGuess, const int depth) {
 std::pair<int, int> AI::AlphaBeta(int alpha, int beta, const int depth) {
     auto rtn = std::make_pair(INT_MIN, 0);
         
-    const auto moveList = board.moveGen->generateAll();
+    const auto moveList = board.moveGen.generateAll();
     const auto moveListSize = moveList.size();
     
     if (boardCache.retrieve(board.currHash)) {
@@ -320,7 +319,7 @@ std::pair<int, int> AI::AlphaBeta(int alpha, int beta, const int depth) {
 
 unsigned long long AI::perft(int depth) {
     unsigned long long nodeCount = 0;
-    const auto& moveList = board.moveGen->generateAll();
+    const auto& moveList = board.moveGen.generateAll();
     const auto& moveListSize = moveList.size();
     
     if (depth == 1) {

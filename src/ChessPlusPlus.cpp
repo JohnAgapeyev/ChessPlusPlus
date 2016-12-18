@@ -1,3 +1,8 @@
+#include <iostream>
+#include <string>
+#include <algorithm>
+#include <cctype>
+#include <regex>
 #include "headers/board.h"
 #include "headers/square.h"
 #include "headers/piece.h"
@@ -5,11 +10,6 @@
 #include "headers/consts.h"
 #include "headers/tt.h"
 #include "headers/ai.h"
-#include <iostream>
-#include <string>
-#include <algorithm>
-#include <cctype>
-#include <regex>
 
 int main() {
     Board b;

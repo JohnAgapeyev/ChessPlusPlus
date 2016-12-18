@@ -17,7 +17,6 @@
 #include "headers/consts.h"
 #include "headers/enums.h"
 #include "headers/move.h"
-#include "headers/movegenerator.h"
 
 /*
  * Try to remove index from squares and instead calculate it based off the index
@@ -32,7 +31,6 @@
 constexpr auto genOffset = [](const auto a, const auto b){return 98 - (15 * a) + b;};
 
 Board::Board() {
-    moveGen = std::make_unique<MoveGenerator>(*this);
     for (int i = 0; i < OUTER_BOARD_SIZE; ++i) {
         for (int j = 0; j < OUTER_BOARD_SIZE; ++j) {
             if (i >= 0 && i <= 7) {
@@ -51,30 +49,13 @@ Board::Board() {
     currHash = repititionList[0];
 }
 
-Board::Board(const Board& b) : Board() {
-    currentGameState = b.currentGameState;
-    castleRights = b.castleRights;
-    blackInCheck = b.blackInCheck;
-    whiteInCheck = b.whiteInCheck;
-    isWhiteTurn = b.isWhiteTurn;
-    enPassantActive = b.enPassantActive;
-    enPassantTarget = b.enPassantTarget;
-    halfMoveClock = b.halfMoveClock;
-    moveCounter = b.moveCounter;
-    currHash = b.currHash;
-}
-
-/*
- * Board contains a unique_ptr<MoveGenerator> where MoveGenerator
- * is an inner class defined outside of board's header. This results in
- * MoveGenerator being defined as an incomplete type at compile time.
- * Unique_ptr requires that the type it holds is 100% complete at compile time.
- * Therefore, I need to manually define a destructor since unique_ptr can't create
- * one due to it holding an incomplete type. Since it's a unique ptr, I don't 
- * have to manually delete any memory, so my destructor just calls 
- * the default one expicitly.
- */
-Board::~Board() = default;
+Board::Board(const Board& b) : moveGen(b.moveGen), vectorTable(b.vectorTable), 
+        currentGameState(b.currentGameState), castleRights(b.castleRights), 
+        blackInCheck(b.blackInCheck), whiteInCheck(b.whiteInCheck), 
+        isWhiteTurn(b.isWhiteTurn), enPassantActive(b.enPassantActive), 
+        enPassantTarget(b.enPassantTarget), halfMoveClock(b.halfMoveClock), 
+        moveCounter(b.moveCounter), currHash(b.currHash), 
+        repititionList(b.repititionList) {}
 
 std::pair<int, int> Board::findCorner() const {
     auto result = std::find_if(
@@ -221,11 +202,11 @@ void Board::shiftBoard(const int col, const int row) {
 
 void Board::makeMove(std::string& input) {
     assert(checkBoardValidity());
-    auto mv = moveGen->createMove(input);
+    auto mv = moveGen.createMove(input);
     
     shiftBoard(input[0], INNER_BOARD_SIZE - 1 - input[1]);
     
-    if (!moveGen->validateMove(mv, false)) {
+    if (!moveGen.validateMove(mv, false)) {
         return;
     }
     assert(checkBoardValidity());
@@ -308,7 +289,7 @@ void Board::makeMove(std::string& input) {
         mv.enPassantFileNum = 0;
     }
     
-    const bool castleDirectionChosen = moveGen->getCastleDirectionBool(
+    const bool castleDirectionChosen = moveGen.getCastleDirectionBool(
             mv.fromPieceType, mv.fromPieceColour, diff);
     
     //Perform castling
@@ -410,7 +391,7 @@ void Board::makeMove(std::string& input) {
         moveCounter++;
     }
     
-    moveGen->generateAll();
+    moveGen.generateAll();
     
     // For testing purposes, display list of opponents legal moves
     //for (const auto& mo : moveGen->getMoveList()) {
@@ -427,7 +408,7 @@ void Board::makeMove(std::string& input) {
     repititionList[repititionList.size() - 1] = currHash;
     
     //Opponent has no legal moves
-    if (!moveGen->generateAll().size()) {
+    if (!moveGen.generateAll().size()) {
         const auto opponentCheck = (!isWhiteTurn) ? whiteInCheck : blackInCheck;
         if (opponentCheck) {
             //Checkmate
@@ -484,10 +465,9 @@ void Board::makeMove(Move mv) {
         }
     }
     end:
-    
     shiftBoard(col, row);
     
-    if (!moveGen->validateMove(mv, true)) {
+    if (!moveGen.validateMove(mv, true)) {
         return;
     }
 
@@ -568,8 +548,7 @@ void Board::makeMove(Move mv) {
         mv.enPassantFileNum = 0;
     }
     
-    const bool castleDirectionChosen = moveGen->getCastleDirectionBool(mv.fromPieceType, mv.fromPieceColour, diff);
-    
+    const bool castleDirectionChosen = moveGen.getCastleDirectionBool(mv.fromPieceType, mv.fromPieceColour, diff);
     //Perform castling
     if (mv.fromPieceType == PieceTypes::KING && std::abs(diff) == 2 && castleDirectionChosen) {
         mv.isCastle = true;
@@ -1024,8 +1003,8 @@ void Board::updateCheckStatus() {
                     && piece->getColour() == Colour::WHITE;
             }));
     
-    blackInCheck = moveGen->inCheck(blackKingDist);
-    whiteInCheck = moveGen->inCheck(whiteKingDist);
+    blackInCheck = moveGen.inCheck(blackKingDist);
+    whiteInCheck = moveGen.inCheck(whiteKingDist);
 }
 
 //Currently no validation for this method as it is being built primarily for perft position testing

@@ -13,8 +13,22 @@
 class Board {
     static constexpr int convertOuterBoardIndex(const int outerIndex, const int cornerIndex);
     
-    class MoveGenerator;
-    std::unique_ptr<MoveGenerator> moveGen;
+    class MoveGenerator {
+        Board& board;
+        void logMoveFailure(const int failureNum, const bool isSilent) const;
+        
+    public:
+        MoveGenerator(Board& b) : board(b) {}
+        std::vector<Move> generateAll();
+        bool validateMove(const Move& mv, const bool isSilent);
+        bool inCheck(const Move& mv) const;
+        bool inCheck(const int squareIndex) const;
+        Move createMove(std::string& input) const;
+        int getOffsetIndex(const int offset, const int startIndex = 0, const int vectorLen = 1) const;
+        bool getCastleDirectionBool(const PieceTypes type, const Colour pieceColour, const int offset) const;
+    };
+    MoveGenerator moveGen{*this};
+    
     std::array<std::shared_ptr<Square>, OUTER_BOARD_SIZE * OUTER_BOARD_SIZE> vectorTable;
     GameState currentGameState = GameState::ACTIVE;
     unsigned char castleRights = 0x0F;
@@ -27,6 +41,7 @@ class Board {
     int moveCounter = 1;
     size_t currHash = 0;
     std::array<size_t, 9> repititionList;
+    
     void shiftVertical(const int count);
     void shiftHorizontal(const int count);
     std::string promptPromotionType() const;
@@ -36,7 +51,6 @@ class Board {
 public:
     Board();
     Board(const Board& b);
-    ~Board();
     
     bool operator==(const Board& second) const {return currHash == second.currHash;}
     
