@@ -131,11 +131,9 @@ void Board::shiftHorizontal(const int count) {
         return;
     }
     auto startCoords = findCorner();
-    if (startCoords.second + count < 0 
-        || startCoords.second + count + INNER_BOARD_SIZE - 1 > OUTER_BOARD_SIZE) {
-        std::cerr << "Invalid horizontal board shift; No movement performed" << std::endl;
-        return;
-    }
+    
+    assert(!(startCoords.second + count < 0 || startCoords.second + count + INNER_BOARD_SIZE - 1 > OUTER_BOARD_SIZE));
+
     for (int i = 0, col = 0; i < INNER_BOARD_SIZE; ++i) {
         for (int j = 0, row = 0; j < INNER_BOARD_SIZE; ++j) {
             col = (count > 0) ? INNER_BOARD_SIZE - 1 - i : i;
@@ -159,11 +157,9 @@ void Board::shiftVertical(const int count) {
         return;
     }
     auto startCoords = findCorner();
-    if (startCoords.first + count < 0 
-        || startCoords.first + count + INNER_BOARD_SIZE - 1 > OUTER_BOARD_SIZE) {
-        std::cerr << "Invalid vertical board shift; No movement performed" << std::endl;
-        return;
-    }
+    
+    assert(!(startCoords.first + count < 0 || startCoords.first + count + INNER_BOARD_SIZE - 1 > OUTER_BOARD_SIZE));
+    
     for (int i = 0, col = 0; i < INNER_BOARD_SIZE; ++i) {
         for (int j = 0, row = 0; j < INNER_BOARD_SIZE; ++j) {
             col = (count > 0) ? INNER_BOARD_SIZE - 1 - i : i;
@@ -455,8 +451,8 @@ void Board::makeMove(Move mv) {
     int row = -1; 
     int col = -1;
     
-    for (int i = 0; i < 8; ++i) {
-        for (int j = 0; j < 8; ++j) {
+    for (int i = 0; i < INNER_BOARD_SIZE; ++i) {
+        for (int j = 0; j < INNER_BOARD_SIZE; ++j) {
             if (*vectorTable[cornerCoords + (i * OUTER_BOARD_SIZE) + j] == *mv.fromSq) {
                 row = i;
                 col = j;

@@ -33,7 +33,6 @@ class AI {
     
     bool isWhitePlayer = false;
     
-    class MoveGenerator;
     Board& board;
     
     Cache<size_t, std::tuple<int, int, SearchBoundary, int>, 1024 * 1024 * 20> boardCache;

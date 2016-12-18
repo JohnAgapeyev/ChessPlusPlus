@@ -88,20 +88,10 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
             return (*sq == *mv.toSq);
         });
     // Try to find the start and end points
-    if (firstSquare == board.vectorTable.cend() || secondSquare == board.vectorTable.cend()) {
-        if (!isSilent) {
-            std::cerr << "Could not find start or end squares\n";
-        }
-        return false;
-    }
+    assert(!(firstSquare == board.vectorTable.cend() || secondSquare == board.vectorTable.cend()));
     
     // Check for either square being a sentinel
-    if (mv.fromSq->checkSentinel() || mv.toSq->checkSentinel()) {
-        if (!isSilent) {
-            std::cerr << "You somehow referenced a sentinel square for your move. GJ\n";
-        }
-        return false;
-    }
+    assert(!(mv.fromSq->checkSentinel() || mv.toSq->checkSentinel()));
     
     if (!mv.fromSq->getPiece() || (mv.fromPieceType == PieceTypes::UNKNOWN 
             && mv.fromPieceColour == Colour::UNKNOWN)) {
