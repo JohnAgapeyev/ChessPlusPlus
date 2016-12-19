@@ -342,11 +342,8 @@ unsigned long long AI::perftDivide(int depth) {
     const auto& moveList = board.moveGen.generateAll();
     const auto& moveListSize = moveList.size();
     
-    switch(depth) {
-        case 0:
-            return 1;
-        case 1:
-            return moveListSize;
+    if (!depth) {
+        return 1;
     }
     
     for (size_t i = 0; i < moveListSize; ++i) {
