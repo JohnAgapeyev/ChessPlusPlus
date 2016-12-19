@@ -1,10 +1,10 @@
-
-#include "headers/piece.h"
-#include "headers/consts.h"
 #include <algorithm>
 #include <cctype>
 #include <iostream>
 #include <vector>
+#include <cassert>
+#include "headers/piece.h"
+#include "headers/consts.h"
 
 std::vector<int> Piece::getVectorList() const {
     std::vector<int> rtn;
@@ -71,7 +71,6 @@ int Piece::getVectorLength() const {
 }
 
 void Piece::promote(PieceTypes newType) {
-    if (this->type == PieceTypes::PAWN) {
-        this->type = newType;
-    }
+    assert(type == PieceTypes::PAWN);
+    type = newType;
 }

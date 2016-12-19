@@ -737,6 +737,10 @@ void Board::unmakeMove(const Move& mv) {
     
     enPassantActive = mv.enPassantActive;
     enPassantTarget = mv.enPassantTarget;
+    
+    currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
+    castleRights = mv.castleRights;
+    currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
 
     /*
      * This section originally was an if else depending on whether the castling
@@ -757,10 +761,6 @@ void Board::unmakeMove(const Move& mv) {
             
         vectorTable[distToEndSquare + 1 - (isQueenSide * 3)]->setOffset(temp);
 
-        currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
-        castleRights = mv.castleRights;
-        currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
-        
         currHash ^= HASH_VALUES[NUM_SQUARE_STATES 
             * convertOuterBoardIndex(distToFromSquare + 3 - (isQueenSide * 7), cornerIndex)
             + pieceLookupTable[PieceTypes::ROOK] + blackFromPieceHashOffset];
