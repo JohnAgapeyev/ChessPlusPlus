@@ -738,10 +738,12 @@ void Board::unmakeMove(const Move& mv) {
     enPassantActive = mv.enPassantActive;
     enPassantTarget = mv.enPassantTarget;
     
-    currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
-    castleRights = mv.castleRights;
-    currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
-
+    if (mv.isCastle || mv.fromPieceType == PieceTypes::ROOK) {
+        currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
+        castleRights = mv.castleRights;
+        currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
+    }
+    
     /*
      * This section originally was an if else depending on whether the castling
      * was done long or short. Since the only difference between the two was the 

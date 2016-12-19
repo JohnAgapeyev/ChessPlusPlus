@@ -229,6 +229,7 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
             const auto index = ((*selectedOffset > 0) ? i : -i);
             const Piece *currPiece = (firstSquare[index]) ? firstSquare[index]->getPiece() : nullptr;
             const auto checkIndex = currIndex + index;
+            
             if ((currPiece && currPiece->getType() != PieceTypes::ROOK) || inCheck(checkIndex)) {
                 logMoveFailure(10, isSilent);
                 return false;
@@ -459,6 +460,8 @@ std::vector<Move> Board::MoveGenerator::generateAll() {
                 
                 mv.halfMoveClock = 0;
                 
+                mv.castleRights = board.castleRights;
+                
                 //Promotion check
                 if (mv.promotionType == PieceTypes::PAWN) {
                     const auto distToEndSquare = std::distance(board.vectorTable.cbegin(), 
@@ -514,7 +517,6 @@ std::vector<Move> Board::MoveGenerator::generateAll() {
                         && getCastleDirectionBool(mv.fromPieceType, 
                             mv.fromPieceColour, (toSquareIndex - ZERO_LOCATION_1D))) {
                     mv.isCastle = true;
-                    mv.castleRights = board.castleRights;
                 }
                 moveList.push_back(mv);
             }
