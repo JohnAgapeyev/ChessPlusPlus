@@ -1125,3 +1125,19 @@ bool Board::checkBoardValidity() {
     //}
     return true;
 }
+
+std::string Board::convertSquareToCoordText(const Square& sq) const {
+    const auto cornerCoords = findCorner_1D();
+    const auto squareDist = std::distance(vectorTable.cbegin(), 
+        std::find_if(vectorTable.cbegin(), vectorTable.cend(), 
+        [&](const auto& bsq){return *bsq == sq;}
+    ));
+    const auto innerDist = convertOuterBoardIndex(squareDist, cornerCoords);
+    
+    return static_cast<char>('a' + (innerDist % INNER_BOARD_SIZE)) 
+        + std::to_string(INNER_BOARD_SIZE - (innerDist / INNER_BOARD_SIZE));
+}
+
+std::string Board::convertMoveToCoordText(const Move& mv) const {
+    return convertSquareToCoordText(*mv.fromSq) + convertSquareToCoordText(*mv.toSq);
+}

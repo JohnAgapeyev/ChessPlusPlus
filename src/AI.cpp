@@ -322,13 +322,39 @@ unsigned long long AI::perft(int depth) {
     const auto& moveList = board.moveGen.generateAll();
     const auto& moveListSize = moveList.size();
     
-    if (depth == 1) {
-        return moveListSize;
+    switch(depth) {
+        case 0:
+            return 1;
+        case 1:
+            return moveListSize;
     }
     
     for (size_t i = 0; i < moveListSize; ++i) {
         board.makeMove(moveList[i]);
         nodeCount += perft(depth - 1);
+        board.unmakeMove(moveList[i]);
+    }
+    return nodeCount;
+}
+
+unsigned long long AI::perftDivide(int depth) {
+    unsigned long long nodeCount = 0;
+    const auto& moveList = board.moveGen.generateAll();
+    const auto& moveListSize = moveList.size();
+    
+    switch(depth) {
+        case 0:
+            return 1;
+        case 1:
+            return moveListSize;
+    }
+    
+    for (size_t i = 0; i < moveListSize; ++i) {
+        std::cout << board.convertMoveToCoordText(moveList[i]) << "\t";
+        board.makeMove(moveList[i]);
+        const auto perftResult = perft(depth - 1);
+        std::cout << perftResult << "\n";
+        nodeCount += perftResult;
         board.unmakeMove(moveList[i]);
     }
     return nodeCount;

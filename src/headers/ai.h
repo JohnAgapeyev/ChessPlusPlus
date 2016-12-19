@@ -45,6 +45,7 @@ class AI {
     std::pair<int, int> AlphaBeta(const int alpha, const int beta, const int depth);
     int getPieceValue(const PieceTypes type) const;
     unsigned long long perft(int depth);
+    unsigned long long perftDivide(int depth);
     
 public:
     AI(Board& b) : board(b) {}
