@@ -21,7 +21,6 @@ struct Move {
     unsigned char castleRights;
     bool enPassantActive;
     Square* enPassantTarget;
-    unsigned char enPassantFileNum;
     int halfMoveClock;
 };
 

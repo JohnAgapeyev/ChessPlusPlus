@@ -60,7 +60,6 @@ Move Board::MoveGenerator::createMove(std::string& input) const {
     result.castleRights = board.castleRights;
     result.enPassantActive = false;
     result.enPassantTarget = nullptr;
-    result.enPassantFileNum = 0;
     result.halfMoveClock = 0;
     
     return result;
@@ -217,6 +216,7 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
     }
     
     const bool castleDirectionChosen = getCastleDirectionBool(mv.fromPieceType, mv.fromPieceColour, *selectedOffset);
+    
     // Prevent king from jumpng 2 spaces if not castling
     if (mv.fromPieceType == PieceTypes::KING && absOffset == 2 && !castleDirectionChosen) {
         logMoveFailure(9, isSilent);
@@ -236,6 +236,13 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
             }
         }
     }
+    
+    //Prevent pieces from capturing a king
+    if (mv.toPieceType == PieceTypes::KING) {
+        logMoveFailure(11, isSilent);
+        return false;
+    }
+
     return true;
 }
 
@@ -457,10 +464,18 @@ std::vector<Move> Board::MoveGenerator::generateAll() {
                 }
                 
                 mv.promotionType = (mv.fromSq->getPiece()) ? mv.fromPieceType : PieceTypes::UNKNOWN;
-                
                 mv.halfMoveClock = 0;
-                
                 mv.castleRights = board.castleRights;
+                
+                mv.enPassantActive = board.enPassantActive;
+                mv.enPassantTarget = board.enPassantTarget;
+                
+                if (mv.fromPieceType == PieceTypes::KING 
+                    && std::abs((toSquareIndex - ZERO_LOCATION_1D)) == 2 
+                    && getCastleDirectionBool(mv.fromPieceType, 
+                        mv.fromPieceColour, (toSquareIndex - ZERO_LOCATION_1D))) {
+                    mv.isCastle = true;
+                }
                 
                 //Promotion check
                 if (mv.promotionType == PieceTypes::PAWN) {
@@ -503,21 +518,7 @@ std::vector<Move> Board::MoveGenerator::generateAll() {
                 if (!validateMove(mv, true)) {
                     break;
                 }
-                if (mv.fromPieceType == PieceTypes::PAWN && !((toSquareIndex - ZERO_LOCATION_1D) % 30)) {
-                    mv.enPassantFileNum = std::get<1>(p) - startCoords.second;
-                } else {
-                    mv.enPassantFileNum = 0;
-                }
                 
-                mv.enPassantActive = board.enPassantActive;
-                mv.enPassantTarget = board.enPassantTarget;
-                
-                if (mv.fromPieceType == PieceTypes::KING 
-                        && std::abs((toSquareIndex - ZERO_LOCATION_1D)) == 2 
-                        && getCastleDirectionBool(mv.fromPieceType, 
-                            mv.fromPieceColour, (toSquareIndex - ZERO_LOCATION_1D))) {
-                    mv.isCastle = true;
-                }
                 moveList.push_back(mv);
             }
         }

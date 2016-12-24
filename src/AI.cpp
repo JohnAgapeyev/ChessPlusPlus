@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <tuple>
 #include <utility>
+#include <cassert>
 #include "headers/ai.h"
 #include "headers/board.h"
 #include "headers/consts.h"
