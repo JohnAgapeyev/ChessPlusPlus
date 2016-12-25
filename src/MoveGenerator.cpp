@@ -409,6 +409,7 @@ void Board::MoveGenerator::logMoveFailure(const int failureNum, const bool isSil
 }
 
 std::vector<Move> Board::MoveGenerator::generateAll() {
+    assert(board.checkBoardValidity());
     std::vector<Move> moveList;
         
     const auto tableSize = static_cast<int>(board.vectorTable.size());
@@ -523,5 +524,6 @@ std::vector<Move> Board::MoveGenerator::generateAll() {
             }
         }
     }
+    assert(board.checkBoardValidity());
     return moveList;
 }

@@ -13,12 +13,14 @@
  * to move with a positive number favouring white, and a negative one favouring black.
  */
 void AI::evaluate() {
-    auto currScore = 0;
+    int currScore = 0;
     std::vector<Move> whiteMoveList;
     std::vector<Move> blackMoveList;
     
     std::vector<int> whiteRookFiles;
     std::vector<int> blackRookFiles;
+    
+    //Array to store pawn counts on a per-file basis with white being 0-7, black 8-15
     int filePawnCount[16] = {0};
     
     if (board.isWhiteTurn) {
@@ -48,8 +50,7 @@ void AI::evaluate() {
         for(int j = 0; j < INNER_BOARD_SIZE; ++j) {
             const auto& currSquare = board.vectorTable[cornerIndex + (i * OUTER_BOARD_SIZE) + j].get();
             const auto& currPiece = currSquare->getPiece();
-            if (currPiece && !currSquare->checkSentinel() 
-                    && currPiece->getType() != PieceTypes::KING) {
+            if (currPiece && currPiece->getType() != PieceTypes::KING) {
                 if (currPiece->getColour() == Colour::WHITE) {
                     currScore += getPieceValue(currPiece->getType());
                     if (currPiece->getType() == PieceTypes::ROOK) {
@@ -205,16 +206,16 @@ void AI::search() {
     }
 }
 
-std::pair<int, int> AI::iterativeDeepening() {
-    auto firstGuess = std::make_pair(INT_MIN, 0);
+std::pair<Move, int> AI::iterativeDeepening() {
+    auto firstGuess = std::make_pair(Move(), 0);
     for (int i = 0; i < DEPTH; ++i) {
         firstGuess = MTD(firstGuess.second, i);
     }
     return firstGuess;
 }
 
-std::pair<int, int> AI::MTD(const int firstGuess, const int depth) {
-    auto currGuess = std::make_pair(INT_MIN, firstGuess);
+std::pair<Move, int> AI::MTD(const int firstGuess, const int depth) {
+    auto currGuess = std::make_pair(Move(), firstGuess);
     int upper = INT_MAX;
     int lower = INT_MIN;
     int beta = 0;
@@ -231,10 +232,11 @@ std::pair<int, int> AI::MTD(const int firstGuess, const int depth) {
     return currGuess;
 }
 
-std::pair<int, int> AI::AlphaBeta(int alpha, int beta, const int depth) {
-    auto rtn = std::make_pair(INT_MIN, 0);
+std::pair<Move, int> AI::AlphaBeta(int alpha, int beta, const int depth) {
+    assert(depth >= 0);
+    auto rtn = std::make_pair(Move(), INT_MIN);
         
-    const auto moveList = board.moveGen.generateAll();
+    const auto& moveList = board.moveGen.generateAll();
     const auto moveListSize = moveList.size();
     
     if (boardCache.retrieve(board.currHash)) {
@@ -249,10 +251,8 @@ std::pair<int, int> AI::AlphaBeta(int alpha, int beta, const int depth) {
             //Update the best move based on the previous value, not sure how yet
             if (entryType == SearchBoundary::LOWER && entryValue > alpha) {
                 alpha = entryValue;
-                
             } else if (entryType == SearchBoundary::UPPER && entryValue < beta) {
                 beta = entryValue;
-                
             }
             if (alpha >= beta) {
                 //Return the best move as well
@@ -263,41 +263,35 @@ std::pair<int, int> AI::AlphaBeta(int alpha, int beta, const int depth) {
     
     if (depth == 0) {
         evaluate();
-        rtn.second = eval;
+        rtn = std::make_pair(Move(), eval);
     } else if (isWhitePlayer == board.isWhiteTurn) {
-        rtn.first = 0;
+        rtn.first = Move();
         rtn.second = INT_MIN;
         int a = alpha;
         
-        auto cmp = std::make_pair(0, 0);
-        
         for (size_t i = 0; rtn.second < beta && i < moveListSize; ++i) {
             board.makeMove(moveList[i]);
+            const auto& abCall = AlphaBeta(a, beta, depth - 1);
             
-            
-            cmp = AlphaBeta(a, beta, depth - 1);
-            if (cmp.second > rtn.second) {
-                rtn.first = i;
-                rtn.second = cmp.second;
+            if (abCall.second >= rtn.second) {
+                rtn.first = moveList[i];
+                rtn.second = abCall.second;
             }
             a = std::max(a, rtn.second);
             board.unmakeMove(moveList[i]);
         }
     } else {
-        rtn.first = 0;
+        rtn.first = Move();
         rtn.second = INT_MAX;
         int b = beta;
         
-        auto cmp = std::make_pair(0, 0);
-        
         for (size_t i = 0; rtn.second > alpha && i < moveListSize; ++i) {
             board.makeMove(moveList[i]);
+            const auto& abCall = AlphaBeta(alpha, b, depth - 1);
             
-            
-            cmp = AlphaBeta(alpha, b, depth - 1);
-            if (cmp.second < rtn.second) {
-                rtn.first = i;
-                rtn.second = cmp.second;
+            if (abCall.second <= rtn.second) {
+                rtn.first = moveList[i];
+                rtn.second = abCall.second;
             }
             b = std::min(b, rtn.second);
             board.unmakeMove(moveList[i]);

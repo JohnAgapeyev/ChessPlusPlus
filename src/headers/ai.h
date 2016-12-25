@@ -1,11 +1,11 @@
 #ifndef AI_H
 #define AI_H
 
-#include "board.h"
-#include "tt.h"
 #include <climits>
 #include <tuple>
 #include <utility>
+#include "board.h"
+#include "tt.h"
 
 class AI {
     static constexpr auto MATE = SHRT_MAX;
@@ -29,20 +29,20 @@ class AI {
     static constexpr auto HALF_OPEN_FILE_VAL = 10;
     static constexpr auto ROOK_SEVEN_VAL = 10;
     
-    const int DEPTH = 5;
+    const int DEPTH = 6;
     
     bool isWhitePlayer = false;
     
     Board& board;
     
-    Cache<size_t, std::tuple<int, int, SearchBoundary, int>, 1024 * 1024 * 20> boardCache;
+    Cache<size_t, std::tuple<int, int, SearchBoundary, Move>, 1024 * 1024 * 20> boardCache;
     
     int eval = 0;
     
     int reduceKnightMobilityScore(const std::vector<Move>& moveList, const int cornerIndex) const;
-    std::pair<int, int> iterativeDeepening();
-    std::pair<int, int> MTD(const int guess, const int depth);
-    std::pair<int, int> AlphaBeta(const int alpha, const int beta, const int depth);
+    std::pair<Move, int> iterativeDeepening();
+    std::pair<Move, int> MTD(const int guess, const int depth);
+    std::pair<Move, int> AlphaBeta(const int alpha, const int beta, const int depth);
     int getPieceValue(const PieceTypes type) const;
     unsigned long long perft(int depth);
     unsigned long long perftDivide(int depth);

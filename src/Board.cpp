@@ -205,7 +205,6 @@ void Board::makeMove(std::string& input) {
     if (!moveGen.validateMove(mv, false)) {
         return;
     }
-    assert(checkBoardValidity());
     
     halfMoveClock++;
     
@@ -242,9 +241,9 @@ void Board::makeMove(std::string& input) {
     
     // If en passant move is made, capture the appropriate pawn
     if (enPassantActive && mv.fromPieceType == PieceTypes::PAWN 
-            && (diff % 15) && *mv.toSq == *enPassantTarget) {
+            && (diff % OUTER_BOARD_SIZE) && *mv.toSq == *enPassantTarget) {
                 
-        const int captureIndex = distToEndSquare + ((isWhiteTurn) ? 15: -15);
+        const int captureIndex = distToEndSquare + ((isWhiteTurn) ? OUTER_BOARD_SIZE: -OUTER_BOARD_SIZE);
         vectorTable[captureIndex]->setPiece(nullptr);
         
         //xor out the captured pawn
@@ -258,7 +257,7 @@ void Board::makeMove(std::string& input) {
     
         //xor out en passant file
         currHash ^= HASH_VALUES[static_cast<int>(SquareState::EN_PASSANT_FILE) 
-            + (convertOuterBoardIndex(distToEnPassantTarget, cornerIndex) % 8)];
+            + (convertOuterBoardIndex(distToEnPassantTarget, cornerIndex) % INNER_BOARD_SIZE)];
     }
     
     mv.enPassantActive = enPassantActive;
@@ -294,10 +293,12 @@ void Board::makeMove(std::string& input) {
             vectorTable[distToFromSquare + 1 - (isQueenSide << 1)]->getOffset());
         vectorTable[distToFromSquare + 1 - (isQueenSide << 1)]->setOffset(temp);
         
-        currHash ^= HASH_VALUES[NUM_SQUARE_STATES * convertOuterBoardIndex(distToFromSquare + 3 - (isQueenSide * 7), cornerIndex)
+        currHash ^= HASH_VALUES[NUM_SQUARE_STATES * convertOuterBoardIndex(
+                distToFromSquare + 3 - (isQueenSide * 7), cornerIndex)  
             + pieceLookupTable[PieceTypes::ROOK] + blackFromPieceHashOffset];
             
-        currHash ^= HASH_VALUES[NUM_SQUARE_STATES * convertOuterBoardIndex(distToFromSquare + 1 - (isQueenSide << 1), cornerIndex)
+        currHash ^= HASH_VALUES[NUM_SQUARE_STATES * convertOuterBoardIndex(
+                distToFromSquare + 1 - (isQueenSide << 1), cornerIndex)
             + pieceLookupTable[PieceTypes::ROOK] + blackFromPieceHashOffset];
             
         if (mv.fromPieceColour == Colour::WHITE) {
@@ -464,8 +465,6 @@ void Board::makeMove(Move mv) {
         return;
     }
 
-    assert(checkBoardValidity());
-    
     halfMoveClock++;
     
     const auto cornerIndex = findCorner_1D();
