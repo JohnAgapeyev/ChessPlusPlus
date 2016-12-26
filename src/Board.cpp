@@ -1,6 +1,7 @@
 #include <vector>
 #include <array>
 #include <iostream>
+#include <iomanip>
 #include <memory>
 #include <utility>
 #include <algorithm>
@@ -101,6 +102,9 @@ void Board::printBoardState() const {
     auto range = OUTER_BOARD_SIZE;
 #endif
     for (auto i = 0; i < range; ++i) {
+#ifdef NDEBUG
+        std::cout << "  ";
+#endif
         for (int j = 0; j < range; ++j) {
 #ifndef NDEBUG
             std::cout << "--------";
@@ -108,16 +112,21 @@ void Board::printBoardState() const {
             std::cout << "---";
 #endif
         }
-        std::cout << "-\n|";
+
 #ifndef NDEBUG
+        std::cout << "-\n|";
         std::for_each(vectorTable.cbegin() + (i * range), vectorTable.cbegin() + ((i + 1) * range), 
                 [](const auto& sq){std::cout << *sq << '|';});
 #else
+        std::cout << "-\n" << (INNER_BOARD_SIZE - i) << " |";
         std::for_each(outputTable.cbegin() + (i * range), outputTable.cbegin() + ((i + 1) * range), 
                 [](const auto& sq){std::cout << *sq << '|';});
 #endif
-        std::cout << std::endl;
+        std::cout << "\n";
     }
+#ifdef NDEBUG
+    std::cout << "  ";
+#endif
 
     for (int k = 0; k < range; ++k) {
 #ifndef NDEBUG
@@ -127,6 +136,14 @@ void Board::printBoardState() const {
 #endif
     }
     std::cout << "-\n";
+    
+#ifdef NDEBUG
+    std::cout << "    ";
+    for (int k = 0; k < range; ++k) {
+        std::cout << std::left << std::setw(3) << static_cast<char>('a' + k);
+    }
+    std::cout << "\n";
+#endif
 }
 
 void Board::shiftHorizontal(const int count) {

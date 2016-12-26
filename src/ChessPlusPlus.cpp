@@ -30,7 +30,7 @@ void mainLoop(Board& b) {
             break;
         }
         if (!checkInputValid(input)) {
-            std::cout << "Not a valid move format" << std::endl;
+            std::cout << "Not a valid move format\n";
             continue;
         }
         b.makeMove(input);
