@@ -40,7 +40,7 @@ class AI {
     
     static const std::unordered_multimap<Piece, std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SIZE>> pieceSquareTables;
     
-    const int DEPTH = 2;
+    const int DEPTH = 4;
     
     bool isWhitePlayer = false;
     

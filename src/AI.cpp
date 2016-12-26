@@ -108,10 +108,18 @@ void AI::evaluate() {
                 } else {
                     //Handle piece square table access for king
                     const auto& elemRange = pieceSquareTables.equal_range(*currPiece);
-                    //Material value
-                    currScore += getPieceValue(currPiece->getType());
-                    //Piece square lookup
-                    currScore += elemRange.first->second[Board::convertOuterBoardIndex(cornerIndex + (i * OUTER_BOARD_SIZE) + j, cornerIndex)];
+                    
+                    if (currPiece->getColour() == Colour::WHITE) {
+                        //Material value
+                        currScore += getPieceValue(currPiece->getType());
+                        //Piece square lookup
+                        currScore += elemRange.first->second[Board::convertOuterBoardIndex(cornerIndex + (i * OUTER_BOARD_SIZE) + j, cornerIndex)];
+                    } else {
+                        //Material value
+                        currScore -= getPieceValue(currPiece->getType());
+                        //Piece square lookup
+                        currScore -= elemRange.first->second[Board::convertOuterBoardIndex(cornerIndex + (i * OUTER_BOARD_SIZE) + j, cornerIndex)];
+                    }
                 }
             }
         }
@@ -222,17 +230,16 @@ int AI::getPieceValue(const PieceTypes type) const {
             return ROOK_VAL;
         case PieceTypes::QUEEN:
             return QUEEN_VAL;
+        case PieceTypes::KING:
+            return KING_VAL;
         default:
             return 0;
     }
 }
 
 void AI::search() {
-    //const auto result = iterativeDeepening();
-    //board.makeMove(board.moveGen->generateAll()[result.first]);
-    for (int i = 0; i <= 6; ++i) {
-        std::cout << "Perft at depth " << i << ": " << perft(i) << std::endl;
-    }
+    const auto result = iterativeDeepening();
+    board.makeMove(result.first);
 }
 
 std::pair<Move, int> AI::iterativeDeepening() {
@@ -293,7 +300,7 @@ std::pair<Move, int> AI::AlphaBeta(int alpha, int beta, const int depth) {
     if (depth == 0) {
         evaluate();
         rtn = std::make_pair(Move(), eval);
-    } else if (isWhitePlayer == board.isWhiteTurn) {
+    } else if (board.isWhiteTurn) {
         rtn.first = Move();
         rtn.second = INT_MIN;
         int a = alpha;
@@ -302,7 +309,7 @@ std::pair<Move, int> AI::AlphaBeta(int alpha, int beta, const int depth) {
             board.makeMove(moveList[i]);
             const auto& abCall = AlphaBeta(a, beta, depth - 1);
             
-            if (abCall.second >= rtn.second) {
+            if (abCall.second > rtn.second) {
                 rtn.first = moveList[i];
                 rtn.second = abCall.second;
             }
@@ -318,7 +325,7 @@ std::pair<Move, int> AI::AlphaBeta(int alpha, int beta, const int depth) {
             board.makeMove(moveList[i]);
             const auto& abCall = AlphaBeta(alpha, b, depth - 1);
             
-            if (abCall.second <= rtn.second) {
+            if (abCall.second < rtn.second) {
                 rtn.first = moveList[i];
                 rtn.second = abCall.second;
             }

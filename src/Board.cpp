@@ -45,6 +45,7 @@ Board::Board() {
             }
         }
     }
+    
     for (size_t i = 0, len = repititionList.size(); i < len; ++i) {
         repititionList[i] = i;
     }
