@@ -45,8 +45,10 @@ Board::Board() {
             }
         }
     }
-    repititionList.fill(std::hash<Board>()(*this));
-    currHash = repititionList[0];
+    for (size_t i = 0, len = repititionList.size(); i < len; ++i) {
+        repititionList[i] = i;
+    }
+    currHash = std::hash<Board>()(*this);
 }
 
 Board::Board(const Board& b) : moveGen(b.moveGen), vectorTable(b.vectorTable), 
