@@ -8,6 +8,10 @@
 #include "headers/consts.h"
 #include "headers/enums.h"
 
+const std::unordered_multimap<Piece, 
+    std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SIZE>> 
+    AI::pieceSquareTables = AI::initializeMap();
+
 /**
  * Evaluates the current board state from the perspective of the current player
  * to move with a positive number favouring white, and a negative one favouring black.
@@ -21,7 +25,7 @@ void AI::evaluate() {
     std::vector<int> blackRookFiles;
     
     //Array to store pawn counts on a per-file basis with white being 0-7, black 8-15
-    int filePawnCount[16] = {0};
+    std::array<int, 16> filePawnCount{{0}};
     
     if (board.isWhiteTurn) {
         whiteMoveList = board.moveGen.generateAll();
@@ -50,39 +54,64 @@ void AI::evaluate() {
         for(int j = 0; j < INNER_BOARD_SIZE; ++j) {
             const auto& currSquare = board.vectorTable[cornerIndex + (i * OUTER_BOARD_SIZE) + j].get();
             const auto& currPiece = currSquare->getPiece();
-            if (currPiece && currPiece->getType() != PieceTypes::KING) {
-                if (currPiece->getColour() == Colour::WHITE) {
-                    currScore += getPieceValue(currPiece->getType());
-                    if (currPiece->getType() == PieceTypes::ROOK) {
-                        if (i == 1) {
-                            currScore += ROOK_SEVEN_VAL;
+            
+            if (currPiece) {
+                if (currPiece->getType() != PieceTypes::KING) {
+                    //Non-king piece square table lookup
+                    const auto& elem = pieceSquareTables.find(*currPiece);
+                    
+                    if (currPiece->getColour() == Colour::WHITE) {
+                        //Material value
+                        currScore += getPieceValue(currPiece->getType());
+                        //Piece square lookup
+                        currScore += elem->second[Board::convertOuterBoardIndex(cornerIndex + (i * OUTER_BOARD_SIZE) + j, cornerIndex)];
+                        
+                        //Check for rook on the seventh and store the file
+                        if (currPiece->getType() == PieceTypes::ROOK) {
+                            if (i == 1) {
+                                currScore += ROOK_SEVEN_VAL;
+                            }
+                            whiteRookFiles.push_back(j);
                         }
-                        whiteRookFiles.push_back(j);
-                    }
-                    if (currPiece->getType() == PieceTypes::PAWN) {
-                        ++filePawnCount[j];
-                        if (i == 1) {
-                            currScore += PAWN_SEVEN_VAL;
-                        } else if (i == 2) {
-                            currScore += PAWN_SIX_VAL;
+                        //Check for pawn on the sixth and seventh, and store the file
+                        if (currPiece->getType() == PieceTypes::PAWN) {
+                            ++filePawnCount[j];
+                            if (i == 1) {
+                                currScore += PAWN_SEVEN_VAL;
+                            } else if (i == 2) {
+                                currScore += PAWN_SIX_VAL;
+                            }
+                        }
+                    } else {
+                        //Material value
+                        currScore -= getPieceValue(currPiece->getType());
+                        //Piece square lookup
+                        currScore -= elem->second[Board::convertOuterBoardIndex(cornerIndex + (i * OUTER_BOARD_SIZE) + j, cornerIndex)];
+                        
+                        //Check for rook on the seventh and store the file
+                        if (currPiece->getType() == PieceTypes::ROOK) {
+                            if (i == 6) {
+                                currScore -= ROOK_SEVEN_VAL;
+                            }
+                            blackRookFiles.push_back(j);
+                        }
+                        //Check for pawn on the sixth and seventh, and store the file
+                        if (currPiece->getType() == PieceTypes::PAWN) {
+                            ++filePawnCount[j + INNER_BOARD_SIZE];
+                            if (i == 6) {
+                                currScore -= PAWN_SEVEN_VAL;
+                            } else if (i == 5) {
+                                currScore -= PAWN_SIX_VAL;
+                            }
                         }
                     }
                 } else {
-                    currScore -= getPieceValue(currPiece->getType());
-                    if (currPiece->getType() == PieceTypes::ROOK) {
-                        if (i == 6) {
-                            currScore -= ROOK_SEVEN_VAL;
-                        }
-                        blackRookFiles.push_back(j);
-                    }
-                    if (currPiece->getType() == PieceTypes::PAWN) {
-                        ++filePawnCount[j + INNER_BOARD_SIZE];
-                        if (i == 6) {
-                            currScore -= PAWN_SEVEN_VAL;
-                        } else if (i == 5) {
-                            currScore -= PAWN_SIX_VAL;
-                        }
-                    }
+                    //Handle piece square table access for king
+                    const auto& elemRange = pieceSquareTables.equal_range(*currPiece);
+                    //Material value
+                    currScore += getPieceValue(currPiece->getType());
+                    //Piece square lookup
+                    currScore += elemRange.first->second[Board::convertOuterBoardIndex(cornerIndex + (i * OUTER_BOARD_SIZE) + j, cornerIndex)];
                 }
             }
         }
@@ -350,4 +379,115 @@ unsigned long long AI::perftDivide(int depth) {
         board.unmakeMove(moveList[i]);
     }
     return nodeCount;
+}
+
+std::unordered_multimap<Piece, std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SIZE>> AI::initializeMap() {
+    std::unordered_multimap<Piece, std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SIZE>> tempMap;
+    
+    tempMap.emplace(std::make_pair(Piece(PieceTypes::PAWN, Colour::WHITE), 
+        std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SIZE>{{
+              0,  0,  0,  0,  0,  0,  0,  0,
+             50, 50, 50, 50, 50, 50, 50, 50,
+             10, 10, 20, 30, 30, 20, 10, 10,
+              5,  5, 10, 25, 25, 10,  5,  5,
+              0,  0,  0, 20, 20,  0,  0,  0,
+              5, -5, 10,  0,  0,-10, -5,  5,
+              5, 10, 10,-20,-20, 10, 10, 50,
+              0,  0,  0,  0,  0,  0,  0,  0
+        }}));
+    tempMap.emplace(std::make_pair(Piece(PieceTypes::BISHOP, Colour::WHITE), 
+        std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SIZE>{{
+            -20,-10,-10,-10,-10,-10,-10,-20,
+            -10,  0,  0,  0,  0,  0,  0,-10,
+            -10,  0,  5, 10, 10,  5,  0,-10,
+            -10,  5,  5, 10, 10,  5,  5,-10,
+            -10,  0, 10, 10, 10, 10,  0,-10,
+            -10, 10, 10, 10, 10, 10, 10,-10,
+            -10,  5,  0,  0,  0,  0,  5,-10,
+            -20,-10,-10,-10,-10,-10,-10,-20
+        }}));
+    tempMap.emplace(std::make_pair(Piece(PieceTypes::KNIGHT, Colour::WHITE), 
+        std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SIZE>{{
+            -50,-40,-30,-30,-30,-30,-40,-50,
+            -40,-20,  0,  0,  0,  0,-20,-40,
+            -30,  0, 10, 15, 15, 10,  0,-30,
+            -30,  5, 15, 20, 20, 15,  5,-30,
+            -30,  0, 15, 20, 20, 15,  0,-30,
+            -30,  5, 10, 15, 15, 10,  5,-30,
+            -40,-20,  0,  5,  5,  0,-20, 50,
+            -50,-40,-30,-30,-30,-30,-40,-50
+        }}));
+    tempMap.emplace(std::make_pair(Piece(PieceTypes::ROOK, Colour::WHITE), 
+        std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SIZE>{{
+              0,  0,  0,  0,  0,  0,  0,  0,
+              5, 10, 10, 10, 10, 10, 10,  5,
+             -5,  0,  0,  0,  0,  0,  0, -5,
+             -5,  0,  0,  0,  0,  0,  0, -5,
+             -5,  0,  0,  0,  0,  0,  0, -5,
+             -5,  0,  0,  0,  0,  0,  0, -5,
+             -5,  0,  0,  0,  0,  0,  0, -5,
+              0,  0,  0,  5,  5,  0,  0,  0
+        }}));
+    tempMap.emplace(std::make_pair(Piece(PieceTypes::KING, Colour::WHITE), 
+        std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SIZE>{{
+            -30,-40,-40,-50,-50,-40,-40,-30,
+            -30,-40,-40,-50,-50,-40,-40,-30,
+            -30,-40,-40,-50,-50,-40,-40,-30,
+            -30,-40,-40,-50,-50,-40,-40,-30,
+            -20,-30,-30,-40,-40,-30,-30,-20,
+            -10,-20,-20,-20,-20,-20,-20,-10,
+             20, 20,  0,  0,  0,  0, 20, 20,
+             20, 30, 10,  0,  0, 10, 30, 20
+        }}));
+    tempMap.emplace(std::make_pair(Piece(PieceTypes::KING, Colour::WHITE), 
+        std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SIZE>{{
+            -50,-40,-30,-20,-20,-30,-40,-50,
+            -30,-20,-10,  0,  0,-10,-20,-30,
+            -30,-10, 20, 30, 30, 20,-10,-30,
+            -30,-10, 30, 40, 40, 30,-10,-30,
+            -30,-10, 30, 40, 40, 30,-10,-30,
+            -30,-10, 20, 30, 30, 20,-10,-30,
+            -30,-30,  0,  0,  0,  0,-30,-30,
+            -50,-30,-30,-30,-30,-30,-30,-50
+        }}));
+    tempMap.emplace(std::make_pair(Piece(PieceTypes::QUEEN, Colour::WHITE), 
+        std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SIZE>{{
+             -20,-10,-10, -5, -5,-10,-10,-20,
+             -10,  0,  0,  0,  0,  0,  0,-10,
+             -10,  0,  5,  5,  5,  5,  0,-10,
+              -5,  0,  5,  5,  5,  5,  0, -5,
+               0,  0,  5,  5,  5,  5,  0, -5,
+             -10,  5,  5,  5,  5,  5,  0,-10,
+             -10,  0,  5,  0,  0,  0,  0,-10,
+             -20,-10,-10, -5, -5,-10,-10,-20
+        }}));
+        
+    for (size_t i = 0; i < 6; ++i) {
+        PieceTypes type;
+        switch(i) {
+            case 0:
+                type = PieceTypes::PAWN;
+                break;
+            case 1:
+                type = PieceTypes::BISHOP;
+                break;
+            case 2:
+                type = PieceTypes::KNIGHT;
+                break;
+            case 3:
+                type = PieceTypes::ROOK;
+                break;
+            case 4:
+                type = PieceTypes::KING;
+                break;
+            case 5:
+                type = PieceTypes::QUEEN;
+                break;
+        }
+        //Reverse piece square tables for black pieces
+        auto previousValue = tempMap.find(Piece(type, Colour::WHITE))->second;
+        std::reverse_copy(std::begin(previousValue), std::end(previousValue), std::begin(previousValue));
+        tempMap.emplace(std::make_pair(Piece(type, Colour::BLACK), previousValue));
+    }
+    return tempMap;
 }

@@ -900,17 +900,6 @@ size_t std::hash<Board>::operator()(const Board& b) const {
     return newHash;
 }
 
-/*
- * Convert 15x15 board index that references square on the inner board, and
- * convert it to the relative index of the inner board.
- * Eg. If outerIndex references a2, this method returns the relative position
- * of a2 regardless of the current board shift state.
- */
-inline constexpr int Board::convertOuterBoardIndex(const int outerIndex, const int cornerIndex) {
-    return (((outerIndex - cornerIndex) / OUTER_BOARD_SIZE) * INNER_BOARD_SIZE) 
-        + (outerIndex % OUTER_BOARD_SIZE) - (cornerIndex % OUTER_BOARD_SIZE);
-}
-
 bool Board::drawByMaterial() const {
     const int cornerIndex = findCorner_1D();
     int minorCount = 0;

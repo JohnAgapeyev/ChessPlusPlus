@@ -1,13 +1,12 @@
 #ifndef PIECE_H
 #define PIECE_H
 
-#include "enums.h"
 #include <array>
 #include <vector>
 #include <iostream>
+#include "enums.h"
 
 class Piece {
-private:
     PieceTypes type;
     Colour pieceColour;
 
@@ -19,7 +18,17 @@ public:
     int getVectorLength() const;
     void promote(PieceTypes newType);
     
+    friend bool operator==(const Piece& first, const Piece& second);
     friend std::ostream& operator<<(std::ostream& os, const Piece& piece);
+    friend class std::hash<Piece>;
 };
+
+namespace std {
+    template<>
+    class hash<Piece> {
+    public:
+        size_t operator() (const Piece& p) const;
+    };
+}
 
 #endif

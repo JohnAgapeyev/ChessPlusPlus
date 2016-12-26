@@ -59,6 +59,10 @@ std::ostream& operator<<(std::ostream& os, const Piece& piece) {
     return os << static_cast<char>(piece.pieceColour) << static_cast<char>(piece.type);
 }
 
+bool operator==(const Piece& first, const Piece& second) {
+    return first.type == second.type && first.pieceColour == second.pieceColour;
+}
+
 int Piece::getVectorLength() const {
     switch (this->type) {
         case PieceTypes::KING:
@@ -73,4 +77,8 @@ int Piece::getVectorLength() const {
 void Piece::promote(PieceTypes newType) {
     assert(type == PieceTypes::PAWN);
     type = newType;
+}
+
+size_t std::hash<Piece>::operator()(const Piece& p) const {
+    return std::hash<char>()(static_cast<char>(p.type)) ^ std::hash<char>()(static_cast<char>(p.pieceColour));
 }

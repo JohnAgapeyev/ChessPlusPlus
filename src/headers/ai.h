@@ -4,8 +4,11 @@
 #include <climits>
 #include <tuple>
 #include <utility>
+#include <unordered_map>
+#include <array>
 #include "board.h"
 #include "tt.h"
+#include "consts.h"
 
 class AI {
     static constexpr auto MATE = SHRT_MAX;
@@ -16,12 +19,14 @@ class AI {
     static constexpr auto BISHOP_VAL = 300;
     static constexpr auto ROOK_VAL = 500;
     static constexpr auto QUEEN_VAL = 900;
+    static constexpr auto KING_VAL = 3000;
     
     static constexpr auto MOBILITY_VAL = 1;
     
     static constexpr auto DOUBLED_PAWN_PENALTY = 40;
     static constexpr auto ISOLATED_PAWN_PENALTY = 50;
     static constexpr auto BACKWARD_PAWN_PENALTY = 30;
+    static constexpr auto PASSED_PAWN_VAL = 30;
     static constexpr auto PAWN_SIX_VAL = 70;
     static constexpr auto PAWN_SEVEN_VAL = 100;
     
@@ -29,7 +34,13 @@ class AI {
     static constexpr auto HALF_OPEN_FILE_VAL = 10;
     static constexpr auto ROOK_SEVEN_VAL = 10;
     
-    const int DEPTH = 6;
+    static constexpr auto CASTLE_BONUS = 30;
+    
+    static std::unordered_multimap<Piece, std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SIZE>> initializeMap();
+    
+    static const std::unordered_multimap<Piece, std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SIZE>> pieceSquareTables;
+    
+    const int DEPTH = 2;
     
     bool isWhitePlayer = false;
     
