@@ -8,6 +8,10 @@
 #include "square.h"
 #include "enums.h"
 
+static constexpr auto INNER_BOARD_SIZE = 8;
+
+static constexpr auto OUTER_BOARD_SIZE = 15;
+
 static constexpr auto NUM_SQUARE_STATES = 12;
 
 /*
@@ -21,15 +25,10 @@ static constexpr auto NUM_SQUARE_STATES = 12;
 static constexpr auto HASH_BOARD_LENGTH = (NUM_SQUARE_STATES * 64) + 1 + 16 + 9;
 
 
-std::array<std::array<std::shared_ptr<Square>, 8>, 8> fillInitBoard();
+std::array<std::array<std::shared_ptr<Square>, INNER_BOARD_SIZE>, INNER_BOARD_SIZE> fillInitBoard();
 std::array<uint_fast64_t, HASH_BOARD_LENGTH> populateHashTable();
 
-
-static const std::array<std::array<std::shared_ptr<Square>, 8>, 8> INIT_BOARD = fillInitBoard();
-
-static constexpr auto INNER_BOARD_SIZE = 8;
-
-static constexpr auto OUTER_BOARD_SIZE = 15;
+static const std::array<std::array<std::shared_ptr<Square>, INNER_BOARD_SIZE>, INNER_BOARD_SIZE> INIT_BOARD = fillInitBoard();
 
 static constexpr auto ZERO_LOCATION = std::make_pair(7, 7);
 

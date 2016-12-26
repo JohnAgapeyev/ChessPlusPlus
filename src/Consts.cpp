@@ -1,4 +1,3 @@
-#include "headers/consts.h"
 #include <array>
 #include <memory>
 #include <vector>
@@ -8,13 +7,14 @@
 #include <unordered_map>
 #include "headers/square.h"
 #include "headers/enums.h"
+#include "headers/consts.h"
 
-std::array<std::array<std::shared_ptr<Square>, 8>, 8> fillInitBoard() {
+std::array<std::array<std::shared_ptr<Square>, INNER_BOARD_SIZE>, INNER_BOARD_SIZE> fillInitBoard() {
     const auto& pickColour = [](const auto T){return (T < 5) ? Colour::BLACK : Colour::WHITE;};
-    std::array<std::array<std::shared_ptr<Square>, 8>, 8> result;
-    for (int i = 0; i < 8; ++i) {
-        std::array<std::shared_ptr<Square>, 8> row;
-        for (int j = 0; j < 8; ++j) {
+    std::array<std::array<std::shared_ptr<Square>, INNER_BOARD_SIZE>, INNER_BOARD_SIZE> result;
+    for (int i = 0; i < INNER_BOARD_SIZE; ++i) {
+        std::array<std::shared_ptr<Square>, INNER_BOARD_SIZE> row;
+        for (int j = 0; j < INNER_BOARD_SIZE; ++j) {
             switch(i) {
                 case 0:
                 case 7:
