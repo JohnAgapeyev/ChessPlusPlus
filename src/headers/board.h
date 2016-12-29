@@ -72,8 +72,8 @@ public:
     std::pair<int, int> findCorner() const;
     int findCorner_1D() const;
     void shiftBoard(const int col, const int row);
-    void makeMove(std::string& input);
-    void makeMove(Move mv);
+    bool makeMove(std::string& input);
+    bool makeMove(Move mv);
     void unmakeMove(const Move& mv);
     std::string generateFEN() const;
     bool drawByMaterial() const;

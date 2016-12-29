@@ -216,14 +216,14 @@ void Board::shiftBoard(const int col, const int row) {
     assert(checkBoardValidity());
 }
 
-void Board::makeMove(std::string& input) {
+bool Board::makeMove(std::string& input) {
     assert(checkBoardValidity());
     auto mv = moveGen.createMove(input);
     
     shiftBoard(input[0], INNER_BOARD_SIZE - 1 - input[1]);
     
     if (!moveGen.validateMove(mv, false)) {
-        return;
+        return false;
     }
     
     halfMoveClock++;
@@ -424,19 +424,19 @@ void Board::makeMove(std::string& input) {
             //Checkmate
             std::cout << "CHECKMATE" << std::endl;
             currentGameState = GameState::MATE;
-            return;
+            return true;
         }
         //Stalemate
         std::cout << "STALEMATE" << std::endl;
         currentGameState = GameState::DRAWN;
-        return;
+        return true;
     }
     if (halfMoveClock >= 100) {
         //50 move rule
         std::cout << "DRAW" << std::endl;
         std::cout << "50 move rule" << std::endl;
         currentGameState = GameState::DRAWN;
-        return;
+        return true;
     }
     
     if (repititionList[0] == repititionList[4] && repititionList[4] == repititionList[8]) {
@@ -444,7 +444,7 @@ void Board::makeMove(std::string& input) {
         std::cout << "DRAW" << std::endl;
         std::cout << "Three move repitition" << std::endl;
         currentGameState = GameState::DRAWN;
-        return;
+        return true;
     }
     
     if (drawByMaterial()) {
@@ -452,12 +452,13 @@ void Board::makeMove(std::string& input) {
         std::cout << "DRAW" << std::endl;
         std::cout << "Insufficient Material" << std::endl;
         currentGameState = GameState::DRAWN;
-        return;
+        return true;
     }
     assert(checkBoardValidity());
+    return true;
 }
 
-void Board::makeMove(Move mv) {
+bool Board::makeMove(Move mv) {
     assert(checkBoardValidity());
     
     const auto& cornerCoords = findCorner_1D();
@@ -482,7 +483,7 @@ void Board::makeMove(Move mv) {
     shiftBoard(col, row);
     
     if (!moveGen.validateMove(mv, true)) {
-        return;
+        return false;
     }
 
     halfMoveClock++;
@@ -658,6 +659,7 @@ void Board::makeMove(Move mv) {
     repititionList[repititionList.size() - 1] = currHash;
     
     assert(checkBoardValidity());
+    return true;
 }
 
 void Board::unmakeMove(const Move& mv) {

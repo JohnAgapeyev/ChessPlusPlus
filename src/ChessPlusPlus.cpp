@@ -33,10 +33,11 @@ void mainLoop(Board& b) {
             std::cout << "Not a valid move format\n";
             continue;
         }
-        b.makeMove(input);
-        b.printBoardState();
-        comp.search();
-        b.printBoardState();
+        if (b.makeMove(input)) {
+            b.printBoardState();
+            comp.search();
+            b.printBoardState();
+        }
     }
 }
 
