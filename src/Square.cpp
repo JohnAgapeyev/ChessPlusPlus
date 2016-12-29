@@ -5,8 +5,8 @@
 #include "headers/square.h"
 
 bool Square::checkSentinel() {
-    return (this->getPiece() && this->getPiece()->getColour() == Colour::UNKNOWN 
-        && this->getPiece()->getType() == PieceTypes::UNKNOWN);
+    return (getPiece() && getPiece()->getColour() == Colour::UNKNOWN 
+        && getPiece()->getType() == PieceTypes::UNKNOWN);
 }
 
 std::ostream& operator<<(std::ostream& os, const Square& square) {

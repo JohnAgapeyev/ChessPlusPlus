@@ -119,8 +119,8 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
     
     // Find the offset that the move uses
     const auto& selectedOffset = std::find_if(vectorOffsets.cbegin(), 
-        vectorOffsets.cend(), [diff](auto offset) {
-            return (diff / offset > 0 && diff / offset < 8 && !(diff % offset));
+        vectorOffsets.cend(), [diff, &mv](auto offset) {
+            return ((diff / offset) > 0 && (diff / offset) < mv.fromSq->getPiece()->getVectorLength() && !(diff % offset));
         }
     );
     
