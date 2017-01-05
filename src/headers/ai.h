@@ -5,6 +5,7 @@
 #include <tuple>
 #include <utility>
 #include <unordered_map>
+#include <memory>
 #include <array>
 #include "board.h"
 #include "tt.h"
@@ -40,13 +41,15 @@ class AI {
     
     static const std::unordered_multimap<Piece, std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SIZE>> pieceSquareTables;
     
-    const int DEPTH = 4;
+    //typedef Cache<Board, std::tuple<int, int, SearchBoundary, Move>, 1024 * 1024> cache_pointer_type;
+    typedef Cache<Board, std::tuple<int, int, SearchBoundary, Move>, 1024 * 50> cache_pointer_type;
+    static std::unique_ptr<cache_pointer_type> boardCache;
+    
+    const int DEPTH = 5;
     
     bool isWhitePlayer = false;
     
     Board& board;
-    
-    Cache<size_t, std::tuple<int, int, SearchBoundary, Move>, 1024 * 1024 * 20> boardCache;
     
     int eval = 0;
     

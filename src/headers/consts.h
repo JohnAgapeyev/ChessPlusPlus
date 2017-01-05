@@ -24,7 +24,6 @@ static constexpr auto NUM_SQUARE_STATES = 12;
  */
 static constexpr auto HASH_BOARD_LENGTH = (NUM_SQUARE_STATES * 64) + 1 + 16 + 9;
 
-
 std::array<std::array<std::shared_ptr<Square>, INNER_BOARD_SIZE>, INNER_BOARD_SIZE> fillInitBoard();
 std::array<uint_fast64_t, HASH_BOARD_LENGTH> populateHashTable();
 

@@ -8,6 +8,8 @@
 #include "headers/consts.h"
 #include "headers/enums.h"
 
+std::unique_ptr<AI::cache_pointer_type> AI::boardCache = std::make_unique<AI::cache_pointer_type>();
+
 const std::unordered_multimap<Piece, 
     std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SIZE>> 
     AI::pieceSquareTables = AI::initializeMap();
@@ -275,11 +277,11 @@ std::pair<Move, int> AI::AlphaBeta(int alpha, int beta, const int depth) {
     const auto& moveList = board.moveGen.generateAll();
     const auto moveListSize = moveList.size();
     
-    if (boardCache.retrieve(board.currHash)) {
+    if (boardCache->retrieve(board)) {
         int entryDepth;
         int entryValue;
         SearchBoundary entryType;
-        std::tie(entryDepth, entryValue, entryType, rtn.first) = boardCache[board.currHash];
+        std::tie(entryDepth, entryValue, entryType, rtn.first) = (*boardCache)[board];
         if (entryDepth >= depth) {
             if (entryType == SearchBoundary::EXACT) {
                 return std::make_pair(rtn.first, entryValue);
@@ -336,13 +338,13 @@ std::pair<Move, int> AI::AlphaBeta(int alpha, int beta, const int depth) {
     
     if (rtn.second <= alpha) {
         //Store rtn as upper bound
-        boardCache.add(board.currHash, std::make_tuple(depth, rtn.second, SearchBoundary::UPPER, rtn.first));
+        boardCache->add(board, std::make_tuple(depth, rtn.second, SearchBoundary::UPPER, rtn.first));
     } else if (rtn.second > alpha && rtn.second < beta) {
         //Should not happen if using null window, but if it does, store rtn as both upper and lower
-        boardCache.add(board.currHash, std::make_tuple(depth, rtn.second, SearchBoundary::EXACT, rtn.first));
+        boardCache->add(board, std::make_tuple(depth, rtn.second, SearchBoundary::EXACT, rtn.first));
     } else if (rtn.second >= beta ) {
         //Store rtn as lower bound
-        boardCache.add(board.currHash, std::make_tuple(depth, rtn.second, SearchBoundary::LOWER, rtn.first));
+        boardCache->add(board, std::make_tuple(depth, rtn.second, SearchBoundary::LOWER, rtn.first));
     }
     
     return rtn;

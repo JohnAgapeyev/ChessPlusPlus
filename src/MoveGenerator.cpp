@@ -327,8 +327,7 @@ bool Board::MoveGenerator::inCheck(const Move& mv) const {
             if (realIndex < 0 || realIndex >= OUTER_BOARD_SIZE * OUTER_BOARD_SIZE) {
                 break;
             }
-            const auto currSquare = board.vectorTable[realIndex].get();
-            const auto& currPiece = currSquare->getPiece();
+            const auto& currPiece = board.vectorTable[realIndex]->getPiece();
             
             if (currPiece) {
                 const auto currPieceColour = currPiece->getColour();

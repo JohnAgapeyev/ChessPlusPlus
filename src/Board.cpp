@@ -152,7 +152,8 @@ void Board::shiftHorizontal(const int count) {
     }
     auto startCoords = findCorner();
     
-    assert(!(startCoords.second + count < 0 || startCoords.second + count + INNER_BOARD_SIZE - 1 > OUTER_BOARD_SIZE));
+    assert(!(startCoords.second + count < 0 
+        || startCoords.second + count + INNER_BOARD_SIZE - 1 > OUTER_BOARD_SIZE));
 
     for (int i = 0, col = 0; i < INNER_BOARD_SIZE; ++i) {
         for (int j = 0, row = 0; j < INNER_BOARD_SIZE; ++j) {
@@ -178,7 +179,8 @@ void Board::shiftVertical(const int count) {
     }
     auto startCoords = findCorner();
     
-    assert(!(startCoords.first + count < 0 || startCoords.first + count + INNER_BOARD_SIZE - 1 > OUTER_BOARD_SIZE));
+    assert(!(startCoords.first + count < 0 
+        || startCoords.first + count + INNER_BOARD_SIZE - 1 > OUTER_BOARD_SIZE));
     
     for (int i = 0, col = 0; i < INNER_BOARD_SIZE; ++i) {
         for (int j = 0, row = 0; j < INNER_BOARD_SIZE; ++j) {
