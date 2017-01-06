@@ -35,7 +35,10 @@ $(DEPS): $(SRCWILD) $(HEADWILD)
 	@$(RM) $(DEPS).tmp
 
 # Add the dependencies into make and don't throw an error if it doesn't exist
+# Also don't generate dependency file during a clean
+ifneq ($(MAKECMDGOALS),clean)
 -include $(DEPS)
+endif
 
 # Target is any bin .o file, prereq is the equivalent src .cpp file
 $(OBJS): $(SRCOBJS)
@@ -47,5 +50,5 @@ $(OBJS): $(SRCOBJS)
 
 # Deletes the executable and all .o files in the bin folder
 clean:
-	$(RM) $(EXEC).exe $(wildcard $(ODIR)/*.d*) $(wildcard $(ODIR)/*.o)
+	$(RM) $(EXEC) $(wildcard $(EXEC).*) $(wildcard $(ODIR)/*.d*) $(wildcard $(ODIR)/*.o)
 
