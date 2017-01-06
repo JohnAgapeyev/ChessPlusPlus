@@ -13,11 +13,11 @@ template<typename Key, typename Value, size_t maxSize, typename Hash = std::hash
 class Cache {
     static_assert(maxSize > 0, "Size must be greater than 0");
 
-    typedef std::pair<Key, Value> CacheEntry;
+    typedef std::pair<size_t, Value> CacheEntry;
     typedef std::list<CacheEntry> CacheList;
     
     CacheList internalList;
-    CacheMap<Key, typename CacheList::iterator, maxSize, Hash> internalMap;
+    CacheMap<size_t, typename CacheList::iterator, maxSize> internalMap;
     Hash hashEngine{};
     size_t currSize = 0;
     
@@ -38,8 +38,8 @@ class Cache {
     
 public:
     void erase(const Key& k) {
-        internalList.erase(internalMap[k]);
-        internalMap.erase(k);
+        internalList.erase(internalMap[hashEngine(k)]);
+        internalMap.erase(hashEngine(k));
     }
     
     void clear() {
@@ -49,17 +49,17 @@ public:
     }
     
     void add(const Key& k, const Value& v) {
-        add(std::make_pair(k, v));
+        add(std::make_pair(hashEngine(k), v));
     }
     
     Value& operator[](const Key& k) {
-        const auto& elem = internalMap[k];
+        const auto& elem = internalMap[hashEngine(k)];
         internalList.splice(internalList.begin(), internalList, elem, std::next(elem));
         return elem->second;
     }
     
     bool retrieve(const Key& k) {
-        return internalMap.find(k);
+        return internalMap.find(hashEngine(k));
     }
     
     size_t size() const {

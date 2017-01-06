@@ -9,7 +9,7 @@ class CacheMap {
 #ifdef STATIC_MEM
     std::array<std::vector<std::pair<Value, size_t>>, maxSize> internalArray{};
 #else
-    std::vector<std::vector<std::pair<Value, size_t>>> internalArray{};
+    std::vector<std::vector<std::pair<Value, size_t>>> internalArray{maxSize};
 #endif
 
     Hash hashEngine{};
@@ -19,13 +19,6 @@ class CacheMap {
     }
     
 public:
-    CacheMap() {
-#ifdef STATIC_MEM
-        internalArray.reserve(maxSize);
-#endif
-    }
-
-
     void insert(const std::pair<Key, Value>& p) {
         insert(p.first, p.second);
     }
@@ -66,7 +59,6 @@ public:
                 return true;
             }
         }
-        
         return false;
     }
     
