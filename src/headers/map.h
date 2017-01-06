@@ -6,8 +6,12 @@
 
 template<typename Key, typename Value, size_t maxSize, typename Hash = std::hash<Key>>
 class CacheMap {
+#ifdef STATIC_MEM
     std::array<std::vector<std::pair<Value, size_t>>, maxSize> internalArray{};
-    
+#else
+    std::vector<std::vector<std::pair<Value, size_t>>> internalArray{};
+#endif
+
     Hash hashEngine{};
     
     size_t getBoundedHash(const Key& k) const {
@@ -15,6 +19,13 @@ class CacheMap {
     }
     
 public:
+    CacheMap() {
+#ifdef STATIC_MEM
+        internalArray.reserve(maxSize);
+#endif
+    }
+
+
     void insert(const std::pair<Key, Value>& p) {
         insert(p.first, p.second);
     }

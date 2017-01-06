@@ -15,7 +15,7 @@ release: debug
 
 debug: $(patsubst $(SRCOBJS), $(OBJS), $(SRCWILD))
 # Command takes all bin .o files and creates an executable called chess in the bin folder
-	$(CXX) $^ $(CXXFLAGS) -o $(EXEC)
+	$(CXX) $^ $(CFLAGS) $(CXXFLAGS) -o $(EXEC)
 
 directories: $(ODIR)
 
@@ -25,7 +25,7 @@ $(ODIR):
 # Create dependency file for make and manually adjust it silently to work with other directories
 $(DEPS): $(SRCWILD) $(HEADWILD)
 # Compile the non-system dependencies and store it in outputdir/execname.d
-	@$(CXX) -MM $(CXXFLAGS) $(SRCWILD) > $(DEPS)
+	@$(CXX) -MM $(CFLAGS) $(CXXFLAGS) $(SRCWILD) > $(DEPS)
 # Copy the contents to a temp file
 	@cp $(DEPS) $(DEPS).tmp
 # Take the temp file contents, do a regex text replace to change all .o strings into
@@ -43,7 +43,7 @@ endif
 # Target is any bin .o file, prereq is the equivalent src .cpp file
 $(OBJS): $(SRCOBJS)
 # Command compiles the src .cpp file with the listed flags and turns it into a bin .o file
-	$(CXX) -c $(CXXFLAGS) $< -o $(patsubst $(SRCOBJS), $(OBJS), $<)
+	$(CXX) -c $(CFLAGS) $(CXXFLAGS) $< -o $(patsubst $(SRCOBJS), $(OBJS), $<)
 
 # Prevent clean from trying to do anything with a file called clean
 .PHONY: clean
