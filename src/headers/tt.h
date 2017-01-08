@@ -54,7 +54,9 @@ public:
     
     Value& operator[](const Key& k) {
         const auto& elem = internalMap[hashEngine(k)];
-        internalList.splice(internalList.begin(), internalList, elem, std::next(elem));
+        if (elem != internalList.begin()) {
+            internalList.splice(internalList.begin(), internalList, elem, std::next(elem));
+        }
         return elem->second;
     }
     
