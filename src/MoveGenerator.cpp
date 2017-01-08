@@ -297,24 +297,32 @@ bool Board::MoveGenerator::inCheck(const int squareIndex) const {
 
 bool Board::MoveGenerator::inCheck(const Move& mv) const {
     const auto& checkVectors = Piece(PieceTypes::UNKNOWN, Colour::UNKNOWN).getVectorList();
-    Colour friendlyPieceColour = (board.isWhiteTurn) ? Colour::WHITE : Colour::BLACK;
-    
-    const auto toPiece = mv.toSq->getPiece();
-    auto toPieceCopy = Piece(PieceTypes::UNKNOWN, Colour::UNKNOWN);
-    if (toPiece) {
-        toPieceCopy = Piece(toPiece->getType(), toPiece->getColour());
-    }
+    const auto& toPiece = mv.toSq->getPiece();
+    const auto toPieceCopy = Piece(mv.toPieceType, mv.toPieceColour);
     
     mv.toSq->setPiece(nullptr);
     std::swap(*mv.fromSq, *mv.toSq);
 
-    const int squareIndex = std::distance(board.vectorTable.cbegin(), 
-        std::find_if(board.vectorTable.cbegin(), board.vectorTable.cend(), 
-            [friendlyPieceColour](const auto& sq){
+    //Check if friendly king can be found
+    assert(std::find_if(vectorTable.cbegin(), vectorTable.cend(), 
+            [](const auto& sq){
                 const auto& piece = sq->getPiece();
                 return piece && piece->getType() == PieceTypes::KING 
-                    && piece->getColour() == friendlyPieceColour;
-            }));
+                    && piece->getColour() == mv.fromPieceColour;
+            }) != vectorTable.cend());
+            
+    int squareIndex = -1;
+    
+    for (size_t i = 0, len = board.vectorTable.size(); i < len; ++i) {
+        const auto& piece = board.vectorTable[i]->getPiece();
+        if (piece && piece->getType() == PieceTypes::KING && piece->getColour() == mv.fromPieceColour) {
+            squareIndex = i;
+            break;
+        }
+    }
+    
+    //Ensure index was found during previous loop
+    assert(squareIndex != -1);
     
     int vectorLength = 7;
     for (const auto& offset : checkVectors) {
@@ -333,7 +341,7 @@ bool Board::MoveGenerator::inCheck(const Move& mv) const {
                 const auto currPieceColour = currPiece->getColour();
                 const auto currPieceType = currPiece->getType();
                 
-                if (currPieceColour == friendlyPieceColour 
+                if (currPieceColour == mv.fromPieceColour 
                         || currPieceColour == Colour::UNKNOWN) {
                     break;
                 }
@@ -344,19 +352,18 @@ bool Board::MoveGenerator::inCheck(const Move& mv) const {
                     break;
                 }
                 
-                const auto& pieceVector = currPiece->getVectorList();
-                
-                if (std::find_if(pieceVector.cbegin(), pieceVector.cend(), 
-                        [currPieceType, offset](const auto off){
-                            if (currPieceType == PieceTypes::PAWN) {
-                                if (off % OUTER_BOARD_SIZE) {
-                                    return off == -offset;
-                                }
-                                return false;
-                            }
-                            return off == offset;
-                        }
-                    ) == pieceVector.cend()) {
+                bool found = false;
+                for (const auto& off : currPiece->getVectorList()) {
+                    if (currPieceType == PieceTypes::PAWN && off % OUTER_BOARD_SIZE && off == -offset) {
+                        found = true;
+                        break;
+                    }
+                    if (off == offset) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
                     break;
                 }
                 std::swap(*mv.fromSq, *mv.toSq);
