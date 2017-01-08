@@ -51,6 +51,13 @@ void AI::evaluate() {
     currScore -= reduceKnightMobilityScore(whiteMoveList, cornerIndex);
     currScore += reduceKnightMobilityScore(blackMoveList, cornerIndex);
     
+    if (hasWhiteCastled) {
+        currScore += CASTLE_BONUS;
+    }
+    if (hasBlackCastled) {
+        currScore -= CASTLE_BONUS;
+    }
+    
     //Counting material values
     for(int i = 0; i < INNER_BOARD_SIZE; ++i) {
         for(int j = 0; j < INNER_BOARD_SIZE; ++j) {
@@ -241,6 +248,16 @@ int AI::getPieceValue(const PieceTypes type) const {
 
 void AI::search() {
     const auto result = iterativeDeepening();
+    
+    if (result.first.isCastle) {
+        if (result.first.fromPieceColour == Colour::WHITE) {
+            hasWhiteCastled = true;
+        } else {
+            hasBlackCastled = true;
+        }
+    }
+    
+    
     board.makeMove(result.first);
 }
 
