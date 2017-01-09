@@ -3,6 +3,8 @@
 #include <tuple>
 #include <utility>
 #include <cassert>
+#include <set>
+#include <functional>
 #include "headers/ai.h"
 #include "headers/board.h"
 #include "headers/consts.h"
@@ -526,40 +528,45 @@ std::unordered_multimap<Piece, std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SI
     return tempMap;
 }
 
-std::vector<Move> AI::orderMoveList(const std::vector<Move>& list, const Move& pvMove) {
-    std::vector<std::pair<Move, size_t>> moveWeighting;
-    
-    for (const auto& mv : list) {
-        moveWeighting.push_back(std::make_pair(mv, 0));
-    }
+std::vector<Move> AI::orderMoveList(std::vector<Move>&& list, const Move& pvMove) {
+    std::set<Move, bool(*)(const Move& first, const Move& second)> output(&operator!=);
     
     //If pv move was found in the cache, move it to the front
     if (pvMove != Move()) {
-        const auto idx = std::distance(moveWeighting.begin(), std::find_if(moveWeighting.begin(), moveWeighting.end(), 
-        [&](const auto& p){return p.first == pvMove;}));
-        std::swap(moveWeighting.front(), moveWeighting[idx]);
+        const auto idx = std::distance(list.begin(), std::find_if(list.begin(), 
+            list.end(), [&](const auto& mv){return mv == pvMove;}));
+        //output.push_back(list[idx]);
+        output.insert(list[idx]);
     } 
     
-    for (auto& p : moveWeighting) {
-        if (p.first == counterMove[(pieceLookupTable[prev.fromPieceType] * INNER_BOARD_SIZE * INNER_BOARD_SIZE) 
-                + board.convertOuterBoardIndex(board.getSquareIndex(prev.toSq), board.findCorner_1D())]) {
-            //Increment score for that move
-            p.second += 10;
-        }
-    }
-    
-    //Sort the results based on their score
-    std::sort(moveWeighting.begin() + (pvMove != Move()), moveWeighting.end(), 
-        [](const auto& first, const auto& second){
-            return first.second > second.second;
+    //Partition list with captures coming before quit moves
+    auto captureIt = std::partition(list.begin(), list.end(), 
+        [](const auto& mv){return mv.toPieceType != PieceTypes::UNKNOWN;});
+        
+    //MVV-LVA sorting
+    std::sort(list.begin(), captureIt, 
+        [this](const auto& first, const auto& second) {
+            if (first.toPieceType == second.toPieceType) {
+                return this->getPieceValue(first.fromPieceType) < this->getPieceValue(second.fromPieceType);
+            }
+            return this->getPieceValue(first.toPieceType) > this->getPieceValue(second.toPieceType);
         }
     );
-    
-    std::vector<Move> output;
-    
-    for (const auto& p : moveWeighting) {
-        output.push_back(p.first);
+    //Adding sorted captures
+    for (auto it = list.begin(); it != captureIt; ++it) {
+        output.insert(*it);
     }
     
-    return output;
+    for (auto& mv : list) {
+        if (mv == counterMove[(pieceLookupTable[prev.fromPieceType] * INNER_BOARD_SIZE * INNER_BOARD_SIZE) 
+                + board.convertOuterBoardIndex(board.getSquareIndex(prev.toSq), board.findCorner_1D())]) {
+            output.insert(mv);
+        }
+    }
+    
+    //Need to add any moves that have not already been added
+    output.insert(list.begin(), list.end());
+    
+    
+    return std::vector<Move>{output.begin(), output.end()};
 }

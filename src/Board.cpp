@@ -466,12 +466,13 @@ bool Board::makeMove(Move mv) {
     const auto& cornerCoords = findCorner_1D();
     const auto blackFromPieceHashOffset = ((mv.fromPieceColour == Colour::WHITE) ? 0 : 6);
     const auto blackToPieceHashOffset = ((mv.toPieceColour == Colour::WHITE) ? 0 : 6);
-    int row = -1; 
+    int row = -1;
     int col = -1;
     
     for (int i = 0; i < INNER_BOARD_SIZE; ++i) {
         for (int j = 0; j < INNER_BOARD_SIZE; ++j) {
-            if (*vectorTable[cornerCoords + (i * OUTER_BOARD_SIZE) + j] == *mv.fromSq) {
+            if (vectorTable[cornerCoords + (i * OUTER_BOARD_SIZE) + j] && mv.fromSq
+                    && *vectorTable[cornerCoords + (i * OUTER_BOARD_SIZE) + j] == *mv.fromSq) {
                 row = i;
                 col = j;
                 goto end;

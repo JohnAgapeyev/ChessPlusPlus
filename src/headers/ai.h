@@ -48,7 +48,7 @@ class AI {
     
     std::array<Move, 6 * INNER_BOARD_SIZE * INNER_BOARD_SIZE> counterMove; 
     
-    const int DEPTH = 4;
+    const int DEPTH = 15;
     
     bool isWhitePlayer = false;
     
@@ -68,7 +68,7 @@ class AI {
     int getPieceValue(const PieceTypes type) const;
     unsigned long long perft(int depth);
     unsigned long long perftDivide(int depth);
-    std::vector<Move> orderMoveList(const std::vector<Move>& list, const Move& pvMove);
+    std::vector<Move> orderMoveList(std::vector<Move>&& list, const Move& pvMove);
     
 public:
     AI(Board& b) : board(b) {}
