@@ -537,8 +537,6 @@ std::vector<Move> AI::orderMoveList(const std::vector<Move>& list, const Move& p
     if (pvMove != Move()) {
         const auto idx = std::distance(moveWeighting.begin(), std::find_if(moveWeighting.begin(), moveWeighting.end(), 
         [&](const auto& p){return p.first == pvMove;}));
-        //std::swap(moveWeighting.front(), std::find_if(moveWeighting.begin(), moveWeighting.end(), 
-        //[&](const auto& p){return p.first == pvMove;}));
         std::swap(moveWeighting.front(), moveWeighting[idx]);
     } 
     
