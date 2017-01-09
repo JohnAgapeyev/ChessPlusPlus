@@ -25,4 +25,8 @@ struct Move {
 };
 
 void swapOffsets(const Move& mv);
+
+bool operator==(const Move& first, const Move& second);
+bool operator!=(const Move& first, const Move& second);
+
 #endif

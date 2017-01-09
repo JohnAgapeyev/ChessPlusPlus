@@ -55,9 +55,11 @@ class Board {
     void shiftHorizontal(const int count);
     std::string promptPromotionType() const;
     void updateCheckStatus();
-    bool checkBoardValidity();
+    bool checkBoardValidity() const;
     std::string convertSquareToCoordText(const Square& sq) const;
     std::string convertMoveToCoordText(const Move& mv) const;
+    
+    size_t getSquareIndex(const Square *sq);
     
 public:
     Board();

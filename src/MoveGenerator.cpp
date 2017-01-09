@@ -304,12 +304,12 @@ bool Board::MoveGenerator::inCheck(const Move& mv) const {
     std::swap(*mv.fromSq, *mv.toSq);
 
     //Check if friendly king can be found
-    assert(std::find_if(vectorTable.cbegin(), vectorTable.cend(), 
-            [](const auto& sq){
+    assert(std::find_if(board.vectorTable.cbegin(), board.vectorTable.cend(), 
+            [&](const auto& sq){
                 const auto& piece = sq->getPiece();
                 return piece && piece->getType() == PieceTypes::KING 
                     && piece->getColour() == mv.fromPieceColour;
-            }) != vectorTable.cend());
+            }) != board.vectorTable.cend());
             
     int squareIndex = -1;
     

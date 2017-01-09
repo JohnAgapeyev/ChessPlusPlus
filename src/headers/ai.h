@@ -7,6 +7,8 @@
 #include <unordered_map>
 #include <memory>
 #include <array>
+#include <vector>
+#include "move.h"
 #include "board.h"
 #include "tt.h"
 #include "consts.h"
@@ -44,7 +46,9 @@ class AI {
     typedef Cache<Board, std::tuple<int, int, SearchBoundary, Move>, 1024 * 1024> cache_pointer_type;
     static std::unique_ptr<cache_pointer_type> boardCache;
     
-    const int DEPTH = 5;
+    std::array<Move, 6 * INNER_BOARD_SIZE * INNER_BOARD_SIZE> counterMove; 
+    
+    const int DEPTH = 4;
     
     bool isWhitePlayer = false;
     
@@ -55,6 +59,8 @@ class AI {
     
     int eval = 0;
     
+    Move prev = Move();
+    
     int reduceKnightMobilityScore(const std::vector<Move>& moveList, const int cornerIndex) const;
     std::pair<Move, int> iterativeDeepening();
     std::pair<Move, int> MTD(const int guess, const int depth);
@@ -62,6 +68,7 @@ class AI {
     int getPieceValue(const PieceTypes type) const;
     unsigned long long perft(int depth);
     unsigned long long perftDivide(int depth);
+    std::vector<Move> orderMoveList(const std::vector<Move>& list, const Move& pvMove);
     
 public:
     AI(Board& b) : board(b) {}

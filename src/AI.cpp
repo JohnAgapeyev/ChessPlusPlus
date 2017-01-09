@@ -257,7 +257,7 @@ void AI::search() {
         }
     }
     
-    
+    prev = result.first;
     board.makeMove(result.first);
 }
 
@@ -291,9 +291,6 @@ std::pair<Move, int> AI::AlphaBeta(int alpha, int beta, const int depth) {
     assert(depth >= 0);
     auto rtn = std::make_pair(Move(), INT_MIN);
         
-    const auto& moveList = board.moveGen.generateAll();
-    const auto moveListSize = moveList.size();
-    
     if (boardCache->retrieve(board)) {
         int entryDepth;
         int entryValue;
@@ -303,7 +300,7 @@ std::pair<Move, int> AI::AlphaBeta(int alpha, int beta, const int depth) {
             if (entryType == SearchBoundary::EXACT) {
                 return std::make_pair(rtn.first, entryValue);
             }
-            //Update the best move based on the previous value, not sure how yet
+            //Update the best move based on the previous value
             if (entryType == SearchBoundary::LOWER && entryValue > alpha) {
                 alpha = entryValue;
             } else if (entryType == SearchBoundary::UPPER && entryValue < beta) {
@@ -315,6 +312,9 @@ std::pair<Move, int> AI::AlphaBeta(int alpha, int beta, const int depth) {
             }
         }
     }
+    
+    const auto& moveList = orderMoveList(board.moveGen.generateAll(), rtn.first);
+    const auto moveListSize = moveList.size();
     
     if (depth == 0) {
         evaluate();
@@ -362,6 +362,14 @@ std::pair<Move, int> AI::AlphaBeta(int alpha, int beta, const int depth) {
     } else if (rtn.second >= beta ) {
         //Store rtn as lower bound
         boardCache->add(board, std::make_tuple(depth, rtn.second, SearchBoundary::LOWER, rtn.first));
+        
+        //If no piece is being captured
+        if (rtn.first.toSq && !rtn.first.toSq->getPiece() && prev != Move()) {
+            counterMove[
+                (pieceLookupTable[prev.fromPieceType] * INNER_BOARD_SIZE * INNER_BOARD_SIZE) 
+                + board.convertOuterBoardIndex(board.getSquareIndex(prev.toSq), board.findCorner_1D())
+            ] = rtn.first;
+        }
     }
     
     return rtn;
@@ -516,4 +524,44 @@ std::unordered_multimap<Piece, std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SI
         tempMap.emplace(std::make_pair(Piece(type, Colour::BLACK), previousValue));
     }
     return tempMap;
+}
+
+std::vector<Move> AI::orderMoveList(const std::vector<Move>& list, const Move& pvMove) {
+    std::vector<std::pair<Move, size_t>> moveWeighting;
+    
+    for (const auto& mv : list) {
+        moveWeighting.push_back(std::make_pair(mv, 0));
+    }
+    
+    //If pv move was found in the cache, move it to the front
+    if (pvMove != Move()) {
+        const auto idx = std::distance(moveWeighting.begin(), std::find_if(moveWeighting.begin(), moveWeighting.end(), 
+        [&](const auto& p){return p.first == pvMove;}));
+        //std::swap(moveWeighting.front(), std::find_if(moveWeighting.begin(), moveWeighting.end(), 
+        //[&](const auto& p){return p.first == pvMove;}));
+        std::swap(moveWeighting.front(), moveWeighting[idx]);
+    } 
+    
+    for (auto& p : moveWeighting) {
+        if (p.first == counterMove[(pieceLookupTable[prev.fromPieceType] * INNER_BOARD_SIZE * INNER_BOARD_SIZE) 
+                + board.convertOuterBoardIndex(board.getSquareIndex(prev.toSq), board.findCorner_1D())]) {
+            //Increment score for that move
+            p.second += 10;
+        }
+    }
+    
+    //Sort the results based on their score
+    std::sort(moveWeighting.begin() + (pvMove != Move()), moveWeighting.end(), 
+        [](const auto& first, const auto& second){
+            return first.second > second.second;
+        }
+    );
+    
+    std::vector<Move> output;
+    
+    for (const auto& p : moveWeighting) {
+        output.push_back(p.first);
+    }
+    
+    return output;
 }

@@ -1095,7 +1095,7 @@ void Board::setPositionByFEN(const std::string& fen) {
 }
 
 //Testing method used to assert board state
-bool Board::checkBoardValidity() {
+bool Board::checkBoardValidity() const {
     int cornerCoords;
     if ((cornerCoords = findCorner_1D()) == -1) {
         std::cerr << "Could not find corner\n";
@@ -1165,4 +1165,17 @@ std::string Board::convertSquareToCoordText(const Square& sq) const {
 
 std::string Board::convertMoveToCoordText(const Move& mv) const {
     return convertSquareToCoordText(*mv.fromSq) + convertSquareToCoordText(*mv.toSq);
+}
+
+size_t Board::getSquareIndex(const Square *sq) {
+    if (!sq) {
+        return static_cast<size_t>(-1);
+    }
+    
+    for (size_t i = 0, len = vectorTable.size(); i < len; ++i) {
+        if (vectorTable[i] && *vectorTable[i] == *sq) {
+            return i;
+        }
+    }
+    return static_cast<size_t>(-1);
 }
