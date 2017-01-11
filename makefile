@@ -10,6 +10,7 @@ HEADWILD := $(wildcard $(HEAD)/*.h)
 EXEC := $(ODIR)/$(APPNAME)
 DEPS := $(EXEC).d
 
+# Add flags for release mode binary
 release: CXXFLAGS += -O3 -march=native -flto -DNDEBUG
 release: debug
 
@@ -17,13 +18,11 @@ debug: $(patsubst $(SRCOBJS), $(OBJS), $(SRCWILD))
 # Command takes all bin .o files and creates an executable called chess in the bin folder
 	$(CXX) $^ $(CFLAGS) $(CXXFLAGS) -o $(EXEC)
 
-directories: $(ODIR)
-
 $(ODIR):
-	mkdir $(ODIR)
+	@mkdir -p $(ODIR)
 
 # Create dependency file for make and manually adjust it silently to work with other directories
-$(DEPS): $(SRCWILD) $(HEADWILD)
+$(DEPS): $(SRCWILD) $(HEADWILD) | $(ODIR) 
 # Compile the non-system dependencies and store it in outputdir/execname.d
 	@$(CXX) -MM $(CFLAGS) $(CXXFLAGS) $(SRCWILD) > $(DEPS)
 # Copy the contents to a temp file
@@ -48,7 +47,7 @@ $(OBJS): $(SRCOBJS)
 # Prevent clean from trying to do anything with a file called clean
 .PHONY: clean
 
-# Deletes the executable and all .o files in the bin folder
-clean:
+# Deletes the executable and all .o and .d files in the bin folder
+clean: |$(ODIR)
 	$(RM) $(EXEC) $(wildcard $(EXEC).*) $(wildcard $(ODIR)/*.d*) $(wildcard $(ODIR)/*.o)
 
