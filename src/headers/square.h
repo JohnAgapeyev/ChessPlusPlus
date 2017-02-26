@@ -17,9 +17,15 @@ public:
     Square(const Piece p, const int off = 0) : piece(std::make_unique<Piece>(p)), offset(off) {}
     Square(std::unique_ptr<Piece> p, const int off = 0) : piece(std::move(p)), offset(off) {}
     
-    auto setPiece(std::unique_ptr<Piece> p) {piece = std::move(p);}
-    auto setPiece(Piece p) {piece = std::make_unique<Piece>(p);}
-    auto setOffset(int off) {offset = off;}
+    void setPiece(std::unique_ptr<Piece> p) {
+        if (!p) {
+            piece.reset();
+        } else {
+            piece = std::move(p);
+        }
+    }
+    void setPiece(const Piece& p) {piece = std::make_unique<Piece>(p);}
+    void setOffset(int off) {offset = off;}
     auto getOffset() const {return offset;}
     auto getPiece() const {return piece.get();}
     

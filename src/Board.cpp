@@ -990,21 +990,27 @@ std::string Board::promptPromotionType() const {
 }
 
 void Board::updateCheckStatus() {
-    const auto blackKingDist = std::distance(vectorTable.cbegin(), 
-        std::find_if(vectorTable.cbegin(), vectorTable.cend(), 
-            [](const auto& sq){
-                const auto& piece = sq->getPiece();
-                return piece && piece->getType() == PieceTypes::KING 
-                    && piece->getColour() == Colour::BLACK;
-            }));
+    const auto& blackIt = std::find_if(vectorTable.cbegin(), vectorTable.cend(), 
+        [](const auto& sq){
+            const auto& piece = sq->getPiece();
+            return piece && piece->getType() == PieceTypes::KING 
+                && piece->getColour() == Colour::BLACK;
+        });
+
+    assert(blackIt != vectorTable.cend());
+
+    const auto blackKingDist = std::distance(vectorTable.cbegin(), blackIt);
     
-    const auto whiteKingDist = std::distance(vectorTable.cbegin(), 
-        std::find_if(vectorTable.cbegin(), vectorTable.cend(), 
-            [](const auto& sq){
-                const auto& piece = sq->getPiece();
-                return piece && piece->getType() == PieceTypes::KING 
-                    && piece->getColour() == Colour::WHITE;
-            }));
+    const auto& whiteIt = std::find_if(vectorTable.cbegin(), vectorTable.cend(), 
+        [](const auto& sq){
+            const auto& piece = sq->getPiece();
+            return piece && piece->getType() == PieceTypes::KING 
+                && piece->getColour() == Colour::WHITE;
+        });
+        
+    assert(whiteIt != vectorTable.cend());
+    
+    const auto whiteKingDist = std::distance(vectorTable.cbegin(), whiteIt);
     
     blackInCheck = moveGen.inCheck(blackKingDist);
     whiteInCheck = moveGen.inCheck(whiteKingDist);

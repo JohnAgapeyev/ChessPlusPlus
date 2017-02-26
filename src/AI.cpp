@@ -533,10 +533,11 @@ std::vector<Move> AI::orderMoveList(std::vector<Move>&& list, const Move& pvMove
     
     //If pv move was found in the cache, move it to the front
     if (pvMove != Move()) {
-        const auto idx = std::distance(list.begin(), std::find_if(list.begin(), 
-            list.end(), [&](const auto& mv){return mv == pvMove;}));
-        //output.push_back(list[idx]);
-        output.insert(list[idx]);
+        const auto& it = std::find_if(list.begin(), list.end(), [&](const auto& mv){return mv == pvMove;});
+        if (it != list.end()) {
+            const auto idx = std::distance(list.begin(), it);
+            output.insert(list[idx]);
+        }
     } 
     
     //Partition list with captures coming before quit moves
