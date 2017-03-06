@@ -402,6 +402,7 @@ bool Board::makeMove(std::string& input) {
     if (isWhiteTurn) {
         moveCounter++;
     }
+    updateCheckStatus();
     
     moveGen.generateAll();
     
@@ -657,6 +658,7 @@ bool Board::makeMove(Move mv) {
     if (isWhiteTurn) {
         moveCounter++;
     }
+    updateCheckStatus();
     
     std::rotate(repititionList.begin(), repititionList.begin() + 1, repititionList.end());
     repititionList[repititionList.size() - 1] = currHash;
