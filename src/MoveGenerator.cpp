@@ -61,6 +61,7 @@ Move Board::MoveGenerator::createMove(std::string& input) const {
     result.enPassantActive = false;
     result.enPassantTarget = nullptr;
     result.halfMoveClock = 0;
+    result.moveCounter = 0;
     
     return result;
 }
@@ -247,7 +248,7 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
 }
 
 bool Board::MoveGenerator::inCheck(const int squareIndex) const {
-    assert(squareIndex >= 0 && squareIndex < board.vectorTable.size());
+    assert(squareIndex >= 0 && squareIndex < static_cast<int>(board.vectorTable.size()));
     
     const auto& checkVectors = Piece(PieceTypes::UNKNOWN, Colour::UNKNOWN).getVectorList();
     const int cornerIndex =  board.findCorner_1D();
@@ -473,7 +474,8 @@ std::vector<Move> Board::MoveGenerator::generateAll() {
                 }
                 
                 mv.promotionType = (mv.fromSq->getPiece()) ? mv.fromPieceType : PieceTypes::UNKNOWN;
-                mv.halfMoveClock = 0;
+                mv.halfMoveClock = board.halfMoveClock;
+                mv.moveCounter = board.moveCounter;
                 mv.castleRights = board.castleRights;
                 
                 mv.enPassantActive = board.enPassantActive;

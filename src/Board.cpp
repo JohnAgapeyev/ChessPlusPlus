@@ -402,6 +402,9 @@ bool Board::makeMove(std::string& input) {
     if (isWhiteTurn) {
         moveCounter++;
     }
+    
+    mv.moveCounter = moveCounter;
+    
     updateCheckStatus();
     
     moveGen.generateAll();
@@ -662,6 +665,11 @@ bool Board::makeMove(Move mv) {
     if (isWhiteTurn) {
         moveCounter++;
     }
+    
+    
+    mv.moveCounter = moveCounter;
+    
+    
     updateCheckStatus();
     
     std::rotate(repititionList.begin(), repititionList.begin() + 1, repititionList.end());
@@ -798,11 +806,9 @@ void Board::unmakeMove(const Move& mv) {
     repititionList[0] = currHash;
     
     updateCheckStatus();
-    
-    if (mv.fromPieceColour == Colour::WHITE) {
-        moveCounter--;
-    }
+
     halfMoveClock = mv.halfMoveClock;
+    moveCounter = mv.moveCounter;
     
     assert(checkBoardValidity());
 }

@@ -23,6 +23,7 @@ struct Move {
     bool enPassantActive;
     Square* enPassantTarget;
     int halfMoveClock;
+    int moveCounter;
 };
 
 void swapOffsets(const Move& mv);
