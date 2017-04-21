@@ -27,3 +27,23 @@ bool operator==(const Move& first, const Move& second) {
 bool operator!=(const Move& first, const Move& second) {
     return !(first == second);
 }
+
+std::ostream& operator<<(std::ostream& os, const Move& mv) {
+    os << mv.fromSq << ", " << mv.toSq;
+    if (mv.fromSq) {
+        os << ", " << *mv.fromSq;
+    }
+    if (mv.toSq) {
+        os << ", " << *mv.toSq;
+    }
+
+    os << ", " << static_cast<char>(mv.fromPieceType) << ", " << static_cast<char>(mv.fromPieceColour) << ", " << mv.captureMade << ", "
+        << static_cast<char>(mv.toPieceType) << ", " << static_cast<char>(mv.toPieceColour) << "," << static_cast<char>(mv.promotionType) << ", " << mv.isCastle 
+        << "," << mv.castleRights << ", " << mv.enPassantActive << ", " << mv.enPassantTarget;
+
+    if (mv.enPassantTarget) {
+        os << ", " << *mv.enPassantTarget;
+    }
+    os << ", " << mv.halfMoveClock;
+    return os;
+}

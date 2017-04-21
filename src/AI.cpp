@@ -327,6 +327,7 @@ std::pair<Move, int> AI::AlphaBeta(int alpha, int beta, const int depth) {
         int a = alpha;
         
         for (size_t i = 0; rtn.second < beta && i < moveListSize; ++i) {
+            assert(moveList[i].fromSq && moveList[i].toSq);
             board.makeMove(moveList[i]);
             const auto& abCall = AlphaBeta(a, beta, depth - 1);
             
@@ -343,6 +344,7 @@ std::pair<Move, int> AI::AlphaBeta(int alpha, int beta, const int depth) {
         int b = beta;
         
         for (size_t i = 0; rtn.second > alpha && i < moveListSize; ++i) {
+            assert(moveList[i].fromSq && moveList[i].toSq);
             board.makeMove(moveList[i]);
             const auto& abCall = AlphaBeta(alpha, b, depth - 1);
             
@@ -530,7 +532,16 @@ std::unordered_multimap<Piece, std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SI
 
 std::vector<Move> AI::orderMoveList(std::vector<Move>&& list, const Move& pvMove) {
     std::set<Move, bool(*)(const Move& first, const Move& second)> output(&operator!=);
-    
+
+    assert([&]()->bool{
+        for (const auto& mv : list) {
+            if (!mv.fromSq || !mv.toSq) {
+                return false;
+            }
+        }
+        return true;
+    }());
+
     //If pv move was found in the cache, move it to the front
     if (pvMove != Move()) {
         const auto& it = std::find_if(list.begin(), list.end(), [&](const auto& mv){return mv == pvMove;});

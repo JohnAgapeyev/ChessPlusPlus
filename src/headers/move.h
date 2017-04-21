@@ -1,6 +1,7 @@
 #ifndef MOVE_H
 #define MOVE_H
 
+#include <iostream>
 #include "square.h"
 #include "piece.h"
 #include "enums.h"
@@ -28,5 +29,6 @@ void swapOffsets(const Move& mv);
 
 bool operator==(const Move& first, const Move& second);
 bool operator!=(const Move& first, const Move& second);
+std::ostream& operator<<(std::ostream& os, const Move& mv);
 
 #endif

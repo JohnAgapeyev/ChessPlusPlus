@@ -247,6 +247,8 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
 }
 
 bool Board::MoveGenerator::inCheck(const int squareIndex) const {
+    assert(squareIndex >= 0 && squareIndex < board.vectorTable.size());
+    
     const auto& checkVectors = Piece(PieceTypes::UNKNOWN, Colour::UNKNOWN).getVectorList();
     const int cornerIndex =  board.findCorner_1D();
     
