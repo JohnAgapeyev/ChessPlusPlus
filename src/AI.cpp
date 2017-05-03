@@ -382,7 +382,7 @@ std::pair<Move, int> AI::AlphaBeta(int alpha, int beta, const int depth) {
 unsigned long long AI::perft(int depth) {
     unsigned long long nodeCount = 0;
     auto moveList = board.moveGen.generateAll();
-    const auto& moveListSize = moveList.size();
+    const auto moveListSize = moveList.size();
     
     switch(depth) {
         case 0:
@@ -402,7 +402,7 @@ unsigned long long AI::perft(int depth) {
 unsigned long long AI::perftDivide(int depth) {
     unsigned long long nodeCount = 0;
     auto moveList = board.moveGen.generateAll();
-    const auto& moveListSize = moveList.size();
+    const auto moveListSize = moveList.size();
     
     if (!depth) {
         return 1;

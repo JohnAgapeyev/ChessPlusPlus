@@ -493,10 +493,11 @@ bool Board::makeMove(Move& mv) {
     assert(row != -1);
     assert(col != -1);
     shiftBoard(col, row);
-    
-    if (!moveGen.validateMove(mv, true)) {
-        return false;
-    }
+
+    assert(moveGen.validateMove(mv, true));
+
+    mv.halfMoveClock = halfMoveClock;
+    mv.moveCounter = moveCounter;
 
     halfMoveClock++;
     
@@ -659,7 +660,6 @@ bool Board::makeMove(Move& mv) {
     swapOffsets(mv);
     isWhiteTurn = !isWhiteTurn;
     
-    mv.halfMoveClock = halfMoveClock;
     
     //xor the change in turn
     currHash ^= HASH_VALUES[static_cast<int>(SquareState::WHITE_MOVE)];
@@ -668,7 +668,6 @@ bool Board::makeMove(Move& mv) {
         moveCounter++;
     }
     
-    mv.moveCounter = moveCounter;
     
     updateCheckStatus();
     
