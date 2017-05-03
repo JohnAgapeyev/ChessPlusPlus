@@ -55,6 +55,7 @@ Move Board::MoveGenerator::createMove(std::string& input) const {
     }
     
     result.promotionType = (result.fromSq->getPiece()) ? result.fromSq->getPiece()->getType() : PieceTypes::UNKNOWN;
+    result.promotionMade = false;
     
     result.isCastle = false;
     result.castleRights = board.castleRights;
@@ -474,6 +475,7 @@ std::vector<Move> Board::MoveGenerator::generateAll() {
                 }
                 
                 mv.promotionType = (mv.fromSq->getPiece()) ? mv.fromPieceType : PieceTypes::UNKNOWN;
+                mv.promotionMade = false;
                 mv.halfMoveClock = board.halfMoveClock;
                 mv.moveCounter = board.moveCounter;
                 mv.castleRights = board.castleRights;

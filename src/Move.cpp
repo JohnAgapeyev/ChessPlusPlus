@@ -5,7 +5,7 @@
 Move::Move() : fromSq(nullptr), toSq(nullptr), fromPieceType(PieceTypes::UNKNOWN), 
         fromPieceColour(Colour::UNKNOWN), captureMade(false), 
         toPieceType(PieceTypes::UNKNOWN), toPieceColour(Colour::UNKNOWN), 
-        promotionType(PieceTypes::UNKNOWN), isCastle(false), castleRights(0), 
+        promotionType(PieceTypes::UNKNOWN), promotionMade(false), isCastle(false), castleRights(0), 
         enPassantActive(false), enPassantTarget(nullptr), halfMoveClock(0), moveCounter(0) {}
 
 void swapOffsets(const Move& mv) {
@@ -19,9 +19,9 @@ bool operator==(const Move& first, const Move& second) {
         && first.fromPieceType == second.fromPieceType && first.fromPieceColour == second.fromPieceColour 
         && first.captureMade == second.captureMade && first.toPieceType == second.toPieceType 
         && first.toPieceColour == second.toPieceColour && first.promotionType == second.promotionType 
-        && first.isCastle == second.isCastle && first.castleRights == second.castleRights 
-        && first.enPassantActive == second.enPassantActive && first.enPassantTarget == second.enPassantTarget 
-        && first.halfMoveClock == second.halfMoveClock;
+        && first.promotionMade == second.promotionMade && first.isCastle == second.isCastle 
+        && first.castleRights == second.castleRights && first.enPassantActive == second.enPassantActive 
+        && first.enPassantTarget == second.enPassantTarget && first.halfMoveClock == second.halfMoveClock;
 }
 
 bool operator!=(const Move& first, const Move& second) {
@@ -37,9 +37,11 @@ std::ostream& operator<<(std::ostream& os, const Move& mv) {
         os << ", " << *mv.toSq;
     }
 
-    os << ", " << static_cast<char>(mv.fromPieceType) << ", " << static_cast<char>(mv.fromPieceColour) << ", " << mv.captureMade << ", "
-        << static_cast<char>(mv.toPieceType) << ", " << static_cast<char>(mv.toPieceColour) << "," << static_cast<char>(mv.promotionType) << ", " << mv.isCastle 
-        << "," << mv.castleRights << ", " << mv.enPassantActive << ", " << mv.enPassantTarget;
+    os << ", " << static_cast<char>(mv.fromPieceType) << ", " << static_cast<char>(mv.fromPieceColour) 
+        << ", " << mv.captureMade << ", " << static_cast<char>(mv.toPieceType) 
+        << ", " << static_cast<char>(mv.toPieceColour) << "," << static_cast<char>(mv.promotionType) 
+        << ", " << mv.promotionMade << ", " << mv.isCastle << "," << mv.castleRights << ", " 
+        << mv.enPassantActive << ", " << mv.enPassantTarget;
 
     if (mv.enPassantTarget) {
         os << ", " << *mv.enPassantTarget;

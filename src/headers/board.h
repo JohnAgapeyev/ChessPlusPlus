@@ -75,7 +75,7 @@ public:
     int findCorner_1D() const;
     void shiftBoard(const int col, const int row);
     bool makeMove(std::string& input);
-    bool makeMove(Move mv);
+    bool makeMove(Move& mv);
     void unmakeMove(const Move& mv);
     std::string generateFEN() const;
     bool drawByMaterial() const;

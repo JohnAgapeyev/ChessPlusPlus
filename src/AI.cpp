@@ -315,7 +315,7 @@ std::pair<Move, int> AI::AlphaBeta(int alpha, int beta, const int depth) {
         }
     }
     
-    const auto& moveList = orderMoveList(board.moveGen.generateAll(), rtn.first);
+    auto moveList = orderMoveList(board.moveGen.generateAll(), rtn.first);
     const auto moveListSize = moveList.size();
     
     if (depth == 0) {
@@ -381,7 +381,7 @@ std::pair<Move, int> AI::AlphaBeta(int alpha, int beta, const int depth) {
 
 unsigned long long AI::perft(int depth) {
     unsigned long long nodeCount = 0;
-    const auto& moveList = board.moveGen.generateAll();
+    auto moveList = board.moveGen.generateAll();
     const auto& moveListSize = moveList.size();
     
     switch(depth) {
@@ -401,18 +401,21 @@ unsigned long long AI::perft(int depth) {
 
 unsigned long long AI::perftDivide(int depth) {
     unsigned long long nodeCount = 0;
-    const auto& moveList = board.moveGen.generateAll();
+    auto moveList = board.moveGen.generateAll();
     const auto& moveListSize = moveList.size();
     
     if (!depth) {
         return 1;
     }
     
+    std::string moveName;
+    
     for (size_t i = 0; i < moveListSize; ++i) {
-        std::cout << board.convertMoveToCoordText(moveList[i]) << "\t";
+        moveName = board.convertMoveToCoordText(moveList[i]);
+        std::cout << moveName << "\n";
         board.makeMove(moveList[i]);
         const auto perftResult = perft(depth - 1);
-        std::cout << perftResult << "\n";
+        std::cout << moveName << "\t" << perftResult << "\n";
         nodeCount += perftResult;
         board.unmakeMove(moveList[i]);
     }

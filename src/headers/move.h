@@ -6,7 +6,6 @@
 #include "piece.h"
 #include "enums.h"
 
-typedef struct Move Move;
 struct Move {
     Move();
     
@@ -18,6 +17,7 @@ struct Move {
     PieceTypes toPieceType;
     Colour toPieceColour;
     PieceTypes promotionType;
+    bool promotionMade;
     bool isCastle;
     unsigned char castleRights;
     bool enPassantActive;

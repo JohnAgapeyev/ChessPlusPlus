@@ -373,6 +373,7 @@ bool Board::makeMove(std::string& input) {
             const auto& input = promptPromotionType();
             mv.fromSq->getPiece()->promote(static_cast<PieceTypes>(input.front()));
             mv.fromPieceType = static_cast<PieceTypes>(input.front());
+            mv.promotionMade = true;
         }
     }
     // If moving to an occupied square, capture the piece
@@ -464,7 +465,7 @@ bool Board::makeMove(std::string& input) {
     return true;
 }
 
-bool Board::makeMove(Move mv) {
+bool Board::makeMove(Move& mv) {
     assert(checkBoardValidity());
     
     const auto& cornerCoords = findCorner_1D();
@@ -634,6 +635,7 @@ bool Board::makeMove(Move mv) {
         if (distFromStartToCorner >= rowPairs.first && distFromStartToCorner <= rowPairs.second) {
             mv.fromSq->getPiece()->promote(mv.promotionType);
             mv.fromPieceType = static_cast<PieceTypes>(mv.promotionType);
+            mv.promotionMade = true;
         }
     }
     
@@ -666,9 +668,7 @@ bool Board::makeMove(Move mv) {
         moveCounter++;
     }
     
-    
     mv.moveCounter = moveCounter;
-    
     
     updateCheckStatus();
     
@@ -707,11 +707,19 @@ void Board::unmakeMove(const Move& mv) {
     //xor out from piece at old square
     currHash ^= HASH_VALUES[NUM_SQUARE_STATES * convertOuterBoardIndex(distToFromSquare, cornerIndex)
         + pieceLookupTable[mv.fromPieceType] + blackFromPieceHashOffset];
+
+    if (mv.promotionMade) {
+        //xor in from piece at new square
+        currHash ^= HASH_VALUES[NUM_SQUARE_STATES * convertOuterBoardIndex(distToEndSquare, cornerIndex)
+            + pieceLookupTable[PieceTypes::PAWN] + blackFromPieceHashOffset];
+
+        mv.toSq->setPiece({PieceTypes::PAWN, mv.fromPieceColour});
+    } else {
+        //xor in from piece at new square
+        currHash ^= HASH_VALUES[NUM_SQUARE_STATES * convertOuterBoardIndex(distToEndSquare, cornerIndex)
+            + pieceLookupTable[mv.fromPieceType] + blackFromPieceHashOffset];
+    }
         
-    //xor in from piece at new square
-    currHash ^= HASH_VALUES[NUM_SQUARE_STATES * convertOuterBoardIndex(distToEndSquare, cornerIndex)
-        + pieceLookupTable[mv.fromPieceType] + blackFromPieceHashOffset];
-    
     std::swap(*mv.fromSq, *mv.toSq);
     swapOffsets(mv);
     isWhiteTurn = !isWhiteTurn;
@@ -749,7 +757,6 @@ void Board::unmakeMove(const Move& mv) {
             && (diff % OUTER_BOARD_SIZE) 
             && !mv.toSq->getPiece()
             && mv.toSq->getOffset() == mv.enPassantTarget->getOffset()) {
-                
                 
         //Inner board index to en passant capture square
         const auto enPassantCaptureIndex = distToFromSquare + diff 
@@ -801,7 +808,7 @@ void Board::unmakeMove(const Move& mv) {
             * convertOuterBoardIndex(distToFromSquare + 1 - (isQueenSide << 1), cornerIndex)
             + pieceLookupTable[PieceTypes::ROOK] + blackFromPieceHashOffset];
     }
-    
+
     std::rotate(repititionList.rbegin(), repititionList.rbegin() + 1, repititionList.rend());
     repititionList[0] = currHash;
     
