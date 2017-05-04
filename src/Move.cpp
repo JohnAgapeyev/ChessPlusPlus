@@ -40,7 +40,7 @@ std::ostream& operator<<(std::ostream& os, const Move& mv) {
     os << ", " << static_cast<char>(mv.fromPieceType) << ", " << static_cast<char>(mv.fromPieceColour) 
         << ", " << mv.captureMade << ", " << static_cast<char>(mv.toPieceType) 
         << ", " << static_cast<char>(mv.toPieceColour) << "," << static_cast<char>(mv.promotionType) 
-        << ", " << mv.promotionMade << ", " << mv.isCastle << "," << mv.castleRights << ", " 
+        << ", " << mv.promotionMade << ", " << mv.isCastle << "," << static_cast<int>(mv.castleRights) << ", " 
         << mv.enPassantActive << ", " << mv.enPassantTarget;
 
     if (mv.enPassantTarget) {

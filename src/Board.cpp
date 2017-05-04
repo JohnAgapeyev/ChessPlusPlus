@@ -494,7 +494,7 @@ bool Board::makeMove(Move& mv) {
     assert(col != -1);
     shiftBoard(col, row);
 
-    assert(moveGen.validateMove(mv, true));
+    assert(moveGen.validateMove(mv, false));
 
     mv.halfMoveClock = halfMoveClock;
     mv.moveCounter = moveCounter;
@@ -625,8 +625,17 @@ bool Board::makeMove(Move& mv) {
                 currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
             }
         }
+    } else if (mv.fromPieceType == PieceTypes::KING) {
+        if (mv.fromPieceColour == Colour::WHITE && (castleRights & WHITE_CASTLE_FLAG)) {
+            currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
+            castleRights &= ~WHITE_CASTLE_FLAG;
+            currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
+        } else if (mv.fromPieceColour == Colour::BLACK && (castleRights & BLACK_CASTLE_FLAG)) {
+            currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
+            castleRights &= ~BLACK_CASTLE_FLAG;
+            currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
+        }
     }
-    
     //Promote pawns on the end ranks
     if (mv.fromPieceType == PieceTypes::PAWN) {
         halfMoveClock = 0;
@@ -774,7 +783,7 @@ void Board::unmakeMove(const Move& mv) {
     enPassantActive = mv.enPassantActive;
     enPassantTarget = mv.enPassantTarget;
     
-    if (mv.isCastle || mv.fromPieceType == PieceTypes::ROOK) {
+    if (mv.isCastle || mv.fromPieceType == PieceTypes::ROOK || mv.fromPieceType == PieceTypes::KING) {
         currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
         castleRights = mv.castleRights;
         currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];

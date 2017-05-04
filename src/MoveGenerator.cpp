@@ -217,10 +217,8 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
         return false;
     }
     
-    const bool castleDirectionChosen = getCastleDirectionBool(mv.fromPieceType, mv.fromPieceColour, *selectedOffset);
-    
-    // Prevent king from jumpng 2 spaces if not castling
-    if (mv.fromPieceType == PieceTypes::KING && absOffset == 2 && !castleDirectionChosen) {
+    // Prevent king from jumping 2 spaces if not castling
+    if (getCastleDirectionBool(mv.fromPieceType, mv.fromPieceColour, *selectedOffset)) {
         logMoveFailure(9, isSilent);
         return false;
     }
