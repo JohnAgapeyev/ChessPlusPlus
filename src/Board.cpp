@@ -467,7 +467,7 @@ bool Board::makeMove(std::string& input) {
 
 bool Board::makeMove(Move& mv) {
     assert(checkBoardValidity());
-    
+
     const auto& cornerCoords = findCorner_1D();
     const auto blackFromPieceHashOffset = ((mv.fromPieceColour == Colour::WHITE) ? 0 : 6);
     const auto blackToPieceHashOffset = ((mv.toPieceColour == Colour::WHITE) ? 0 : 6);

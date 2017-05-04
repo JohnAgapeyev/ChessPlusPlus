@@ -408,14 +408,10 @@ unsigned long long AI::perftDivide(int depth) {
         return 1;
     }
     
-    std::string moveName;
-    
     for (size_t i = 0; i < moveListSize; ++i) {
-        moveName = board.convertMoveToCoordText(moveList[i]);
-        std::cout << moveName << "\n";
         board.makeMove(moveList[i]);
         const auto perftResult = perft(depth - 1);
-        std::cout << moveName << "\t" << perftResult << "\n";
+        std::cout << board.convertMoveToCoordText(moveList[i]) << "\t" << perftResult << "\n";
         nodeCount += perftResult;
         board.unmakeMove(moveList[i]);
     }
