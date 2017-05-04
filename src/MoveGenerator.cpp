@@ -218,7 +218,7 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
     }
     
     // Prevent king from jumping 2 spaces if not castling
-    if (getCastleDirectionBool(mv.fromPieceType, mv.fromPieceColour, *selectedOffset)) {
+    if (!getCastleDirectionBool(mv.fromPieceType, mv.fromPieceColour, *selectedOffset)) {
         logMoveFailure(9, isSilent);
         return false;
     }

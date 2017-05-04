@@ -578,6 +578,5 @@ std::vector<Move> AI::orderMoveList(std::vector<Move>&& list, const Move& pvMove
     //Need to add any moves that have not already been added
     output.insert(list.begin(), list.end());
     
-    
     return std::vector<Move>{output.begin(), output.end()};
 }
