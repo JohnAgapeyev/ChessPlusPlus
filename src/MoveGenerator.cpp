@@ -223,16 +223,20 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
             logMoveFailure(9, isSilent);
             return false;
         }
+        //Prevent castling if king is currently in check
+        if ((mv.fromPieceColour == Colour::BLACK && board.blackInCheck) 
+                || (mv.fromPieceColour == Colour::WHITE && board.whiteInCheck)) {
+            logMoveFailure(10, isSilent);
+            return false;
+        }
         const bool isKingSide = (*selectedOffset > 0);
-    
         const auto currIndex = std::distance(board.vectorTable.cbegin(), firstSquare);
         for (int i = 1; i <= 2 + !isKingSide; ++i) {
             const auto index = (isKingSide ? i : -i);
             const auto currPiece = (firstSquare[index]) ? firstSquare[index]->getPiece() : nullptr;
             const auto checkIndex = currIndex + index;
-
             if ((currPiece && currPiece->getType() != PieceTypes::ROOK) || (i <= 2 && inCheck(checkIndex))) {
-                logMoveFailure(10, isSilent);
+                logMoveFailure(11, isSilent);
                 return false;
             }
         }
@@ -240,7 +244,7 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
     
     //Prevent pieces from capturing a king
     if (mv.toPieceType == PieceTypes::KING) {
-        logMoveFailure(11, isSilent);
+        logMoveFailure(12, isSilent);
         return false;
     }
 
