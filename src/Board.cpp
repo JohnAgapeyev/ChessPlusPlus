@@ -991,7 +991,7 @@ bool Board::drawByMaterial() const {
     if (whiteBishopFound && blackBishopFound) {
         //perform bishop colour check, returns 0 if white, 1 if black and checks if they are equal
         if (((whiteBishopCoords.first & 1) ^ (whiteBishopCoords.second & 1)) 
-            == ((blackBishopCoords.first & 1) ^ (blackBishopCoords.second & 1))) {
+                == ((blackBishopCoords.first & 1) ^ (blackBishopCoords.second & 1))) {
             return true;
         }
     }
@@ -1017,30 +1017,32 @@ std::string Board::promptPromotionType() const {
 }
 
 void Board::updateCheckStatus() {
-    const auto& blackIt = std::find_if(vectorTable.cbegin(), vectorTable.cend(), 
-        [](const auto& sq){
-            const auto& piece = sq->getPiece();
-            return piece && piece->getType() == PieceTypes::KING 
-                && piece->getColour() == Colour::BLACK;
-        });
+    const auto corner = findCorner_1D();
+    int idx = -1;
+    for (int i = 0; i < INNER_BOARD_SIZE; ++i) {
+        for (int j = 0; j < INNER_BOARD_SIZE; ++j) {
+            const auto& piece = vectorTable[corner + (i * OUTER_BOARD_SIZE) + j]->getPiece();
+            if (piece && piece->getType() == PieceTypes::KING && piece->getColour() == Colour::BLACK) {
+                idx = (i * OUTER_BOARD_SIZE) + j;
+                break;
+            }
+        }
+    }
+    assert(idx != -1);
+    blackInCheck = moveGen.inCheck(corner + idx);
 
-    assert(blackIt != vectorTable.cend());
-
-    const auto blackKingDist = std::distance(vectorTable.cbegin(), blackIt);
-    
-    const auto& whiteIt = std::find_if(vectorTable.cbegin(), vectorTable.cend(), 
-        [](const auto& sq){
-            const auto& piece = sq->getPiece();
-            return piece && piece->getType() == PieceTypes::KING 
-                && piece->getColour() == Colour::WHITE;
-        });
-        
-    assert(whiteIt != vectorTable.cend());
-    
-    const auto whiteKingDist = std::distance(vectorTable.cbegin(), whiteIt);
-    
-    blackInCheck = moveGen.inCheck(blackKingDist);
-    whiteInCheck = moveGen.inCheck(whiteKingDist);
+    idx = -1;
+    for (int i = 0; i < INNER_BOARD_SIZE; ++i) {
+        for (int j = 0; j < INNER_BOARD_SIZE; ++j) {
+            const auto& piece = vectorTable[corner + (i * OUTER_BOARD_SIZE) + j]->getPiece();
+            if (piece && piece->getType() == PieceTypes::KING && piece->getColour() == Colour::WHITE) {
+                idx = (i * OUTER_BOARD_SIZE) + j;
+                break;
+            }
+        }
+    }
+    assert(idx != -1);
+    whiteInCheck = moveGen.inCheck(corner + idx);
 }
 
 //Currently no validation for this method as it is being built primarily for perft position testing
