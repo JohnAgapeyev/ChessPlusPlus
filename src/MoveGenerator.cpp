@@ -286,6 +286,9 @@ bool Board::MoveGenerator::inCheck(const int squareIndex) const {
                 if (std::find(pieceVector.cbegin(), pieceVector.cend(), -offset) == pieceVector.cend()) {
                     break;
                 }
+                if (i > currPiece->getVectorLength() - 1) {
+                    break;
+                }
                 return true;
             }
         }
