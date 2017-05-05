@@ -217,19 +217,19 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
         return false;
     }
     
-    // Prevent king from jumping 2 spaces if not castling
-    if (!getCastleDirectionBool(mv.fromPieceType, mv.fromPieceColour, *selectedOffset)) {
-        logMoveFailure(9, isSilent);
-        return false;
-    }
-    
     if (mv.fromPieceType == PieceTypes::KING && absOffset == 2) {
+        // Prevent king from jumping 2 spaces if not castling
+        if (!getCastleDirectionBool(mv.fromPieceType, mv.fromPieceColour, *selectedOffset)) {
+            logMoveFailure(9, isSilent);
+            return false;
+        }
+    
         const auto currIndex = std::distance(board.vectorTable.cbegin(), firstSquare);
         for (int i = 1; i <= 2; ++i) {
             const auto index = ((*selectedOffset > 0) ? i : -i);
             const Piece *currPiece = (firstSquare[index]) ? firstSquare[index]->getPiece() : nullptr;
             const auto checkIndex = currIndex + index;
-            
+
             if ((currPiece && currPiece->getType() != PieceTypes::ROOK) || inCheck(checkIndex)) {
                 logMoveFailure(10, isSilent);
                 return false;
@@ -270,10 +270,6 @@ bool Board::MoveGenerator::inCheck(const int squareIndex) const {
         vectorLength = (absOffset == 13 || absOffset > 16) ? 1 : 7;
         
         for (int i = 1; i <= vectorLength; ++i) {
-            if (squareIndex + (i * -offset) < 0 
-                    || squareIndex + (i * -offset) >= OUTER_BOARD_SIZE * OUTER_BOARD_SIZE) {
-                break;
-            }
             const auto realIndex = getOffsetIndex(offset, squareIndex, i);
             if (realIndex < 0 || realIndex >= OUTER_BOARD_SIZE * OUTER_BOARD_SIZE) {
                 break;
@@ -287,7 +283,7 @@ bool Board::MoveGenerator::inCheck(const int squareIndex) const {
                     break;
                 }
                 const auto& pieceVector = currPiece->getVectorList();
-                if (std::find(pieceVector.cbegin(), pieceVector.cend(), offset) == pieceVector.cend()) {
+                if (std::find(pieceVector.cbegin(), pieceVector.cend(), -offset) == pieceVector.cend()) {
                     break;
                 }
                 return true;
