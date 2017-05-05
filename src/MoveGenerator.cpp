@@ -223,11 +223,12 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
             logMoveFailure(9, isSilent);
             return false;
         }
+        const bool isKingSide = (*selectedOffset > 0);
     
         const auto currIndex = std::distance(board.vectorTable.cbegin(), firstSquare);
-        for (int i = 1; i <= 2; ++i) {
-            const auto index = ((*selectedOffset > 0) ? i : -i);
-            const Piece *currPiece = (firstSquare[index]) ? firstSquare[index]->getPiece() : nullptr;
+        for (int i = 1; i <= 2 + !isKingSide; ++i) {
+            const auto index = (isKingSide ? i : -i);
+            const auto currPiece = (firstSquare[index]) ? firstSquare[index]->getPiece() : nullptr;
             const auto checkIndex = currIndex + index;
 
             if ((currPiece && currPiece->getType() != PieceTypes::ROOK) || inCheck(checkIndex)) {
