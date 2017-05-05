@@ -231,7 +231,7 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
             const auto currPiece = (firstSquare[index]) ? firstSquare[index]->getPiece() : nullptr;
             const auto checkIndex = currIndex + index;
 
-            if ((currPiece && currPiece->getType() != PieceTypes::ROOK) || inCheck(checkIndex)) {
+            if ((currPiece && currPiece->getType() != PieceTypes::ROOK) || (i <= 2 && inCheck(checkIndex))) {
                 logMoveFailure(10, isSilent);
                 return false;
             }
