@@ -30,8 +30,6 @@ std::ostream& operator<<(std::ostream& os, const Square& square) {
 bool operator==(const Square& first, const Square& second) {
     if (first.piece && second.piece) {
         return first.piece == second.piece && first.offset == second.offset;
-    } else {
-        return first.offset == second.offset;
     }
-    //return first.piece == second.piece && first.offset == second.offset;
+    return first.offset == second.offset;
 }

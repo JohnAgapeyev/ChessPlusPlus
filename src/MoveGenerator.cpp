@@ -305,7 +305,7 @@ bool Board::MoveGenerator::inCheck(const Move& mv) const {
     const auto& checkVectors = Piece(PieceTypes::UNKNOWN, Colour::UNKNOWN).getVectorList();
     const auto& toPiece = mv.toSq->getPiece();
     const auto toPieceCopy = Piece(mv.toPieceType, mv.toPieceColour);
-    
+
     mv.toSq->setPiece(nullptr);
     std::swap(*mv.fromSq, *mv.toSq);
 
@@ -445,7 +445,7 @@ std::vector<Move> Board::MoveGenerator::generateAll() {
     
     for (const auto& p : pieceCoords) {
         board.shiftBoard(std::get<1>(p) - startCoords.second, std::get<0>(p) - startCoords.first);
-        for (const auto& offset : std::get<2>(p)->getVectorList()) {
+        for (const auto offset : std::get<2>(p)->getVectorList()) {
              //Define number of squares to check along the selected vector
             const int moveLen = std::get<2>(p)->getVectorLength();
             
@@ -462,8 +462,7 @@ std::vector<Move> Board::MoveGenerator::generateAll() {
                     mv.fromPieceType = mv.fromSq->getPiece()->getType();
                     mv.fromPieceColour = mv.fromSq->getPiece()->getColour();
                 } else {
-                    mv.fromPieceType = PieceTypes::UNKNOWN;
-                    mv.fromPieceColour = Colour::UNKNOWN;
+                    break;
                 }
                 
                 if (mv.toSq->getPiece()) {
@@ -485,12 +484,9 @@ std::vector<Move> Board::MoveGenerator::generateAll() {
                 mv.enPassantActive = board.enPassantActive;
                 mv.enPassantTarget = board.enPassantTarget;
                 
-                if (mv.fromPieceType == PieceTypes::KING 
-                    && std::abs((toSquareIndex - ZERO_LOCATION_1D)) == 2 
-                    && getCastleDirectionBool(mv.fromPieceType, 
-                        mv.fromPieceColour, (toSquareIndex - ZERO_LOCATION_1D))) {
-                    mv.isCastle = true;
-                }
+                mv.isCastle = (mv.fromPieceType == PieceTypes::KING 
+                    && std::abs(offset) == 2 && getCastleDirectionBool(mv.fromPieceType, 
+                        mv.fromPieceColour, offset));
                 
                 //Promotion check
                 if (mv.promotionType == PieceTypes::PAWN) {
@@ -511,7 +507,7 @@ std::vector<Move> Board::MoveGenerator::generateAll() {
                             break;
                         }
                         if (!validateMove(mv, true)) {
-                            break;
+                            continue;
                         }
                         
                         mv.promotionType = PieceTypes::KNIGHT;
@@ -529,9 +525,9 @@ std::vector<Move> Board::MoveGenerator::generateAll() {
                 if (mv.toSq->checkSentinel()) {
                     break;
                 }
-                
+
                 if (!validateMove(mv, true)) {
-                    break;
+                    continue;
                 }
                 
                 moveList.push_back(mv);
