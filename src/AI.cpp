@@ -383,7 +383,7 @@ unsigned long long AI::perft(int depth) {
     unsigned long long nodeCount = 0;
     auto moveList = board.moveGen.generateAll();
     const auto moveListSize = moveList.size();
-    
+
     switch(depth) {
         case 0:
             return 1;

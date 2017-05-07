@@ -231,12 +231,20 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
         }
         const bool isKingSide = (*selectedOffset > 0);
         const auto currIndex = std::distance(board.vectorTable.cbegin(), firstSquare);
+
+        const auto& rookSquare = board.vectorTable[currIndex + (isKingSide ? 3 : -3) - !isKingSide]->getPiece();
+        if (!rookSquare || rookSquare->getType() != PieceTypes::ROOK 
+                || rookSquare->getColour() != (board.isWhiteTurn ? Colour::WHITE : Colour::BLACK)) {
+            logMoveFailure(11, isSilent); 
+            return false;
+        }
+
         for (int i = 1; i <= 2 + !isKingSide; ++i) {
             const auto index = (isKingSide ? i : -i);
             const auto currPiece = (firstSquare[index]) ? firstSquare[index]->getPiece() : nullptr;
             const auto checkIndex = currIndex + index;
             if ((currPiece && currPiece->getType() != PieceTypes::ROOK) || (i <= 2 && inCheck(checkIndex))) {
-                logMoveFailure(11, isSilent);
+                logMoveFailure(12, isSilent);
                 return false;
             }
         }
@@ -244,7 +252,7 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
     
     //Prevent pieces from capturing a king
     if (mv.toPieceType == PieceTypes::KING) {
-        logMoveFailure(12, isSilent);
+        logMoveFailure(13, isSilent);
         return false;
     }
 
