@@ -1003,9 +1003,9 @@ std::string Board::promptPromotionType() const {
     std::regex reg("[NBRQ]");
     
     for (;;) {
-        std::cout << "Pawn promotion detected" << std::endl;
-        std::cout << "Knight = [n/N], Bishop = [b/B], Rook = [r/R], Queen = [q/Q]" << std::endl;
-        std::cout << "Enter choice for promotion:" << std::endl;
+        std::cout << "Pawn promotion detected\n";
+        std::cout << "Knight = [n/N], Bishop = [b/B], Rook = [r/R], Queen = [q/Q]\n";
+        std::cout << "Enter choice for promotion:\n";
         std::getline(std::cin, input);
         std::transform(input.begin(), input.end(), input.begin(), ::toupper);
         if (input.length() == 1 && std::regex_match(input, reg)) {
