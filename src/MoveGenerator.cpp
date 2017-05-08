@@ -311,7 +311,6 @@ bool Board::MoveGenerator::inCheck(const int squareIndex) const {
 
 bool Board::MoveGenerator::inCheck(const Move& mv) const {
     const auto& checkVectors = Piece(PieceTypes::UNKNOWN, Colour::UNKNOWN).getVectorList();
-    const auto& toPiece = mv.toSq->getPiece();
     const auto toPieceCopy = Piece(mv.toPieceType, mv.toPieceColour);
 
     mv.toSq->setPiece(nullptr);
@@ -326,7 +325,6 @@ bool Board::MoveGenerator::inCheck(const Move& mv) const {
             }) != board.vectorTable.cend());
             
     int squareIndex = -1;
-    
     for (size_t i = 0, len = board.vectorTable.size(); i < len; ++i) {
         const auto& piece = board.vectorTable[i]->getPiece();
         if (piece && piece->getType() == PieceTypes::KING && piece->getColour() == mv.fromPieceColour) {
@@ -334,12 +332,11 @@ bool Board::MoveGenerator::inCheck(const Move& mv) const {
             break;
         }
     }
-    
     //Ensure index was found during previous loop
     assert(squareIndex != -1);
     
     int vectorLength = 7;
-    for (const auto& offset : checkVectors) {
+    for (const auto offset : checkVectors) {
         const auto absOffset = std::abs(offset);
         // Change depth if current offset is a knight offset
         vectorLength = (absOffset == 13 || absOffset > 16) ? 1 : 7;
@@ -349,30 +346,26 @@ bool Board::MoveGenerator::inCheck(const Move& mv) const {
             if (realIndex < 0 || realIndex >= OUTER_BOARD_SIZE * OUTER_BOARD_SIZE) {
                 break;
             }
-            const auto& currPiece = board.vectorTable[realIndex]->getPiece();
-            
+            const auto currPiece = board.vectorTable[realIndex]->getPiece();
             if (currPiece) {
-                const auto currPieceColour = currPiece->getColour();
-                const auto currPieceType = currPiece->getType();
-                
-                if (currPieceColour == mv.fromPieceColour 
-                        || currPieceColour == Colour::UNKNOWN) {
+                if (currPiece->getColour() == mv.fromPieceColour 
+                        || currPiece->getColour() == Colour::UNKNOWN) {
                     break;
                 }
+
                 //Prevent single space mover pieces from being treated as sliding pieces
-                if (i > 1 && (currPieceType == PieceTypes::KING 
-                        || currPieceType == PieceTypes::PAWN 
-                        || currPieceType == PieceTypes::KNIGHT)) {
+                if (i > currPiece->getVectorLength() - 1) {
                     break;
                 }
                 
                 bool found = false;
-                for (const auto& off : currPiece->getVectorList()) {
-                    if (currPieceType == PieceTypes::PAWN && off % OUTER_BOARD_SIZE && off == -offset) {
-                        found = true;
-                        break;
-                    }
-                    if (off == offset) {
+                for (const auto off : currPiece->getVectorList()) {
+                    if (currPiece->getType() == PieceTypes::PAWN) {
+                        if (off % OUTER_BOARD_SIZE && off == -offset) {
+                            found = true;
+                            break;
+                        }
+                    } else if (off == offset) {
                         found = true;
                         break;
                     }
@@ -381,7 +374,7 @@ bool Board::MoveGenerator::inCheck(const Move& mv) const {
                     break;
                 }
                 std::swap(*mv.fromSq, *mv.toSq);
-                if (toPiece) {
+                if (mv.captureMade) {
                     mv.toSq->setPiece(toPieceCopy);
                 }
                 return true;
@@ -389,7 +382,7 @@ bool Board::MoveGenerator::inCheck(const Move& mv) const {
         }
     }
     std::swap(*mv.fromSq, *mv.toSq);
-    if (toPiece) {
+    if (mv.captureMade) {
         mv.toSq->setPiece(toPieceCopy);
     }
     return false;
