@@ -16,7 +16,7 @@ public:
     auto getColour() const {return pieceColour;}
     const std::vector<int> getVectorList() const;
     int getVectorLength() const;
-    void promote(PieceTypes newType);
+    void promote(const PieceTypes newType);
     
     friend bool operator==(const Piece& first, const Piece& second);
     friend std::ostream& operator<<(std::ostream& os, const Piece& piece);

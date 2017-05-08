@@ -59,7 +59,7 @@ int Piece::getVectorLength() const {
     }
 }
 
-void Piece::promote(PieceTypes newType) {
+void Piece::promote(const PieceTypes newType) {
     assert(type == PieceTypes::PAWN);
     type = newType;
 }
