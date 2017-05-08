@@ -249,7 +249,7 @@ int AI::getPieceValue(const PieceTypes type) const {
 }
 
 void AI::search() {
-    const auto result = iterativeDeepening();
+    auto result = iterativeDeepening();
     
     if (result.first.isCastle) {
         if (result.first.fromPieceColour == Colour::WHITE) {
