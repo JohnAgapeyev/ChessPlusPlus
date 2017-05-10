@@ -312,8 +312,8 @@ bool Board::MoveGenerator::inCheck(const int squareIndex) const {
 bool Board::MoveGenerator::inCheck(const Move& mv) const {
     const auto& checkVectors = Piece(PieceTypes::UNKNOWN, Colour::UNKNOWN).getVectorList();
     const auto toPieceCopy = Piece(mv.toPieceType, mv.toPieceColour);
-
     mv.toSq->setPiece(nullptr);
+
     std::swap(*mv.fromSq, *mv.toSq);
 
     //Check if friendly king can be found

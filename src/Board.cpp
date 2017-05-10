@@ -468,7 +468,7 @@ bool Board::makeMove(std::string& input) {
 bool Board::makeMove(Move& mv) {
     assert(checkBoardValidity());
 
-    const auto& cornerCoords = findCorner_1D();
+    const auto cornerCoords = findCorner_1D();
     const auto blackFromPieceHashOffset = ((mv.fromPieceColour == Colour::WHITE) ? 0 : 6);
     const auto blackToPieceHashOffset = ((mv.toPieceColour == Colour::WHITE) ? 0 : 6);
     int row = -1;
@@ -560,13 +560,71 @@ bool Board::makeMove(Move& mv) {
     
     // Add en Passant target if pawn double move was made.
     if (std::abs(diff) == 30 && mv.fromPieceType == PieceTypes::PAWN) {
+        auto left = vectorTable[distToEndSquare + 1];
+        auto right = vectorTable[distToEndSquare - 1];
+
+        //xor of the pointers checks for empty/full status
+        if (static_cast<bool>(left->getPiece()) ^ static_cast<bool>(right->getPiece())) {
+            if (left->getPiece() && left->getPiece()->getType() == PieceTypes::PAWN && left->getPiece()->getColour() != mv.fromPieceColour) {
+               //Perform check check 
+                Piece temp = *left->getPiece();
+                left->setPiece(nullptr);
+
+                //Get opposite colour king position
+                int idx = -1;
+                for (int i = 0; i < INNER_BOARD_SIZE; ++i) {
+                    for (int j = 0; j < INNER_BOARD_SIZE; ++j) {
+                        const auto& piece = vectorTable[cornerIndex + (i * OUTER_BOARD_SIZE) + j]->getPiece();
+                        if (piece && piece->getType() == PieceTypes::KING && piece->getColour() != mv.fromPieceColour) {
+                            idx = (i * OUTER_BOARD_SIZE) + j;
+                            break;
+                        }
+                    }
+                }
+                assert(idx != -1);
+
+                const auto result = moveGen.inCheck(cornerIndex + idx);
+                left->setPiece(std::move(temp));
+
+                if (result) {
+                    goto notarget;
+                }
+            } else if (right->getPiece() && right->getPiece()->getType() == PieceTypes::PAWN && right->getPiece()->getColour() != mv.fromPieceColour) {
+                //Perform check check
+                Piece temp = *right->getPiece();
+                right->setPiece(nullptr);
+
+                //Get opposite colour king position
+                int idx = -1;
+                for (int i = 0; i < INNER_BOARD_SIZE; ++i) {
+                    for (int j = 0; j < INNER_BOARD_SIZE; ++j) {
+                        const auto& piece = vectorTable[cornerIndex + (i * OUTER_BOARD_SIZE) + j]->getPiece();
+                        if (piece && piece->getType() == PieceTypes::KING && piece->getColour() != mv.fromPieceColour) {
+                            idx = (i * OUTER_BOARD_SIZE) + j;
+                            break;
+                        }
+                    }
+                }
+                assert(idx != -1);
+
+                const auto result = moveGen.inCheck(cornerIndex + idx);
+                right->setPiece(std::move(temp));
+
+                if (result) {
+                    goto notarget;
+                }
+            }
+        }
+
         enPassantActive = true;
-        enPassantTarget = vectorTable[distToEndSquare + (diff >> 1)].get();
+        enPassantTarget = vectorTable[distToEndSquare + (diff / 2)].get();
         
         //xor in en passant file
         currHash ^= HASH_VALUES[static_cast<int>(SquareState::EN_PASSANT_FILE) 
             + (distToEndSquare % OUTER_BOARD_SIZE) - (INNER_BOARD_SIZE - 1 - col)];
     }
+
+notarget:
     
     const bool castleDirectionChosen = moveGen.getCastleDirectionBool(mv.fromPieceType, mv.fromPieceColour, diff);
     //Perform castling
