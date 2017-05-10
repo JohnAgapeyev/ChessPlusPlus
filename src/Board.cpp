@@ -564,8 +564,13 @@ bool Board::makeMove(Move& mv) {
         auto right = vectorTable[distToEndSquare - 1];
 
         //xor of the pointers checks for empty/full status
-        if (static_cast<bool>(left->getPiece()) ^ static_cast<bool>(right->getPiece())) {
-            if (left->getPiece() && left->getPiece()->getType() == PieceTypes::PAWN && left->getPiece()->getColour() != mv.fromPieceColour) {
+        if ((left->getPiece() != nullptr) ^ (right->getPiece() != nullptr)
+                || (left->getPiece() && left->getPiece()->getType() == PieceTypes::KING 
+                    && left->getPiece()->getColour() != mv.fromPieceColour)
+                || (right->getPiece() && right->getPiece()->getType() == PieceTypes::KING 
+                    && right->getPiece()->getColour() != mv.fromPieceColour)) {
+            if (left->getPiece() && left->getPiece()->getType() == PieceTypes::PAWN 
+                    && left->getPiece()->getColour() != mv.fromPieceColour) {
                //Perform check check 
                 Piece temp = *left->getPiece();
                 left->setPiece(nullptr);
@@ -589,7 +594,8 @@ bool Board::makeMove(Move& mv) {
                 if (result) {
                     goto notarget;
                 }
-            } else if (right->getPiece() && right->getPiece()->getType() == PieceTypes::PAWN && right->getPiece()->getColour() != mv.fromPieceColour) {
+            } else if (right->getPiece() && right->getPiece()->getType() == PieceTypes::PAWN 
+                    && right->getPiece()->getColour() != mv.fromPieceColour) {
                 //Perform check check
                 Piece temp = *right->getPiece();
                 right->setPiece(nullptr);
