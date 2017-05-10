@@ -552,10 +552,14 @@ bool Board::makeMove(Move& mv) {
 
         //xor of the pointers checks for empty/full status
         if ((left->getPiece() != nullptr) ^ (right->getPiece() != nullptr)
-                || (left->getPiece() && left->getPiece()->getType() == PieceTypes::KING 
-                    && left->getPiece()->getColour() != mv.fromPieceColour)
-                || (right->getPiece() && right->getPiece()->getType() == PieceTypes::KING 
-                    && right->getPiece()->getColour() != mv.fromPieceColour)) {
+                || (left->getPiece() 
+                    && ((left->getPiece()->getType() == PieceTypes::KING && left->getPiece()->getColour() != mv.fromPieceColour) 
+                        || (left->getPiece()->getVectorLength() == INNER_BOARD_SIZE 
+                            && left->getPiece()->getColour() == mv.fromPieceColour)))
+                || (right->getPiece() 
+                    && ((right->getPiece()->getType() == PieceTypes::KING && right->getPiece()->getColour() != mv.fromPieceColour) 
+                        || (right->getPiece()->getVectorLength() == INNER_BOARD_SIZE 
+                            && right->getPiece()->getColour() == mv.fromPieceColour)))) {
             if (left->getPiece() && left->getPiece()->getType() == PieceTypes::PAWN 
                     && left->getPiece()->getColour() != mv.fromPieceColour) {
                //Perform check check 
