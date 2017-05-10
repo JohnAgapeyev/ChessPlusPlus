@@ -530,7 +530,7 @@ bool Board::makeMove(Move& mv) {
         std::find_if(vectorTable.cbegin(), vectorTable.cend(), 
             [&mv](const auto& sq){return (*sq == *mv.toSq);}));
     
-    const int captureIndex = distToEndSquare + ((isWhiteTurn) ? 15: -15);
+    const int captureIndex = distToEndSquare + ((isWhiteTurn) ? OUTER_BOARD_SIZE: -OUTER_BOARD_SIZE);
     // If en passant move is made, capture the appropriate pawn
     if (enPassantActive && mv.fromPieceType == PieceTypes::PAWN 
             && (diff % OUTER_BOARD_SIZE) && *mv.toSq == *enPassantTarget
