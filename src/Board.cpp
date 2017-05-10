@@ -401,25 +401,12 @@ bool Board::makeMove(std::string& input) {
     currHash ^= HASH_VALUES[static_cast<int>(SquareState::WHITE_MOVE)];
     
     if (isWhiteTurn) {
-        moveCounter++;
+        ++moveCounter;
     }
     
     mv.moveCounter = moveCounter;
     
     updateCheckStatus();
-    
-    moveGen.generateAll();
-    
-    // For testing purposes, display list of opponents legal moves
-    //for (const auto& mo : moveGen->getMoveList()) {
-        //if (mo.fromPiece && mo.fromPiece->getType()== PieceTypes::PAWN 
-                //&& mo.promotionType != mo.fromPiece->getType()) {
-            //std::cout << *mo.fromSq << ", " << *mo.toSq << " Promoting to: " << static_cast<char>(mo.promotionType) << std::endl;
-        //} else {
-            //std::cout << *mo.fromSq << ", " << *mo.toSq << std::endl;
-        //}
-    //}
-    //std::cout << moveGen->getMoveList().size() << std::endl;
     
     std::rotate(repititionList.begin(), repititionList.begin() + 1, repititionList.end());
     repititionList[repititionList.size() - 1] = currHash;
