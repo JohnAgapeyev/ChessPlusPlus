@@ -302,6 +302,9 @@ bool Board::MoveGenerator::inCheck(const int squareIndex) const {
                 if (i > currPiece->getVectorLength() - 1) {
                     break;
                 }
+                if (currPiece->getType() == PieceTypes::PAWN && (offset % OUTER_BOARD_SIZE) == 0) {
+                    break;
+                }
                 return true;
             }
         }
@@ -365,7 +368,7 @@ bool Board::MoveGenerator::inCheck(const Move& mv) const {
                             found = true;
                             break;
                         }
-                    } else if (off == offset) {
+                    } else if (off == -offset) {
                         found = true;
                         break;
                     }

@@ -547,72 +547,51 @@ bool Board::makeMove(Move& mv) {
     
     // Add en Passant target if pawn double move was made.
     if (std::abs(diff) == 30 && mv.fromPieceType == PieceTypes::PAWN) {
-        auto left = vectorTable[distToEndSquare + 1];
-        auto right = vectorTable[distToEndSquare - 1];
+        auto left = vectorTable[distToEndSquare - 1].get();
+        auto right = vectorTable[distToEndSquare + 1].get();
 
-        //xor of the pointers checks for empty/full status
-        if ((left->getPiece() != nullptr) ^ (right->getPiece() != nullptr)
-                || (left->getPiece() 
-                    && ((left->getPiece()->getType() == PieceTypes::KING && left->getPiece()->getColour() != mv.fromPieceColour) 
-                        || (left->getPiece()->getVectorLength() == INNER_BOARD_SIZE 
-                            && left->getPiece()->getColour() == mv.fromPieceColour)))
-                || (right->getPiece() 
-                    && ((right->getPiece()->getType() == PieceTypes::KING && right->getPiece()->getColour() != mv.fromPieceColour) 
-                        || (right->getPiece()->getVectorLength() == INNER_BOARD_SIZE 
-                            && right->getPiece()->getColour() == mv.fromPieceColour)))) {
-            if (left->getPiece() && left->getPiece()->getType() == PieceTypes::PAWN 
-                    && left->getPiece()->getColour() != mv.fromPieceColour) {
-               //Perform check check 
-                Piece temp = *left->getPiece();
-                left->setPiece(nullptr);
-
-                //Get opposite colour king position
-                int idx = -1;
-                for (int i = 0; i < INNER_BOARD_SIZE; ++i) {
-                    for (int j = 0; j < INNER_BOARD_SIZE; ++j) {
-                        const auto& piece = vectorTable[cornerIndex + (i * OUTER_BOARD_SIZE) + j]->getPiece();
-                        if (piece && piece->getType() == PieceTypes::KING && piece->getColour() != mv.fromPieceColour) {
-                            idx = (i * OUTER_BOARD_SIZE) + j;
-                            break;
+        if (left->getPiece() || right->getPiece()) {
+            if (left->getPiece() && right->getPiece()) {
+                const auto isLeftPawn = (left->getPiece()->getType() == PieceTypes::PAWN && left->getPiece()->getColour() != mv.fromPieceColour);
+                const auto isRightPawn = (right->getPiece()->getType() == PieceTypes::PAWN && right->getPiece()->getColour() != mv.fromPieceColour);
+                if (isLeftPawn ^ isRightPawn) {
+                    if (isLeftPawn) {
+                        //Check right square for its piece type
+                        if (right->getPiece()->getVectorLength() == INNER_BOARD_SIZE 
+                                || (right->getPiece()->getType() == PieceTypes::KING && right->getPiece()->getColour() != mv.fromPieceColour)) {
+                            //Enemy pawn and enemy king - perform check check on left square
+                            if (!checkEnPassantValidity(left, mv)) {
+                                goto notarget;
+                            }
+                        }
+                    } else {
+                        //Check left square for its piece type
+                        if (left->getPiece()->getVectorLength() == INNER_BOARD_SIZE 
+                                || (left->getPiece()->getType() == PieceTypes::KING && left->getPiece()->getColour() != mv.fromPieceColour)) {
+                            //Enemy pawn and enemy king - perform check check on right square
+                            if (!checkEnPassantValidity(right, mv)) {
+                                goto notarget;
+                            }
                         }
                     }
                 }
-                assert(idx != -1);
-
-                const auto result = moveGen.inCheck(cornerIndex + idx);
-                left->setPiece(std::move(temp));
-
-                if (result) {
+            } else if (left->getPiece() && left->getPiece()->getType() == PieceTypes::PAWN && left->getPiece()->getColour() != mv.fromPieceColour) {
+                //Perform check check on left square
+                if (!checkEnPassantValidity(left, mv)) {
                     goto notarget;
                 }
-            } else if (right->getPiece() && right->getPiece()->getType() == PieceTypes::PAWN 
-                    && right->getPiece()->getColour() != mv.fromPieceColour) {
-                //Perform check check
-                Piece temp = *right->getPiece();
-                right->setPiece(nullptr);
-
-                //Get opposite colour king position
-                int idx = -1;
-                for (int i = 0; i < INNER_BOARD_SIZE; ++i) {
-                    for (int j = 0; j < INNER_BOARD_SIZE; ++j) {
-                        const auto& piece = vectorTable[cornerIndex + (i * OUTER_BOARD_SIZE) + j]->getPiece();
-                        if (piece && piece->getType() == PieceTypes::KING && piece->getColour() != mv.fromPieceColour) {
-                            idx = (i * OUTER_BOARD_SIZE) + j;
-                            break;
-                        }
-                    }
-                }
-                assert(idx != -1);
-
-                const auto result = moveGen.inCheck(cornerIndex + idx);
-                right->setPiece(std::move(temp));
-
-                if (result) {
+            } else if (right->getPiece() && right->getPiece()->getType() == PieceTypes::PAWN && right->getPiece()->getColour() != mv.fromPieceColour) {
+                //Perform check check on right square
+                if (!checkEnPassantValidity(right, mv)) {
                     goto notarget;
                 }
             }
         }
 
+
+
+
+target:
         enPassantActive = true;
         enPassantTarget = vectorTable[distToEndSquare + (diff / 2)].get();
         
@@ -957,56 +936,6 @@ std::string Board::generateFEN() const {
     return output;
 }
 
-size_t std::hash<Board>::operator()(const Board& b) const {
-    if (b.currHash) {
-        return b.currHash;
-    }
-    
-    const auto& cornerCoords = b.findCorner();
-    const int cornerIndex = (cornerCoords.first * OUTER_BOARD_SIZE) + cornerCoords.second;
-    const auto& cornerPiece = b.vectorTable[cornerIndex]->getPiece();
-    size_t newHash = 0;
-    if (cornerPiece) {
-        newHash = HASH_VALUES[pieceLookupTable[cornerPiece->getType()] 
-            + ((cornerPiece->getColour() == Colour::WHITE) ? 0: 6)];
-    }
-    
-    for (int i = cornerCoords.first; i < cornerCoords.first + INNER_BOARD_SIZE; ++i) {
-        for (int j = cornerCoords.second; j < cornerCoords.second + INNER_BOARD_SIZE; ++j) {
-            if (i == cornerCoords.first && j == cornerCoords.second) {
-                continue;
-            }
-            //Black is (white hash + 6) for equivalent piece types
-            if (b.vectorTable[(i * OUTER_BOARD_SIZE) + j]->getPiece()) {
-                const auto& currPiece = b.vectorTable[(i * OUTER_BOARD_SIZE) + j]->getPiece();
-
-                newHash ^= HASH_VALUES[NUM_SQUARE_STATES 
-                    * b.convertOuterBoardIndex((i * OUTER_BOARD_SIZE) + j, cornerIndex)
-                    + pieceLookupTable[currPiece->getType()] 
-                    + ((currPiece->getColour() == Colour::WHITE) ? 0 : 6)];
-            }
-        }
-    }
-    if (b.isWhiteTurn) {
-        newHash ^= HASH_VALUES[static_cast<int>(SquareState::WHITE_MOVE)];
-    }
-    
-    newHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + b.castleRights];
-    
-    if (b.enPassantActive) {
-         //Calculate en passant file
-        const auto targetIndex = std::distance(b.vectorTable.cbegin(), 
-            std::find_if(b.vectorTable.cbegin(), b.vectorTable.cend(), 
-            [&b](const auto& sq){
-                return *sq == *b.enPassantTarget;
-            }
-        ));
-        const int fileNum = Board::convertOuterBoardIndex(targetIndex, cornerIndex) % INNER_BOARD_SIZE;
-        newHash ^= HASH_VALUES[static_cast<int>(SquareState::EN_PASSANT_FILE) + fileNum];
-    }
-    return newHash;
-}
-
 bool Board::drawByMaterial() const {
     const int cornerIndex = findCorner_1D();
     int minorCount = 0;
@@ -1258,7 +1187,7 @@ std::string Board::convertMoveToCoordText(const Move& mv) const {
     return convertSquareToCoordText(*mv.fromSq) + convertSquareToCoordText(*mv.toSq);
 }
 
-size_t Board::getSquareIndex(const Square *sq) {
+size_t Board::getSquareIndex(const Square *sq) const {
     if (!sq) {
         return static_cast<size_t>(-1);
     }
@@ -1270,3 +1199,33 @@ size_t Board::getSquareIndex(const Square *sq) {
     }
     return static_cast<size_t>(-1);
 }
+
+bool Board::checkEnPassantValidity(Square *sq, const Move& mv) {
+    //Enemy pawn and enemy king - perform check check on left square
+    Piece temp = *sq->getPiece();
+    sq->setPiece(nullptr);
+
+    const auto cornerIndex = findCorner_1D();
+
+    //Get opposite colour king position
+    int idx = -1;
+    for (int i = 0; i < INNER_BOARD_SIZE; ++i) {
+        for (int j = 0; j < INNER_BOARD_SIZE; ++j) {
+            const auto& piece = vectorTable[cornerIndex + (i * OUTER_BOARD_SIZE) + j]->getPiece();
+            if (piece && piece->getType() == PieceTypes::KING && piece->getColour() != mv.fromPieceColour) {
+                idx = (i * OUTER_BOARD_SIZE) + j;
+                break;
+            }
+        }
+    }
+    assert(idx != -1);
+
+    const auto result = moveGen.inCheck(cornerIndex + idx);
+    sq->setPiece(std::move(temp));
+
+    if (result) {
+        return false;
+    }
+    return true;
+}
+

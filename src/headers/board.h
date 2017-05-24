@@ -9,6 +9,7 @@
 #include "consts.h"
 #include "move.h"
 #include "enums.h"
+#include "hash.h"
 
 class Board {
     /*
@@ -59,7 +60,10 @@ class Board {
     std::string convertSquareToCoordText(const Square& sq) const;
     std::string convertMoveToCoordText(const Move& mv) const;
     
-    size_t getSquareIndex(const Square *sq);
+    size_t getSquareIndex(const Square *sq) const;
+
+    bool checkEnPassantValidity(Square *sq, const Move& mv);
+
     
 public:
     Board();
@@ -84,14 +88,6 @@ public:
     friend class std::hash<Board>;
     friend class AI;
 };
-
-namespace std {
-    template<>
-    class hash<Board> {
-    public:
-        size_t operator() (const Board& b) const;
-    };
-}
 
 
 #endif
