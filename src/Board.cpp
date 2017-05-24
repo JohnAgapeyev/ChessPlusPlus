@@ -416,35 +416,35 @@ bool Board::makeMove(std::string& input) {
         const auto opponentCheck = (!isWhiteTurn) ? whiteInCheck : blackInCheck;
         if (opponentCheck) {
             //Checkmate
-            std::cout << "CHECKMATE" << std::endl;
+            std::cout << "CHECKMATE\n";
             currentGameState = GameState::MATE;
             return true;
         }
         //Stalemate
-        std::cout << "STALEMATE" << std::endl;
+        std::cout << "STALEMATE\n";
         currentGameState = GameState::DRAWN;
         return true;
     }
     if (halfMoveClock >= 100) {
         //50 move rule
-        std::cout << "DRAW" << std::endl;
-        std::cout << "50 move rule" << std::endl;
+        std::cout << "DRAW\n";
+        std::cout << "50 move rule\n";
         currentGameState = GameState::DRAWN;
         return true;
     }
     
     if (repititionList[0] == repititionList[4] && repititionList[4] == repititionList[8]) {
         //Three move Repitition
-        std::cout << "DRAW" << std::endl;
-        std::cout << "Three move repitition" << std::endl;
+        std::cout << "DRAW\n";
+        std::cout << "Three move repitition\n";
         currentGameState = GameState::DRAWN;
         return true;
     }
     
     if (drawByMaterial()) {
         //Insufficient Material
-        std::cout << "DRAW" << std::endl;
-        std::cout << "Insufficient Material" << std::endl;
+        std::cout << "DRAW\n";
+        std::cout << "Insufficient Material\n";
         currentGameState = GameState::DRAWN;
         return true;
     }
