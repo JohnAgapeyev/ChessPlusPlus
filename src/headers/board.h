@@ -4,12 +4,14 @@
 #include <vector>
 #include <array>
 #include <memory>
-#include <algorithm>
-#include "square.h"
-#include "consts.h"
-#include "move.h"
-#include "enums.h"
 #include "hash.h"
+//#include "square.h"
+#include "consts.h"
+//#include "move.h"
+#include "enums.h"
+
+class Square;
+struct Move;
 
 class Board {
     /*

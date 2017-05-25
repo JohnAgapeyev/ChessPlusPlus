@@ -1,8 +1,5 @@
-#include <vector>
-#include <list>
-#include <array>
-#include <iterator>
-#include <utility>
+#ifndef MAP_H
+#define MAP_H
 
 template<typename Key, typename Value, size_t maxSize, typename Hash = std::hash<Key>>
 class CacheMap {
@@ -69,3 +66,5 @@ public:
         }
     }
 };
+
+#endif

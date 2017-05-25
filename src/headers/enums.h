@@ -51,16 +51,6 @@ enum class SearchBoundary {
     EXACT
 };
 
-namespace std {
-    template<>
-    class hash<PieceTypes> {
-    public:
-        size_t operator()(PieceTypes p) const {
-            return std::hash<int>()(static_cast<int>(p));
-        }
-    };
-}
-
 static std::unordered_map<PieceTypes, int> pieceLookupTable = {
     {PieceTypes::PAWN, 0},
     {PieceTypes::KNIGHT, 1},

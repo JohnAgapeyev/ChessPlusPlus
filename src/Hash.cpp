@@ -1,11 +1,15 @@
+#include <algorithm>
+#include <utility>
+#include <functional>
+#include "headers/hash.h"
 #include "headers/board.h"
 
-size_t std::hash<Board>::operator() (Board& b) const {
+size_t std::hash<Board>::operator() (const Board& b) const {
     if (b.currHash) {
         return b.currHash;
     }
     
-    const auto& cornerCoords = b.findCorner();
+    const auto& cornerCoords = const_cast<Board&>(b).findCorner();
     const int cornerIndex = (cornerCoords.first * OUTER_BOARD_SIZE) + cornerCoords.second;
     const auto& cornerPiece = b.vectorTable[cornerIndex]->getPiece();
     size_t newHash = 0;
@@ -48,4 +52,12 @@ size_t std::hash<Board>::operator() (Board& b) const {
         newHash ^= HASH_VALUES[static_cast<int>(SquareState::EN_PASSANT_FILE) + fileNum];
     }
     return newHash;
+}
+
+size_t std::hash<Piece>::operator()(const Piece& p) const {
+    return std::hash<char>()(static_cast<char>(p.type)) ^ std::hash<char>()(static_cast<char>(p.pieceColour));
+}
+
+size_t std::hash<PieceTypes>::operator()(const PieceTypes p) const {
+    return std::hash<int>()(static_cast<int>(p));
 }

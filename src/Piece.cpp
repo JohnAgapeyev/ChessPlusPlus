@@ -1,7 +1,4 @@
-#include <algorithm>
-#include <cctype>
 #include <iostream>
-#include <vector>
 #include <cassert>
 #include "headers/piece.h"
 #include "headers/consts.h"
@@ -62,8 +59,4 @@ int Piece::getVectorLength() const {
 void Piece::promote(const PieceTypes newType) {
     assert(type == PieceTypes::PAWN);
     type = newType;
-}
-
-size_t std::hash<Piece>::operator()(const Piece& p) const {
-    return std::hash<char>()(static_cast<char>(p.type)) ^ std::hash<char>()(static_cast<char>(p.pieceColour));
 }

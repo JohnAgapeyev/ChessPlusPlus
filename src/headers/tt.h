@@ -1,12 +1,9 @@
 #ifndef TT_H
 #define TT_H
 
-#include <unordered_map>
 #include <vector>
 #include <list>
 #include <array>
-#include <iterator>
-#include <utility>
 #include "map.h"
 
 template<typename Key, typename Value, size_t maxSize, typename Hash = std::hash<Key>>

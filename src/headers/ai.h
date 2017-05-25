@@ -2,12 +2,6 @@
 #define AI_H
 
 #include <climits>
-#include <tuple>
-#include <utility>
-#include <unordered_map>
-#include <memory>
-#include <array>
-#include <vector>
 #include "move.h"
 #include "board.h"
 #include "tt.h"

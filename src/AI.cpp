@@ -1,12 +1,10 @@
-#include <climits>
 #include <algorithm>
+#include <climits>
 #include <tuple>
-#include <utility>
 #include <cassert>
 #include <set>
-#include <functional>
-#include "headers/ai.h"
 #include "headers/board.h"
+#include "headers/ai.h"
 #include "headers/consts.h"
 #include "headers/enums.h"
 

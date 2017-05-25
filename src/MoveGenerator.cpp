@@ -1,16 +1,10 @@
 #include <vector>
 #include <array>
 #include <iostream>
-#include <memory>
-#include <utility>
 #include <algorithm>
-#include <iterator>
-#include <cstdlib>
-#include <stdexcept>
-#include <functional>
 #include <cassert>
-#include "headers/square.h"
 #include "headers/board.h"
+#include "headers/square.h"
 #include "headers/consts.h"
 #include "headers/enums.h"
 #include "headers/move.h"

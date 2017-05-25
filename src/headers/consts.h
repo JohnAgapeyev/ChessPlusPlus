@@ -1,10 +1,6 @@
 #ifndef CONSTS_H
 #define CONSTS_H
 
-#include <array>
-#include <memory>
-#include <utility>
-#include <cstdint>
 #include "square.h"
 #include "enums.h"
 

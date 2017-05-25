@@ -1,9 +1,7 @@
 #ifndef PIECE_H
 #define PIECE_H
 
-#include <array>
 #include <vector>
-#include <iostream>
 #include "enums.h"
 
 class Piece {
@@ -22,13 +20,5 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const Piece& piece);
     friend class std::hash<Piece>;
 };
-
-namespace std {
-    template<>
-    class hash<Piece> {
-    public:
-        size_t operator() (const Piece& p) const;
-    };
-}
 
 #endif
