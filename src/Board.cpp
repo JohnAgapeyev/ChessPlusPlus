@@ -509,13 +509,11 @@ bool Board::makeMove(Move& mv) {
         mv.captureMade = false;
     }
     
-    const auto distToFromSquare = std::distance(vectorTable.cbegin(), 
-        std::find_if(vectorTable.cbegin(), vectorTable.cend(), 
-            [&mv](const auto& sq){return (*sq == *mv.fromSq);}));
-                
-    const auto distToEndSquare = std::distance(vectorTable.cbegin(), 
-        std::find_if(vectorTable.cbegin(), vectorTable.cend(), 
-            [&mv](const auto& sq){return (*sq == *mv.toSq);}));
+    const auto distToFromSquare = getSquareIndex(mv.fromSq);
+    const auto distToEndSquare = getSquareIndex(mv.toSq);
+
+    assert(distToFromSquare != static_cast<size_t>(-1));
+    assert(distToEndSquare != static_cast<size_t>(-1));
     
     const int captureIndex = distToEndSquare + ((isWhiteTurn) ? OUTER_BOARD_SIZE: -OUTER_BOARD_SIZE);
     // If en passant move is made, capture the appropriate pawn
@@ -530,9 +528,8 @@ bool Board::makeMove(Move& mv) {
             + pieceLookupTable[PieceTypes::PAWN] + ((isWhiteTurn) ? 6 : 0)];
     }
     if (enPassantActive) {
-        const auto distToEnPassantTarget = std::distance(vectorTable.cbegin(), 
-            std::find_if(vectorTable.cbegin(), vectorTable.cend(), 
-                [=](const auto& sq){return (*sq == *enPassantTarget);}));
+        const auto distToEnPassantTarget = getSquareIndex(enPassantTarget);
+        assert(distToEnPassantTarget != static_cast<size_t>(-1));
                 
         //xor out en passant file
         currHash ^= HASH_VALUES[static_cast<int>(SquareState::EN_PASSANT_FILE) 
@@ -676,7 +673,7 @@ notarget:
         const auto distFromStartToCorner = distToEndSquare - cornerIndex;
         const auto& rowPairs = (mv.fromPieceColour == Colour::WHITE) ? std::make_pair(0, 14) : std::make_pair(105, 119);
         
-        if (distFromStartToCorner >= rowPairs.first && distFromStartToCorner <= rowPairs.second) {
+        if (static_cast<int>(distFromStartToCorner) >= rowPairs.first && static_cast<int>(distFromStartToCorner) <= rowPairs.second) {
             mv.fromSq->getPiece()->promote(mv.promotionType);
             mv.fromPieceType = static_cast<PieceTypes>(mv.promotionType);
             mv.promotionMade = true;
@@ -724,23 +721,20 @@ notarget:
 void Board::unmakeMove(const Move& mv) {
     assert(checkBoardValidity());
     
-    const auto distToFromSquare = std::distance(vectorTable.cbegin(), 
-        std::find_if(vectorTable.cbegin(), vectorTable.cend(), 
-            [&mv](const auto& sq){return (*sq == *mv.fromSq);}));
+    const auto distToFromSquare = getSquareIndex(mv.fromSq);
+    const auto distToEndSquare = getSquareIndex(mv.toSq);
+
+    assert(!(distToFromSquare == static_cast<size_t>(-1) 
+                || distToEndSquare == static_cast<size_t>(-1)));
                 
-    const auto distToEndSquare = std::distance(vectorTable.cbegin(), 
-        std::find_if(vectorTable.cbegin(), vectorTable.cend(), 
-            [&mv](const auto& sq){return (*sq == *mv.toSq);}));
-            
     const auto blackFromPieceHashOffset = ((mv.fromPieceColour == Colour::WHITE) ? 0 : 6);
     const auto blackToPieceHashOffset = ((mv.toPieceColour == Colour::WHITE) ? 0 : 6);
             
     auto distToOldTarget = 0;
     
     if (enPassantTarget) {
-        distToOldTarget = std::distance(vectorTable.cbegin(), 
-            std::find_if(vectorTable.cbegin(), vectorTable.cend(), 
-                [this](const auto& sq){return (*sq == *enPassantTarget);}));
+        distToOldTarget = getSquareIndex(enPassantTarget);
+        assert(distToOldTarget != static_cast<size_t>(-1));
     }
     
     const auto cornerIndex = findCorner_1D();
@@ -783,11 +777,9 @@ void Board::unmakeMove(const Move& mv) {
     
     if (mv.enPassantTarget) {
         //Hash in the previous file num
-        auto distToCurrTarget = std::distance(vectorTable.cbegin(), 
-            std::find_if(vectorTable.cbegin(), vectorTable.cend(), 
-                [&](const auto& sq){return (*sq == *mv.enPassantTarget);}));
-        
-        auto fileNum = convertOuterBoardIndex(distToCurrTarget, cornerIndex) % INNER_BOARD_SIZE;
+        const auto distToCurrTarget = getSquareIndex(mv.enPassantTarget);
+        assert(distToCurrTarget != static_cast<size_t>(-1));
+        const auto fileNum = convertOuterBoardIndex(distToCurrTarget, cornerIndex) % INNER_BOARD_SIZE;
         
         currHash ^= HASH_VALUES[static_cast<int>(SquareState::EN_PASSANT_FILE) + fileNum];
     }
@@ -916,12 +908,8 @@ std::string Board::generateFEN() const {
     }
     output += ' ';
     if (enPassantActive) {
-        const auto distToCurrSquare = std::distance(vectorTable.cbegin(), 
-            std::find_if(vectorTable.cbegin(), vectorTable.cend(), 
-            [this](const auto& currSquare){
-                return *enPassantTarget == *currSquare;
-            })
-        );
+        const auto distToCurrSquare = getSquareIndex(enPassantTarget);
+        assert(distToCurrSquare != static_cast<size_t>(-1));
         const auto cornerDist = findCorner_1D();
         const auto distToTarget = distToCurrSquare - cornerDist;
         output += static_cast<char>(97 + (distToTarget % OUTER_BOARD_SIZE));
@@ -995,7 +983,7 @@ std::string Board::promptPromotionType() const {
         if (input.length() == 1 && std::regex_match(input, reg)) {
             break;
         }
-        std::cout << "Invalid input" << std::endl;
+        std::cout << "Invalid input\n";
     }
     return input;
 }
@@ -1171,12 +1159,10 @@ bool Board::checkBoardValidity() const {
     return true;
 }
 
-std::string Board::convertSquareToCoordText(const Square& sq) const {
+std::string Board::convertSquareToCoordText(const Square *sq) const {
     const auto cornerCoords = findCorner_1D();
-    const auto squareDist = std::distance(vectorTable.cbegin(), 
-        std::find_if(vectorTable.cbegin(), vectorTable.cend(), 
-        [&](const auto& bsq){return *bsq == sq;}
-    ));
+    const auto squareDist = getSquareIndex(sq);
+    assert(squareDist != static_cast<size_t>(-1));
     const auto innerDist = convertOuterBoardIndex(squareDist, cornerCoords);
     
     return static_cast<char>('a' + (innerDist % INNER_BOARD_SIZE)) 
@@ -1184,19 +1170,24 @@ std::string Board::convertSquareToCoordText(const Square& sq) const {
 }
 
 std::string Board::convertMoveToCoordText(const Move& mv) const {
-    return convertSquareToCoordText(*mv.fromSq) + convertSquareToCoordText(*mv.toSq);
+    return convertSquareToCoordText(mv.fromSq) + convertSquareToCoordText(mv.toSq);
 }
 
 size_t Board::getSquareIndex(const Square *sq) const {
     if (!sq) {
         return static_cast<size_t>(-1);
     }
-    
-    for (size_t i = 0, len = vectorTable.size(); i < len; ++i) {
-        if (vectorTable[i] && *vectorTable[i] == *sq) {
-            return i;
+
+    const auto cornerIndex = findCorner_1D();
+
+    for (int i = 0; i < INNER_BOARD_SIZE; ++i) {
+        for (int j = 0; j < INNER_BOARD_SIZE; ++j) {
+            if (*vectorTable[cornerIndex + (i * OUTER_BOARD_SIZE) + j] == *sq) {
+                return cornerIndex + (i * OUTER_BOARD_SIZE) + j;
+            }
         }
     }
+
     return static_cast<size_t>(-1);
 }
 

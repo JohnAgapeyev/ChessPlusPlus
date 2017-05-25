@@ -57,7 +57,7 @@ class Board {
     std::string promptPromotionType() const;
     void updateCheckStatus();
     bool checkBoardValidity() const;
-    std::string convertSquareToCoordText(const Square& sq) const;
+    std::string convertSquareToCoordText(const Square *sq) const;
     std::string convertMoveToCoordText(const Move& mv) const;
     
     size_t getSquareIndex(const Square *sq) const;

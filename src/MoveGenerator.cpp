@@ -80,16 +80,9 @@ Move Board::MoveGenerator::createMove(std::string& input) const {
   * breaks everything.
   */
 bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
-    const auto& firstSquare = std::find_if(board.vectorTable.cbegin(), 
-        board.vectorTable.cend(), [&mv](const auto& sq){
-            return (*sq == *mv.fromSq);
-        });
-    const auto& secondSquare = std::find_if(board.vectorTable.cbegin(), 
-        board.vectorTable.cend(), [&mv](const auto& sq){
-            return (*sq == *mv.toSq);
-        });
     // Try to find the start and end points
-    assert(!(firstSquare == board.vectorTable.cend() || secondSquare == board.vectorTable.cend()));
+    assert(!(board.getSquareIndex(mv.fromSq) == static_cast<size_t>(-1) 
+                || board.getSquareIndex(mv.toSq) == static_cast<size_t>(-1)));
     
     // Check for either square being a sentinel
     assert(!(mv.fromSq->checkSentinel() || mv.toSq->checkSentinel()));
@@ -117,7 +110,7 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
     
     const auto& vectorOffsets = mv.fromSq->getPiece()->getVectorList();
     const auto diff = mv.toSq->getOffset() - mv.fromSq->getOffset();
-    const auto& secondSquareIndex = std::distance(board.vectorTable.cbegin(), secondSquare);
+    const auto secondSquareIndex = board.getSquareIndex(mv.toSq);
     
     // Find the offset that the move uses
     const auto& selectedOffset = std::find_if(vectorOffsets.cbegin(), 
@@ -182,11 +175,11 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
      * of the selected move.
      */
     if (absOffset == 30) {
-        const auto dist = std::distance(board.vectorTable.cbegin(), firstSquare);
+        const auto dist = board.getSquareIndex(mv.fromSq);
         const auto cornerIndex =  board.findCorner_1D();
         const auto distFromStartToCorner = dist - cornerIndex;
         const auto& rowPairs = (mv.fromPieceColour == Colour::WHITE) ? std::make_pair(90, 104) : std::make_pair(15, 29);
-        if (distFromStartToCorner < rowPairs.first || distFromStartToCorner > rowPairs.second) {
+        if (static_cast<int>(distFromStartToCorner) < rowPairs.first || static_cast<int>(distFromStartToCorner) > rowPairs.second) {
             logMoveFailure(5, isSilent);
             return false;
         }
@@ -230,7 +223,7 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
             return false;
         }
         const bool isKingSide = (*selectedOffset > 0);
-        const auto currIndex = std::distance(board.vectorTable.cbegin(), firstSquare);
+        const auto currIndex = board.getSquareIndex(mv.fromSq);
 
         const auto& rookSquare = board.vectorTable[currIndex + (isKingSide ? 3 : -3) - !isKingSide]->getPiece();
         if (!rookSquare || rookSquare->getType() != PieceTypes::ROOK 
@@ -241,7 +234,7 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
 
         for (int i = 1; i <= 2 + !isKingSide; ++i) {
             const auto index = (isKingSide ? i : -i);
-            const auto currPiece = (firstSquare[index]) ? firstSquare[index]->getPiece() : nullptr;
+            const auto currPiece = board.vectorTable[currIndex + index]->getPiece();
             const auto checkIndex = currIndex + index;
             if ((currPiece && currPiece->getType() != PieceTypes::ROOK) || (i <= 2 && inCheck(checkIndex))) {
                 logMoveFailure(12, isSilent);
