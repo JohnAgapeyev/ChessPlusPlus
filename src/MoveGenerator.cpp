@@ -179,7 +179,7 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
         const auto cornerIndex =  board.findCorner_1D();
         const auto distFromStartToCorner = dist - cornerIndex;
         const auto& rowPairs = (mv.fromPieceColour == Colour::WHITE) ? std::make_pair(90, 104) : std::make_pair(15, 29);
-        if (static_cast<int>(distFromStartToCorner) < rowPairs.first || static_cast<int>(distFromStartToCorner) > rowPairs.second) {
+        if (distFromStartToCorner < rowPairs.first || distFromStartToCorner > rowPairs.second) {
             logMoveFailure(5, isSilent);
             return false;
         }
@@ -270,7 +270,7 @@ bool Board::MoveGenerator::inCheck(const int squareIndex) const {
     }
     
     int vectorLength = 7;
-    for (const auto& offset : checkVectors) {
+    for (const auto offset : checkVectors) {
         const auto absOffset = std::abs(offset);
         // Change depth if current offset is a knight offset
         vectorLength = (absOffset == 13 || absOffset > 16) ? 1 : 7;
@@ -421,7 +421,7 @@ std::vector<Move> Board::MoveGenerator::generateAll() {
     assert(board.checkBoardValidity());
     std::vector<Move> moveList;
         
-    const auto tableSize = static_cast<int>(board.vectorTable.size());
+    const auto tableSize = OUTER_BOARD_SIZE * OUTER_BOARD_SIZE;
     const auto& currentPlayerColour = (board.isWhiteTurn) ? Colour::WHITE : Colour::BLACK;
     
     const std::vector<std::tuple<int, int, Piece*>> pieceCoords = [&]{
@@ -487,9 +487,7 @@ std::vector<Move> Board::MoveGenerator::generateAll() {
                 
                 //Promotion check
                 if (mv.promotionType == PieceTypes::PAWN) {
-                    const auto distToEndSquare = std::distance(board.vectorTable.cbegin(), 
-                        std::find_if(board.vectorTable.cbegin(), board.vectorTable.cend(), 
-                            [&mv](const auto& sq){return (*sq == *mv.toSq);}));
+                    const auto distToEndSquare = board.getSquareIndex(mv.toSq);
                             
                     //Calculate the corner index based on the above board shift to prevent a linear search
                     const auto cornerIndex = ((7 - std::get<0>(p) + startCoords.first) 

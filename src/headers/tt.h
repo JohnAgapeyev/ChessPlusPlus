@@ -37,7 +37,7 @@ class Cache {
     }
     
 public:
-    void erase(const Key& k) {
+    void erase(Key& k) {
         internalList.erase(internalMap[hashEngine(k)]);
         internalMap.erase(hashEngine(k));
     }
@@ -48,11 +48,11 @@ public:
         currSize = 0;
     }
     
-    void add(const Key& k, const Value& v) {
+    void add(Key& k, const Value& v) {
         add(std::make_pair(hashEngine(k), v));
     }
     
-    Value& operator[](const Key& k) {
+    Value& operator[](Key& k) {
         const auto& elem = internalMap[hashEngine(k)];
         if (elem != internalList.begin()) {
             internalList.splice(internalList.begin(), internalList, elem, std::next(elem));
@@ -60,7 +60,7 @@ public:
         return elem->second;
     }
     
-    bool retrieve(const Key& k) {
+    bool retrieve(Key& k) {
         return internalMap.find(hashEngine(k));
     }
     

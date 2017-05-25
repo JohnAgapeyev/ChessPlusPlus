@@ -7,7 +7,7 @@ namespace std {
     template<>
     class hash<Board> {
     public:
-        size_t operator() (const Board& b) const;
+        size_t operator() (Board& b) const;
     };
 }
 

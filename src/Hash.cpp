@@ -1,6 +1,6 @@
 #include "headers/board.h"
 
-size_t std::hash<Board>::operator()(const Board& b) const {
+size_t std::hash<Board>::operator() (Board& b) const {
     if (b.currHash) {
         return b.currHash;
     }

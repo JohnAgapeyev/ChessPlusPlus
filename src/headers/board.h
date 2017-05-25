@@ -56,13 +56,16 @@ class Board {
     void shiftHorizontal(const int count);
     std::string promptPromotionType() const;
     void updateCheckStatus();
-    bool checkBoardValidity() const;
-    std::string convertSquareToCoordText(const Square *sq) const;
-    std::string convertMoveToCoordText(const Move& mv) const;
+    bool checkBoardValidity();
+    std::string convertSquareToCoordText(const Square *sq);
+    std::string convertMoveToCoordText(const Move& mv);
     
-    size_t getSquareIndex(const Square *sq) const;
+    int getSquareIndex(const Square *sq);
 
     bool checkEnPassantValidity(Square *sq, const Move& mv);
+
+
+    int cornerCache = -1;
 
     
 public:
@@ -75,14 +78,14 @@ public:
     auto getBoard() const {return vectorTable;}
     auto getGameState() const {return currentGameState;}
     auto getCurrHash() const {return currHash;}
-    std::pair<int, int> findCorner() const;
-    int findCorner_1D() const;
+    std::pair<int, int> findCorner();
+    int findCorner_1D();
     void shiftBoard(const int col, const int row);
     bool makeMove(std::string& input);
     bool makeMove(Move& mv);
     void unmakeMove(const Move& mv);
-    std::string generateFEN() const;
-    bool drawByMaterial() const;
+    std::string generateFEN();
+    bool drawByMaterial();
     void setPositionByFEN(const std::string& fen);
     
     friend class std::hash<Board>;
