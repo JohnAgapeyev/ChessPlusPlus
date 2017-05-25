@@ -75,8 +75,7 @@ Move Board::MoveGenerator::createMove(std::string& input) const {
   */
 bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
     // Try to find the start and end points
-    assert(!(board.getSquareIndex(mv.fromSq) == static_cast<size_t>(-1) 
-                || board.getSquareIndex(mv.toSq) == static_cast<size_t>(-1)));
+    assert(!(board.getSquareIndex(mv.fromSq) == -1 || board.getSquareIndex(mv.toSq) == -1));
     
     // Check for either square being a sentinel
     assert(!(mv.fromSq->checkSentinel() || mv.toSq->checkSentinel()));

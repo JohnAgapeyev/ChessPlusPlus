@@ -65,6 +65,7 @@ class Board {
     int getSquareIndex(const Square *sq);
 
     bool checkEnPassantValidity(Square *sq, const Move& mv);
+    void removeCastlingRights(const unsigned char flag);
 
 
     int cornerCache = -1;

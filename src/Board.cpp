@@ -243,14 +243,9 @@ bool Board::makeMove(std::string& input) {
         mv.toPieceColour = Colour::UNKNOWN;
         mv.captureMade = false;
     }
-    
-    const auto distToFromSquare = std::distance(vectorTable.cbegin(), 
-        std::find_if(vectorTable.cbegin(), vectorTable.cend(), 
-            [&mv](const auto& sq){return (*sq == *mv.fromSq);}));
-                
-    const auto distToEndSquare = std::distance(vectorTable.cbegin(), 
-        std::find_if(vectorTable.cbegin(), vectorTable.cend(), 
-            [&mv](const auto& sq){return (*sq == *mv.toSq);}));
+
+    const auto distToFromSquare = getSquareIndex(mv.fromSq);
+    const auto distToEndSquare = getSquareIndex(mv.toSq);
     
     // If en passant move is made, capture the appropriate pawn
     if (enPassantActive && mv.fromPieceType == PieceTypes::PAWN 
@@ -315,13 +310,9 @@ bool Board::makeMove(std::string& input) {
             + pieceLookupTable[PieceTypes::ROOK] + blackFromPieceHashOffset];
             
         if (mv.fromPieceColour == Colour::WHITE) {
-            currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
-            castleRights &= ~WHITE_CASTLE_FLAG;
-            currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
+            removeCastlingRights(WHITE_CASTLE_FLAG);
         } else {
-            currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
-            castleRights &= ~BLACK_CASTLE_FLAG;
-            currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
+            removeCastlingRights(BLACK_CASTLE_FLAG);
         }
     }
     // Disable castling if the appropriate rook moves
@@ -330,27 +321,19 @@ bool Board::makeMove(std::string& input) {
             const int backRankIndex = findCorner_1D() + (7 * OUTER_BOARD_SIZE);
             const auto& fromSquare = *mv.fromSq;
             if (*(vectorTable[backRankIndex].get()) == fromSquare) {
-                currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
-                castleRights &= ~WHITE_CASTLE_QUEEN_FLAG;
-                currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
+                removeCastlingRights(WHITE_CASTLE_QUEEN_FLAG);
             }
             if (*(vectorTable[backRankIndex + 7].get()) == fromSquare) {
-                currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
-                castleRights &= ~WHITE_CASTLE_KING_FLAG;
-                currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
+                removeCastlingRights(WHITE_CASTLE_KING_FLAG);
             }
         } else if (mv.fromPieceColour == Colour::BLACK && (castleRights & BLACK_CASTLE_FLAG)) {
             const int backRankIndex = findCorner_1D();
             const auto& fromSquare = *mv.fromSq;
             if (*(vectorTable[backRankIndex].get()) == fromSquare) {
-                currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
-                castleRights &= ~BLACK_CASTLE_QUEEN_FLAG;
-                currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
+                removeCastlingRights(BLACK_CASTLE_QUEEN_FLAG);
             }
             if (*(vectorTable[backRankIndex + 7].get()) == fromSquare) {
-                currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
-                castleRights &= ~BLACK_CASTLE_KING_FLAG;
-                currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
+                removeCastlingRights(BLACK_CASTLE_KING_FLAG);
             }
         }
     }
@@ -445,32 +428,20 @@ bool Board::makeMove(std::string& input) {
 
 bool Board::makeMove(Move& mv) {
     assert(checkBoardValidity());
+    assert(mv.fromSq && mv.toSq);
 
-    const auto cornerCoords = findCorner_1D();
     const auto blackFromPieceHashOffset = ((mv.fromPieceColour == Colour::WHITE) ? 0 : 6);
     const auto blackToPieceHashOffset = ((mv.toPieceColour == Colour::WHITE) ? 0 : 6);
-    int row = -1;
-    int col = -1;
 
-    assert(mv.fromSq && mv.toSq);
-    
-    for (int i = 0; i < INNER_BOARD_SIZE; ++i) {
-        for (int j = 0; j < INNER_BOARD_SIZE; ++j) {
-            assert((cornerCoords + (i * OUTER_BOARD_SIZE) + j) >= 0);
-            assert((cornerCoords + (i * OUTER_BOARD_SIZE) + j) < OUTER_BOARD_SIZE * OUTER_BOARD_SIZE);
-            assert(vectorTable[cornerCoords + (i * OUTER_BOARD_SIZE) + j]);
-            if (*vectorTable[cornerCoords + (i * OUTER_BOARD_SIZE) + j] == *mv.fromSq) {
-                row = i;
-                col = j;
-                goto end;
-            }
-        }
-    }
-    
-    end:
-    assert(row != -1);
-    assert(col != -1);
-    shiftBoard(col, row);
+    const auto oldFromDist = getSquareIndex(mv.fromSq);
+    const auto cornerCoords = findCorner_1D();
+
+    const std::pair<int, int> shiftCoords{(oldFromDist - cornerCoords) / OUTER_BOARD_SIZE, 
+        (oldFromDist - cornerCoords) % OUTER_BOARD_SIZE};
+
+    assert(shiftCoords.first != -1);
+    assert(shiftCoords.second != -1);
+    shiftBoard(shiftCoords.second, shiftCoords.first);
 
     assert(moveGen.validateMove(mv, false));
 
@@ -585,7 +556,7 @@ target:
         
         //xor in en passant file
         currHash ^= HASH_VALUES[static_cast<int>(SquareState::EN_PASSANT_FILE) 
-            + (distToEndSquare % OUTER_BOARD_SIZE) - (INNER_BOARD_SIZE - 1 - col)];
+            + (distToEndSquare % OUTER_BOARD_SIZE) - (INNER_BOARD_SIZE - 1 - shiftCoords.second)];
     }
 
 notarget:
@@ -611,13 +582,9 @@ notarget:
             + pieceLookupTable[PieceTypes::ROOK] + blackFromPieceHashOffset];
             
         if (mv.fromPieceColour == Colour::WHITE) {
-            currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
-            castleRights &= ~WHITE_CASTLE_FLAG;
-            currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
+            removeCastlingRights(WHITE_CASTLE_FLAG);
         } else {
-            currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
-            castleRights &= ~BLACK_CASTLE_FLAG;
-            currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
+            removeCastlingRights(BLACK_CASTLE_FLAG);
         }
     }
     // Disable castling if the appropriate rook moves
@@ -625,37 +592,25 @@ notarget:
         if (mv.fromPieceColour == Colour::WHITE && (castleRights & WHITE_CASTLE_FLAG)) {
             const int backRankIndex = findCorner_1D() + (7 * OUTER_BOARD_SIZE);
             if (*(vectorTable[backRankIndex].get()) == *mv.fromSq) {
-                currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
-                castleRights &= ~WHITE_CASTLE_QUEEN_FLAG;
-                currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
+                removeCastlingRights(WHITE_CASTLE_QUEEN_FLAG);
             }
             if (*(vectorTable[backRankIndex + 7].get()) == *mv.fromSq) {
-                currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
-                castleRights &= ~WHITE_CASTLE_KING_FLAG;
-                currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
+                removeCastlingRights(WHITE_CASTLE_KING_FLAG);
             }
         } else if (mv.fromPieceColour == Colour::BLACK && (castleRights & BLACK_CASTLE_FLAG)) {
             const int backRankIndex = findCorner_1D();
             if (*(vectorTable[backRankIndex].get()) == *mv.fromSq) {
-                currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
-                castleRights &= ~BLACK_CASTLE_QUEEN_FLAG;
-                currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
+                removeCastlingRights(BLACK_CASTLE_QUEEN_FLAG);
             }
             if (*(vectorTable[backRankIndex + 7].get()) == *mv.fromSq) {
-                currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
-                castleRights &= ~BLACK_CASTLE_KING_FLAG;
-                currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
+                removeCastlingRights(BLACK_CASTLE_KING_FLAG);
             }
         }
     } else if (mv.fromPieceType == PieceTypes::KING) {
         if (mv.fromPieceColour == Colour::WHITE && (castleRights & WHITE_CASTLE_FLAG)) {
-            currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
-            castleRights &= ~WHITE_CASTLE_FLAG;
-            currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
+            removeCastlingRights(WHITE_CASTLE_FLAG);
         } else if (mv.fromPieceColour == Colour::BLACK && (castleRights & BLACK_CASTLE_FLAG)) {
-            currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
-            castleRights &= ~BLACK_CASTLE_FLAG;
-            currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
+            removeCastlingRights(BLACK_CASTLE_FLAG);
         }
     }
     //Promote pawns on the end ranks
@@ -1210,3 +1165,8 @@ bool Board::checkEnPassantValidity(Square *sq, const Move& mv) {
     return true;
 }
 
+void Board::removeCastlingRights(const unsigned char flag) {
+    currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
+    castleRights &= ~flag;
+    currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
+}
