@@ -301,6 +301,15 @@ bool Board::MoveGenerator::inCheck(const int squareIndex) const {
 bool Board::MoveGenerator::inCheck(const Move& mv) const {
     const auto& checkVectors = Piece(PieceTypes::UNKNOWN, Colour::UNKNOWN).getVectorList();
     const auto toPieceCopy = Piece(mv.toPieceType, mv.toPieceColour);
+    bool enPassantCaptureMade = false;
+    int captureIndex = -1;
+
+    if (mv.enPassantActive && mv.fromPieceType == PieceTypes::PAWN && *mv.toSq == *mv.enPassantTarget
+            && ((mv.toSq->getOffset() - mv.fromSq->getOffset()) % 15)) {
+        enPassantCaptureMade = true;
+        captureIndex = board.getSquareIndex(mv.toSq) + ((board.isWhiteTurn) ? OUTER_BOARD_SIZE: -OUTER_BOARD_SIZE);
+        board.vectorTable[captureIndex]->setPiece(nullptr);
+    }
 
     mv.toSq->setPiece(nullptr);
     std::swap(*mv.fromSq, *mv.toSq);
@@ -366,6 +375,9 @@ bool Board::MoveGenerator::inCheck(const Move& mv) const {
                 if (mv.captureMade) {
                     mv.toSq->setPiece(toPieceCopy);
                 }
+                if (enPassantCaptureMade) {
+                    board.vectorTable[captureIndex]->setPiece(Piece{PieceTypes::PAWN, (board.isWhiteTurn) ? Colour::BLACK : Colour::WHITE});
+                }
                 return true;
             }
         }
@@ -373,6 +385,9 @@ bool Board::MoveGenerator::inCheck(const Move& mv) const {
     std::swap(*mv.fromSq, *mv.toSq);
     if (mv.captureMade) {
         mv.toSq->setPiece(toPieceCopy);
+    }
+    if (enPassantCaptureMade) {
+        board.vectorTable[captureIndex]->setPiece(Piece{PieceTypes::PAWN, (board.isWhiteTurn) ? Colour::BLACK : Colour::WHITE});
     }
     return false;
 }
@@ -477,7 +492,7 @@ std::vector<Move> Board::MoveGenerator::generateAll() {
                 mv.isCastle = (mv.fromPieceType == PieceTypes::KING 
                     && std::abs(offset) == 2 && getCastleDirectionBool(mv.fromPieceType, 
                         mv.fromPieceColour, offset));
-                
+
                 //Promotion check
                 if (mv.promotionType == PieceTypes::PAWN) {
                     const auto distToEndSquare = board.getSquareIndex(mv.toSq);

@@ -547,10 +547,6 @@ bool Board::makeMove(Move& mv) {
             }
         }
 
-
-
-
-target:
         enPassantActive = true;
         enPassantTarget = vectorTable[distToEndSquare + (diff / 2)].get();
         
@@ -1147,7 +1143,7 @@ bool Board::checkEnPassantValidity(Square *sq, const Move& mv) {
     int idx = -1;
     for (int i = 0; i < INNER_BOARD_SIZE; ++i) {
         for (int j = 0; j < INNER_BOARD_SIZE; ++j) {
-            const auto& piece = vectorTable[cornerIndex + (i * OUTER_BOARD_SIZE) + j]->getPiece();
+            const auto piece = vectorTable[cornerIndex + (i * OUTER_BOARD_SIZE) + j]->getPiece();
             if (piece && piece->getType() == PieceTypes::KING && piece->getColour() != mv.fromPieceColour) {
                 idx = (i * OUTER_BOARD_SIZE) + j;
                 break;

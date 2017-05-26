@@ -6,7 +6,7 @@
 
 class Board;
 class Piece;
-enum class PieceTypes;
+enum class PieceTypes : unsigned char;
 
 namespace std {
 

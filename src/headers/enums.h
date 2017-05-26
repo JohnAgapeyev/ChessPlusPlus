@@ -3,7 +3,7 @@
 
 #include <unordered_map>
 
-enum class PieceTypes {
+enum class PieceTypes : unsigned char {
     UNKNOWN = ' ',
     PAWN = 'P',
     KNIGHT = 'N',
@@ -13,7 +13,7 @@ enum class PieceTypes {
     KING = 'K'
 };
 
-enum class Colour {
+enum class Colour : unsigned char {
     UNKNOWN = ' ',
     WHITE = 'W',
     BLACK = 'B'
@@ -25,7 +25,7 @@ enum class GameState {
     MATE
 };
 
-enum class SquareState {
+enum class SquareState : int {
     WHITE_PAWN,
     WHITE_KNIGHT,
     WHITE_BISHOP,
