@@ -879,7 +879,7 @@ int Board::getSquareIndex(const Square *sq) {
 
     for (int i = 0; i < INNER_BOARD_SIZE; ++i) {
         for (int j = 0; j < INNER_BOARD_SIZE; ++j) {
-            if (*vectorTable[cornerIndex + (i * OUTER_BOARD_SIZE) + j] == *sq) {
+            if (vectorTable[cornerIndex + (i * OUTER_BOARD_SIZE) + j].get() == sq) {
                 return cornerIndex + (i * OUTER_BOARD_SIZE) + j;
             }
         }

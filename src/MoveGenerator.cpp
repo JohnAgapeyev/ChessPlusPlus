@@ -106,19 +106,20 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
     const auto secondSquareIndex = board.getSquareIndex(mv.toSq);
     
     // Find the offset that the move uses
-    const auto& selectedOffset = std::find_if(vectorOffsets.cbegin(), 
-        vectorOffsets.cend(), [diff, &mv](auto offset) {
-            return ((diff / offset) > 0 && (diff / offset) < mv.fromSq->getPiece()->getVectorLength() && !(diff % offset));
+    int selectedOffset = -100;
+    for (const auto offset : vectorOffsets) {
+        if ((diff / offset) > 0 && (diff / offset) < mv.fromSq->getPiece()->getVectorLength() && !(diff % offset)) {
+            selectedOffset = offset;
+            break;
         }
-    );
-    
+    }
     // Check if the move offset was found
-    if (selectedOffset == vectorOffsets.cend()) {
+    if (selectedOffset == -100) {
         logMoveFailure(1, isSilent);
         return false;
     }
     
-    const auto absOffset = std::abs(*selectedOffset);
+    const auto absOffset = std::abs(selectedOffset);
     
     /*
      * Check if the colour of the piece on the starting square 
@@ -139,13 +140,13 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
     
     // Iterate through to ensure sliding pieces aren't being blocked
     for (int i = 1; i < moveLen; ++i) {
-        const auto realIndex = getOffsetIndex(*selectedOffset >> isDoublePawnMove, ZERO_LOCATION_1D, i);
+        const auto realIndex = getOffsetIndex(selectedOffset >> isDoublePawnMove, ZERO_LOCATION_1D, i);
         if (realIndex < 0 || realIndex >= OUTER_BOARD_SIZE * OUTER_BOARD_SIZE) {
             break;
         }
         currSquare = board.vectorTable[realIndex].get();
         
-        if (*currSquare == *mv.toSq) {
+        if (currSquare == mv.toSq) {
             foundToSquare = true;
             break;
         }
@@ -182,7 +183,7 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
         // Ensure pawns only move diagonally if they capture a piece, including en passant
         const int captureOffset = (mv.fromPieceColour == Colour::WHITE) ? 15 : -15;
         
-        if ((*selectedOffset % OUTER_BOARD_SIZE) 
+        if ((selectedOffset % OUTER_BOARD_SIZE) 
                 && !board.vectorTable[secondSquareIndex]->getPiece() 
                 && !(board.enPassantActive && *board.vectorTable[secondSquareIndex] == *board.enPassantTarget 
                     && board.vectorTable[secondSquareIndex + captureOffset]->getPiece()
@@ -191,7 +192,7 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
             return false;
         }
         // Prevent pawns from capturing vertically
-        if (!(*selectedOffset % OUTER_BOARD_SIZE) && board.vectorTable[secondSquareIndex]->getPiece()) {
+        if (!(selectedOffset % OUTER_BOARD_SIZE) && board.vectorTable[secondSquareIndex]->getPiece()) {
             logMoveFailure(7, isSilent);
             return false;
         }
@@ -205,7 +206,7 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
     
     if (mv.fromPieceType == PieceTypes::KING && absOffset == 2) {
         // Prevent king from jumping 2 spaces if not castling
-        if (!getCastleDirectionBool(mv.fromPieceType, mv.fromPieceColour, *selectedOffset)) {
+        if (!getCastleDirectionBool(mv.fromPieceType, mv.fromPieceColour, selectedOffset)) {
             logMoveFailure(9, isSilent);
             return false;
         }
@@ -215,7 +216,7 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
             logMoveFailure(10, isSilent);
             return false;
         }
-        const bool isKingSide = (*selectedOffset > 0);
+        const bool isKingSide = (selectedOffset > 0);
         const auto currIndex = board.getSquareIndex(mv.fromSq);
 
         const auto& rookSquare = board.vectorTable[currIndex + (isKingSide ? 3 : -3) - !isKingSide]->getPiece();
