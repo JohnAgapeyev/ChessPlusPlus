@@ -21,8 +21,6 @@
  * Negative x: -((30 * ((abs(x) + 7) / 15)) - abs(x))
  */
  
-constexpr auto genOffset = [](const auto a, const auto b){return 98 - (15 * a) + b;};
-
 Board::Board() {
     for (int i = 0; i < OUTER_BOARD_SIZE; ++i) {
         for (int j = 0; j < OUTER_BOARD_SIZE; ++j) {
@@ -224,9 +222,6 @@ bool Board::makeMove(std::string& input) {
     const auto cornerIndex = findCorner_1D();
     const auto diff = mv.toSq->getOffset() - mv.fromSq->getOffset();
     
-    const auto blackFromPieceHashOffset = ((mv.fromPieceColour == Colour::WHITE) ? 0 : 6);
-    const auto blackToPieceHashOffset = ((mv.toPieceColour == Colour::WHITE) ? 0 : 6);
-    
     if (mv.fromSq->getPiece()) {
         mv.fromPieceType = mv.fromSq->getPiece()->getType();
         mv.fromPieceColour = mv.fromSq->getPiece()->getColour();
@@ -275,18 +270,15 @@ bool Board::makeMove(std::string& input) {
     }
     // If moving to an occupied square, capture the piece
     if (mv.toSq->getPiece()) {
-        currHash ^= HASH_VALUES[NUM_SQUARE_STATES * convertOuterBoardIndex(distToEndSquare, cornerIndex)
-            + pieceLookupTable[mv.toPieceType] + blackToPieceHashOffset];
+        hashPieceChange(convertOuterBoardIndex(distToEndSquare, cornerIndex), mv.toPieceType);
         mv.toSq->setPiece(nullptr);
         halfMoveClock = 0;
     }
     //xor out from piece at old square
-    currHash ^= HASH_VALUES[NUM_SQUARE_STATES * convertOuterBoardIndex(distToFromSquare, cornerIndex)
-        + pieceLookupTable[mv.fromPieceType] + blackFromPieceHashOffset];
+    hashPieceChange(convertOuterBoardIndex(distToFromSquare, cornerIndex), mv.fromPieceType);
         
     //xor in from piece at new square
-    currHash ^= HASH_VALUES[NUM_SQUARE_STATES * convertOuterBoardIndex(distToEndSquare, cornerIndex)
-        + pieceLookupTable[mv.fromPieceType] + blackFromPieceHashOffset];
+    hashPieceChange(convertOuterBoardIndex(distToEndSquare, cornerIndex), mv.fromPieceType);
         
     std::swap(*mv.fromSq, *mv.toSq);
     swapOffsets(mv);
@@ -352,9 +344,6 @@ bool Board::makeMove(std::string& input) {
 bool Board::makeMove(Move& mv) {
     assert(checkBoardValidity());
     assert(mv.fromSq && mv.toSq);
-
-    const auto blackFromPieceHashOffset = ((mv.fromPieceColour == Colour::WHITE) ? 0 : 6);
-    const auto blackToPieceHashOffset = ((mv.toPieceColour == Colour::WHITE) ? 0 : 6);
 
     const auto oldFromDist = getSquareIndex(mv.fromSq);
     const auto cornerCoords = findCorner_1D();
@@ -437,19 +426,16 @@ bool Board::makeMove(Move& mv) {
     
     // If moving to an occupied square, capture the piece
     if (mv.toSq->getPiece()) {
-        currHash ^= HASH_VALUES[NUM_SQUARE_STATES * convertOuterBoardIndex(distToEndSquare, cornerIndex)
-            + pieceLookupTable[mv.toPieceType] + blackToPieceHashOffset];
+        hashPieceChange(convertOuterBoardIndex(distToEndSquare, cornerIndex), mv.toPieceType);
             
         mv.toSq->setPiece(nullptr);
         halfMoveClock = 0;
     }
     //xor out from piece at old square
-    currHash ^= HASH_VALUES[NUM_SQUARE_STATES * convertOuterBoardIndex(distToFromSquare, cornerIndex)
-        + pieceLookupTable[mv.fromPieceType] + blackFromPieceHashOffset];
+    hashPieceChange(convertOuterBoardIndex(distToFromSquare, cornerIndex), mv.fromPieceType);
         
     //xor in from piece at new square
-    currHash ^= HASH_VALUES[NUM_SQUARE_STATES * convertOuterBoardIndex(distToEndSquare, cornerIndex)
-        + pieceLookupTable[mv.fromPieceType] + blackFromPieceHashOffset];
+    hashPieceChange(convertOuterBoardIndex(distToEndSquare, cornerIndex), mv.fromPieceType);
         
     std::swap(*mv.fromSq, *mv.toSq);
     swapOffsets(mv);
@@ -479,9 +465,6 @@ void Board::unmakeMove(const Move& mv) {
 
     assert(distToFromSquare != -1 && distToEndSquare != -1);
                 
-    const auto blackFromPieceHashOffset = ((mv.fromPieceColour == Colour::WHITE) ? 0 : 6);
-    const auto blackToPieceHashOffset = ((mv.toPieceColour == Colour::WHITE) ? 0 : 6);
-            
     auto distToOldTarget = 0;
     
     if (enPassantTarget) {
@@ -493,19 +476,15 @@ void Board::unmakeMove(const Move& mv) {
     const auto diff = mv.toSq->getOffset() - mv.fromSq->getOffset();
     
     //xor out from piece at old square
-    currHash ^= HASH_VALUES[NUM_SQUARE_STATES * convertOuterBoardIndex(distToFromSquare, cornerIndex)
-        + pieceLookupTable[mv.fromPieceType] + blackFromPieceHashOffset];
+    hashPieceChange(convertOuterBoardIndex(distToFromSquare, cornerIndex), mv.fromPieceType);
 
     if (mv.promotionMade) {
-        //xor in from piece at new square
-        currHash ^= HASH_VALUES[NUM_SQUARE_STATES * convertOuterBoardIndex(distToEndSquare, cornerIndex)
-            + pieceLookupTable[PieceTypes::PAWN] + blackFromPieceHashOffset];
-
         mv.toSq->setPiece({PieceTypes::PAWN, mv.fromPieceColour});
+        //xor in from piece at new square
+        hashPieceChange(convertOuterBoardIndex(distToEndSquare, cornerIndex), PieceTypes::PAWN);
     } else {
         //xor in from piece at new square
-        currHash ^= HASH_VALUES[NUM_SQUARE_STATES * convertOuterBoardIndex(distToEndSquare, cornerIndex)
-            + pieceLookupTable[mv.fromPieceType] + blackFromPieceHashOffset];
+        hashPieceChange(convertOuterBoardIndex(distToEndSquare, cornerIndex), mv.fromPieceType);
     }
         
     std::swap(*mv.fromSq, *mv.toSq);
@@ -517,8 +496,7 @@ void Board::unmakeMove(const Move& mv) {
     
     if (mv.captureMade) {
         mv.toSq->setPiece({mv.toPieceType, mv.toPieceColour});
-        currHash ^= HASH_VALUES[NUM_SQUARE_STATES * convertOuterBoardIndex(distToEndSquare, cornerIndex)
-            + pieceLookupTable[mv.toPieceType] + blackToPieceHashOffset];
+        hashPieceChange(convertOuterBoardIndex(distToEndSquare, cornerIndex), mv.toPieceType);
     }
     
     if (enPassantActive) {
@@ -553,9 +531,7 @@ void Board::unmakeMove(const Move& mv) {
             vectorTable[enPassantCaptureIndex]->setPiece({PieceTypes::PAWN, capturedColour});
         
         //Hashing in the captured pawn
-        currHash ^= HASH_VALUES[NUM_SQUARE_STATES 
-            * convertOuterBoardIndex(enPassantCaptureIndex, cornerIndex) + pieceLookupTable[PieceTypes::PAWN] 
-            + ((capturedColour == Colour::WHITE) ? 0 : 6)];
+        hashPieceChange(convertOuterBoardIndex(enPassantCaptureIndex, cornerIndex), PieceTypes::PAWN);
     }
     
     enPassantActive = mv.enPassantActive;
@@ -586,13 +562,8 @@ void Board::unmakeMove(const Move& mv) {
             
         vectorTable[distToEndSquare + 1 - (isQueenSide * 3)]->setOffset(temp);
 
-        currHash ^= HASH_VALUES[NUM_SQUARE_STATES 
-            * convertOuterBoardIndex(distToFromSquare + 3 - (isQueenSide * 7), cornerIndex)
-            + pieceLookupTable[PieceTypes::ROOK] + blackFromPieceHashOffset];
-            
-        currHash ^= HASH_VALUES[NUM_SQUARE_STATES 
-            * convertOuterBoardIndex(distToFromSquare + 1 - (isQueenSide << 1), cornerIndex)
-            + pieceLookupTable[PieceTypes::ROOK] + blackFromPieceHashOffset];
+        hashPieceChange(convertOuterBoardIndex(distToFromSquare + 3 - (isQueenSide * 7), cornerIndex), PieceTypes::ROOK);
+        hashPieceChange(convertOuterBoardIndex(distToFromSquare + 1 - (isQueenSide << 1), cornerIndex), PieceTypes::ROOK);
     }
 
     std::rotate(repititionList.rbegin(), repititionList.rbegin() + 1, repititionList.rend());
@@ -1061,7 +1032,6 @@ void Board::addEnPassantTarget(const Move& mv, const int offset, const int colum
 }
 
 void Board::performCastling(Move& mv, const int offset, const int fromSquareIndex) {
-    const auto blackFromPieceHashOffset = ((mv.fromPieceColour == Colour::WHITE) ? 0 : 6);
     const bool castleDirectionChosen = moveGen.getCastleDirectionBool(mv.fromPieceType, mv.fromPieceColour, offset);
     //Perform castling
     if (mv.fromPieceType == PieceTypes::KING && std::abs(offset) == 2 && castleDirectionChosen) {
@@ -1077,11 +1047,8 @@ void Board::performCastling(Move& mv, const int offset, const int fromSquareInde
             vectorTable[fromSquareIndex + 1 - (isQueenSide << 1)]->getOffset());
         vectorTable[fromSquareIndex + 1 - (isQueenSide << 1)]->setOffset(temp);
         
-        currHash ^= HASH_VALUES[NUM_SQUARE_STATES * convertOuterBoardIndex(fromSquareIndex + 3 - (isQueenSide * 7), cornerIndex)
-            + pieceLookupTable[PieceTypes::ROOK] + blackFromPieceHashOffset];
-            
-        currHash ^= HASH_VALUES[NUM_SQUARE_STATES * convertOuterBoardIndex(fromSquareIndex + 1 - (isQueenSide << 1), cornerIndex)
-            + pieceLookupTable[PieceTypes::ROOK] + blackFromPieceHashOffset];
+        hashPieceChange(convertOuterBoardIndex(fromSquareIndex + 3 - (isQueenSide * 7), cornerIndex), PieceTypes::ROOK);
+        hashPieceChange(convertOuterBoardIndex(fromSquareIndex + 1 - (isQueenSide << 1), cornerIndex), PieceTypes::ROOK);
             
         if (mv.fromPieceColour == Colour::WHITE) {
             removeCastlingRights(WHITE_CASTLE_FLAG);
@@ -1102,7 +1069,10 @@ void Board::captureEnPassant(const Move& mv, const int offset, const int toSquar
         vectorTable[captureIndex]->setPiece(nullptr);
         
         //xor out the captured pawn
-        currHash ^= HASH_VALUES[NUM_SQUARE_STATES * convertOuterBoardIndex(captureIndex, cornerIndex)
-            + pieceLookupTable[PieceTypes::PAWN] + ((isWhiteTurn) ? 6 : 0)];
+        hashPieceChange(convertOuterBoardIndex(captureIndex, cornerIndex), PieceTypes::PAWN);
     }
+}
+
+void Board::hashPieceChange(const int index, const PieceTypes type) {
+    currHash ^= HASH_VALUES[NUM_SQUARE_STATES * index + pieceLookupTable[type] + ((isWhiteTurn) ? 6 : 0)];
 }

@@ -24,6 +24,10 @@ class Board {
         return (((outerIndex - cornerIndex) / OUTER_BOARD_SIZE) * INNER_BOARD_SIZE) 
             + (outerIndex % OUTER_BOARD_SIZE) - (cornerIndex % OUTER_BOARD_SIZE);
     }
+
+    static inline constexpr int genOffset(const int i, const int j) {
+        return 98 - (15 * i) + j;
+    }
     
     class MoveGenerator {
         Board& board;
@@ -70,6 +74,7 @@ class Board {
     void performCastling(Move& mv, const int offset, const int fromSquareIndex);
     void addEnPassantTarget(const Move& mv, const int offset, const int columnNum, const int endSquareIndex);
     void captureEnPassant(const Move& mv, const int offset, const int toSquareIndex);
+    void hashPieceChange(const int index, const PieceTypes type);
 
 
     int cornerCache = -1;
