@@ -57,6 +57,7 @@ class Board {
     int moveCounter = 1;
     size_t currHash = 0;
     std::array<size_t, 9> repititionList;
+    int cornerCache = -1;
     
     void shiftVertical(const int count);
     void shiftHorizontal(const int count);
@@ -65,9 +66,7 @@ class Board {
     bool checkBoardValidity();
     std::string convertSquareToCoordText(const Square *sq);
     std::string convertMoveToCoordText(const Move& mv);
-    
     int getSquareIndex(const Square *sq);
-
     bool checkEnPassantValidity(Square *sq, const Move& mv);
     void removeCastlingRights(const unsigned char flag);
     void disableCastling(const Move& mv);
@@ -75,11 +74,8 @@ class Board {
     void addEnPassantTarget(const Move& mv, const int offset, const int columnNum, const int endSquareIndex);
     void captureEnPassant(const Move& mv, const int offset, const int toSquareIndex);
     void hashPieceChange(const int index, const PieceTypes type);
+    void promotePawn(Move& mv, const int endSquareIndex, const bool isSilent);
 
-
-    int cornerCache = -1;
-
-    
 public:
     Board();
     Board(const Board& b);

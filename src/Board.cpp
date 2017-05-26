@@ -255,19 +255,9 @@ bool Board::makeMove(std::string& input) {
     performCastling(mv, diff, distToFromSquare);
     
     disableCastling(mv);
+
+    promotePawn(mv, distToEndSquare, false);
     
-    if (mv.fromPieceType == PieceTypes::PAWN) {
-        halfMoveClock = 0;
-        const auto distFromStartToCorner = distToEndSquare - cornerIndex;
-        const auto& rowPairs = (mv.fromPieceColour == Colour::WHITE) ? std::make_pair(0, 14) : std::make_pair(105, 119);
-        
-        if (distFromStartToCorner >= rowPairs.first && distFromStartToCorner <= rowPairs.second) {
-            const auto& input = promptPromotionType();
-            mv.fromSq->getPiece()->promote(static_cast<PieceTypes>(input.front()));
-            mv.fromPieceType = static_cast<PieceTypes>(input.front());
-            mv.promotionMade = true;
-        }
-    }
     // If moving to an occupied square, capture the piece
     if (mv.toSq->getPiece()) {
         hashPieceChange(convertOuterBoardIndex(distToEndSquare, cornerIndex), mv.toPieceType);
@@ -411,18 +401,8 @@ bool Board::makeMove(Move& mv) {
     performCastling(mv, diff, distToFromSquare);
     
     disableCastling(mv);
-    //Promote pawns on the end ranks
-    if (mv.fromPieceType == PieceTypes::PAWN) {
-        halfMoveClock = 0;
-        const auto distFromStartToCorner = distToEndSquare - cornerIndex;
-        const auto& rowPairs = (mv.fromPieceColour == Colour::WHITE) ? std::make_pair(0, 14) : std::make_pair(105, 119);
-        
-        if (distFromStartToCorner >= rowPairs.first && distFromStartToCorner <= rowPairs.second) {
-            mv.fromSq->getPiece()->promote(mv.promotionType);
-            mv.fromPieceType = static_cast<PieceTypes>(mv.promotionType);
-            mv.promotionMade = true;
-        }
-    }
+
+    promotePawn(mv, distToEndSquare, true);
     
     // If moving to an occupied square, capture the piece
     if (mv.toSq->getPiece()) {
@@ -543,12 +523,6 @@ void Board::unmakeMove(const Move& mv) {
         currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
     }
     
-    /*
-     * This section originally was an if else depending on whether the castling
-     * was done long or short. Since the only difference between the two was the 
-     * values used to offset from distToEndSquare, I decided to remove the branch
-     * and redudant code and use the boolean value to change the offset when necessary.
-     */
     if (mv.isCastle) {
         const auto isQueenSide = (mv.toSq->getOffset() - mv.fromSq->getOffset() < 0);
         
@@ -1075,4 +1049,26 @@ void Board::captureEnPassant(const Move& mv, const int offset, const int toSquar
 
 void Board::hashPieceChange(const int index, const PieceTypes type) {
     currHash ^= HASH_VALUES[NUM_SQUARE_STATES * index + pieceLookupTable[type] + ((isWhiteTurn) ? 6 : 0)];
+}
+
+void Board::promotePawn(Move& mv, const int endSquareIndex, const bool isSilent) {
+    const auto cornerIndex = findCorner_1D();
+    //Promote pawns on the end ranks
+    if (mv.fromPieceType == PieceTypes::PAWN) {
+        halfMoveClock = 0;
+        const auto distFromStartToCorner = endSquareIndex - cornerIndex;
+        const auto& rowPairs = (mv.fromPieceColour == Colour::WHITE) ? std::make_pair(0, 14) : std::make_pair(105, 119);
+        
+        if (distFromStartToCorner >= rowPairs.first && distFromStartToCorner <= rowPairs.second) {
+            if (isSilent) {
+                mv.fromSq->getPiece()->promote(mv.promotionType);
+                mv.fromPieceType = static_cast<PieceTypes>(mv.promotionType);
+            } else {
+                const auto& input = promptPromotionType();
+                mv.fromSq->getPiece()->promote(static_cast<PieceTypes>(input.front()));
+                mv.fromPieceType = static_cast<PieceTypes>(input.front());
+            }
+            mv.promotionMade = true;
+        }
+    }
 }
