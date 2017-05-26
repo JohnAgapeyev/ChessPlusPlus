@@ -66,6 +66,10 @@ class Board {
 
     bool checkEnPassantValidity(Square *sq, const Move& mv);
     void removeCastlingRights(const unsigned char flag);
+    void disableCastling(const Move& mv);
+    void performCastling(Move& mv, const int offset, const int fromSquareIndex);
+    void addEnPassantTarget(const Move& mv, const int offset, const int columnNum, const int endSquareIndex);
+    void captureEnPassant(const Move& mv, const int offset, const int toSquareIndex);
 
 
     int cornerCache = -1;
