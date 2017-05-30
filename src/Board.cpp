@@ -752,7 +752,7 @@ void Board::setPositionByFEN(const std::string& fen) {
     isWhiteTurn = fenSections[1] == "w";
     
     castleRights = 0x00;
-    
+
     //Castling rights are not empty
     if (fenSections[2].find_first_of('-') == std::string::npos) {
         if (fenSections[2].find_first_of('K') != std::string::npos) {
@@ -797,6 +797,11 @@ void Board::setPositionByFEN(const std::string& fen) {
     //Resetting the board hash based on the new position
     currHash = 0;
     currHash = std::hash<Board>()(*this);
+    
+    //Resetting the check status
+    blackInCheck = false;
+    whiteInCheck = false;
+    updateCheckStatus();
 }
 
 //Testing method used to assert board state
