@@ -20,18 +20,19 @@ class Board {
      * Eg. If outerIndex references a2, this method returns the relative position
      * of a2 regardless of the current board shift state.
      */
-    static inline constexpr int convertOuterBoardIndex(const int outerIndex, const int cornerIndex) {
+    static constexpr int convertOuterBoardIndex(const int outerIndex, const int cornerIndex) {
         return (((outerIndex - cornerIndex) / OUTER_BOARD_SIZE) * INNER_BOARD_SIZE) 
             + (outerIndex % OUTER_BOARD_SIZE) - (cornerIndex % OUTER_BOARD_SIZE);
     }
 
-    static inline constexpr int genOffset(const int i, const int j) {
+    static constexpr int genOffset(const int i, const int j) {
         return 98 - (15 * i) + j;
     }
     
     class MoveGenerator {
         Board& board;
         void logMoveFailure(const int failureNum, const bool isSilent) const;
+        int getMoveOffset(const Move& mv) const;
         
     public:
         MoveGenerator(Board& b) : board(b) {}
