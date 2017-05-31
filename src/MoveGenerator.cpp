@@ -229,6 +229,9 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
     }
     
     //Prevent pieces from capturing a king
+    //Does not affect perft in any way
+    //Might want to remove or add macro check to save check for AI
+    //Will revisit when UX for engine is revamped
     if (mv.toPieceType == PieceTypes::KING) {
         logMoveFailure(12, isSilent);
         return false;
