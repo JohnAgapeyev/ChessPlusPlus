@@ -844,11 +844,10 @@ bool Board::checkBoardValidity() {
         return false;
     }
     
-    Board temp(*this);
-    temp.currHash = 0;
-    temp.currHash = std::hash<Board>()(temp);
-    
-    if (currHash != temp.currHash) {
+    const auto tempHash = currHash;
+    currHash = 0;
+
+    if ((currHash = std::hash<Board>()(*this)) != tempHash) {
         std::cerr << "Calculated hash does not match current board hash\n";
         return false;
     }
