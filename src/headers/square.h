@@ -12,6 +12,8 @@ class Square {
     
 public:
     Square() = default;
+    Square(const Square& sq) : piece((sq.piece) ? std::make_unique<Piece>(*sq.piece) : nullptr), offset(sq.offset) {}
+    Square(Square&& sq) : piece(std::move(sq.piece)), offset(sq.offset) {}
     Square(const int off) : piece(std::make_unique<Piece>(PieceTypes::UNKNOWN, Colour::UNKNOWN)), offset(off) {}
     Square(const Piece p, const int off = 0) : piece(std::make_unique<Piece>(p)), offset(off) {}
     Square(std::unique_ptr<Piece> p, const int off = 0) : piece(std::move(p)), offset(off) {}
@@ -29,6 +31,18 @@ public:
 
     bool operator==(const Square& second) {
         return (offset == second.offset && !(piece && second.piece)) || (offset == second.offset && (piece == second.piece));
+    }
+
+    Square& operator=(const Square& sq) {
+        piece = (sq.piece) ? std::make_unique<Piece>(*sq.piece) : nullptr;
+        offset = sq.offset;
+        return *this;
+    }
+
+    Square& operator=(Square&& sq) {
+        piece = std::move(sq.piece);
+        offset = sq.offset;
+        return *this;
     }
     
     friend std::ostream& operator<<(std::ostream& os, const Square& square);

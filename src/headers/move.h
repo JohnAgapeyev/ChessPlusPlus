@@ -8,6 +8,11 @@
 
 struct Move {
     Move();
+    Move(const Move& mv) = default;
+    Move(Move&& mv) = default;
+
+    Move& operator=(const Move& mv);
+    Move& operator=(Move&& mv);
     
     Square *fromSq;
     Square *toSq;

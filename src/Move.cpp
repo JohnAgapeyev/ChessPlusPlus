@@ -14,6 +14,44 @@ void swapOffsets(const Move& mv) {
     mv.toSq->setOffset(temp);
 }
 
+Move& Move::operator=(const Move& mv) {
+    fromSq = mv.fromSq;
+    toSq = mv.toSq;
+    fromPieceType = mv.fromPieceType;
+    fromPieceColour = mv.fromPieceColour;
+    captureMade = mv.captureMade;
+    toPieceType = mv.toPieceType;
+    toPieceColour = mv.toPieceColour;
+    promotionType = mv.promotionType;
+    promotionMade = mv.promotionMade;
+    isCastle = mv.isCastle;
+    castleRights = mv.castleRights;
+    enPassantActive = mv.enPassantActive;
+    enPassantTarget = mv.enPassantTarget;
+    halfMoveClock = mv.halfMoveClock;
+    moveCounter = mv.moveCounter;
+    return *this;
+}
+
+Move& Move::operator=(Move&& mv) {
+    fromSq = mv.fromSq;
+    toSq = mv.toSq;
+    fromPieceType = mv.fromPieceType;
+    fromPieceColour = mv.fromPieceColour;
+    captureMade = mv.captureMade;
+    toPieceType = mv.toPieceType;
+    toPieceColour = mv.toPieceColour;
+    promotionType = mv.promotionType;
+    promotionMade = mv.promotionMade;
+    isCastle = mv.isCastle;
+    castleRights = mv.castleRights;
+    enPassantActive = mv.enPassantActive;
+    enPassantTarget = mv.enPassantTarget;
+    halfMoveClock = mv.halfMoveClock;
+    moveCounter = mv.moveCounter;
+    return *this;
+}
+
 bool operator==(const Move& first, const Move& second) {
     return first.fromSq == second.fromSq && first.toSq == second.toSq 
         && first.fromPieceType == second.fromPieceType && first.fromPieceColour == second.fromPieceColour 

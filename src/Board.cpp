@@ -26,13 +26,13 @@ Board::Board() {
         for (int j = 0; j < OUTER_BOARD_SIZE; ++j) {
             if (i >= 0 && i <= 7) {
                 if (j >= 0 && j <= 7) {
-                    vectorTable[(i * OUTER_BOARD_SIZE) + j] = INIT_BOARD[i][j];
+                    vectorTable[(i * OUTER_BOARD_SIZE) + j] = std::make_unique<Square>(*INIT_BOARD[i][j]);
                     vectorTable[(i * OUTER_BOARD_SIZE) + j]->setOffset(genOffset(i, j));
                 } else {
-                    vectorTable[(i * OUTER_BOARD_SIZE) + j] = std::make_shared<Square>(genOffset(i, j));
+                    vectorTable[(i * OUTER_BOARD_SIZE) + j] = std::make_unique<Square>(genOffset(i, j));
                 }
             } else {
-                vectorTable[(i * OUTER_BOARD_SIZE) + j] = std::make_shared<Square>(genOffset(i, j));
+                vectorTable[(i * OUTER_BOARD_SIZE) + j] = std::make_unique<Square>(genOffset(i, j));
             }
         }
     }
@@ -42,14 +42,6 @@ Board::Board() {
     }
     currHash = std::hash<Board>()(*this);
 }
-
-Board::Board(const Board& b) : moveGen(b.moveGen), vectorTable(b.vectorTable), 
-        currentGameState(b.currentGameState), castleRights(b.castleRights), 
-        blackInCheck(b.blackInCheck), whiteInCheck(b.whiteInCheck), 
-        isWhiteTurn(b.isWhiteTurn), enPassantActive(b.enPassantActive), 
-        enPassantTarget(b.enPassantTarget), halfMoveClock(b.halfMoveClock), 
-        moveCounter(b.moveCounter), currHash(b.currHash), 
-        repititionList(b.repititionList) {}
 
 std::pair<int, int> Board::findCorner() {
     if (cornerCache != -1) {
@@ -79,14 +71,16 @@ int Board::findCorner_1D() {
 
 void Board::printBoardState() const {
 #ifdef NDEBUG
-    auto range = INNER_BOARD_SIZE;
-    std::array<std::shared_ptr<Square>, 64> outputTable;
-    std::copy_if(vectorTable.begin(), vectorTable.end(), outputTable.begin(), [](const auto& sq) {
-        auto pc = sq->getPiece();
-        return !(pc && pc->getColour() == Colour::UNKNOWN && pc->getType() == PieceTypes::UNKNOWN);
-    });
+    const auto range = INNER_BOARD_SIZE;
+    std::vector<Square *> outputTable;
+    for (size_t i = 0; i < vectorTable.size(); ++i) {
+        const auto pc = vectorTable[i]->getPiece();
+        if (!(pc && pc->getColour() == Colour::UNKNOWN && pc->getType() == PieceTypes::UNKNOWN)) {
+            outputTable.push_back(vectorTable[i].get());
+        }
+    }
 #else
-    auto range = OUTER_BOARD_SIZE;
+    const auto range = OUTER_BOARD_SIZE;
 #endif
     for (auto i = 0; i < range; ++i) {
 #ifdef NDEBUG

@@ -11,7 +11,7 @@ size_t std::hash<Board>::operator() (const Board& b) const {
     
     const auto& cornerCoords = const_cast<Board&>(b).findCorner();
     const int cornerIndex = (cornerCoords.first * OUTER_BOARD_SIZE) + cornerCoords.second;
-    const auto& cornerPiece = b.vectorTable[cornerIndex]->getPiece();
+    const auto cornerPiece = b.vectorTable[cornerIndex]->getPiece();
     size_t newHash = 0;
     if (cornerPiece) {
         newHash = HASH_VALUES[pieceLookupTable[cornerPiece->getType()] 

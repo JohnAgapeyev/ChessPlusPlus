@@ -5,9 +5,7 @@
 #include <array>
 #include <memory>
 #include "hash.h"
-//#include "square.h"
 #include "consts.h"
-//#include "move.h"
 #include "enums.h"
 
 class Square;
@@ -46,7 +44,7 @@ class Board {
     };
     MoveGenerator moveGen{*this};
     
-    std::array<std::shared_ptr<Square>, OUTER_BOARD_SIZE * OUTER_BOARD_SIZE> vectorTable;
+    std::array<std::unique_ptr<Square>, OUTER_BOARD_SIZE * OUTER_BOARD_SIZE> vectorTable;
     GameState currentGameState = GameState::ACTIVE;
     unsigned char castleRights = 0x0F;
     bool blackInCheck = false;
@@ -79,12 +77,13 @@ class Board {
 
 public:
     Board();
-    Board(const Board& b);
+    Board(const Board& b) = delete;
+    Board(Board&& b) = default;
     
     bool operator==(const Board& second) const {return currHash == second.currHash;}
     
     void printBoardState() const;
-    auto getBoard() const {return vectorTable;}
+    auto& getBoard() const {return vectorTable;}
     auto getGameState() const {return currentGameState;}
     auto getCurrHash() const {return currHash;}
     std::pair<int, int> findCorner();
