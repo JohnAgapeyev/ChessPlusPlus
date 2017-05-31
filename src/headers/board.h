@@ -73,6 +73,8 @@ class Board {
     void addEnPassantTarget(const Move& mv, const int offset, const int columnNum, const int endSquareIndex);
     void captureEnPassant(const Move& mv, const int offset, const int toSquareIndex);
     void hashPieceChange(const int index, const PieceTypes type);
+    void hashTurnChange();
+    void hashEnPassantFile(const int fileNum);
     void promotePawn(Move& mv, const int endSquareIndex, const bool isSilent);
 
 public:

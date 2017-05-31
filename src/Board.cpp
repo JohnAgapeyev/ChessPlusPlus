@@ -270,8 +270,8 @@ bool Board::makeMove(std::string& input) {
     
     mv.halfMoveClock = halfMoveClock;
     
-    //xor the change in turn
-    currHash ^= HASH_VALUES[static_cast<int>(SquareState::WHITE_MOVE)];
+    //hash the change in turn
+    hashTurnChange();
     
     if (isWhiteTurn) {
         ++moveCounter;
@@ -380,8 +380,7 @@ bool Board::makeMove(Move& mv) {
         assert(distToEnPassantTarget != -1);
                 
         //xor out en passant file
-        currHash ^= HASH_VALUES[static_cast<int>(SquareState::EN_PASSANT_FILE) 
-            + (convertOuterBoardIndex(distToEnPassantTarget, cornerIndex) % INNER_BOARD_SIZE)];
+        hashEnPassantFile(convertOuterBoardIndex(distToEnPassantTarget, cornerIndex) % INNER_BOARD_SIZE);
     }
     
     mv.enPassantActive = enPassantActive;
@@ -415,8 +414,8 @@ bool Board::makeMove(Move& mv) {
     swapOffsets(mv);
     isWhiteTurn = !isWhiteTurn;
     
-    //xor the change in turn
-    currHash ^= HASH_VALUES[static_cast<int>(SquareState::WHITE_MOVE)];
+    //hash the change in turn
+    hashTurnChange();
     
     if (isWhiteTurn) {
         moveCounter++;
@@ -465,8 +464,8 @@ void Board::unmakeMove(const Move& mv) {
     swapOffsets(mv);
     isWhiteTurn = !isWhiteTurn;
     
-    //xor the change in turn
-    currHash ^= HASH_VALUES[static_cast<int>(SquareState::WHITE_MOVE)];
+    //hash the change in turn
+    hashTurnChange();
     
     if (mv.captureMade) {
         mv.toSq->setPiece({mv.toPieceType, mv.toPieceColour});
@@ -475,8 +474,7 @@ void Board::unmakeMove(const Move& mv) {
     
     if (enPassantActive) {
         //Hash out the current file
-        currHash ^= HASH_VALUES[static_cast<int>(SquareState::EN_PASSANT_FILE) 
-            + (convertOuterBoardIndex(distToOldTarget, cornerIndex) % INNER_BOARD_SIZE)];
+        hashEnPassantFile((convertOuterBoardIndex(distToOldTarget, cornerIndex) % INNER_BOARD_SIZE));
     }
     
     if (mv.enPassantTarget) {
@@ -485,7 +483,7 @@ void Board::unmakeMove(const Move& mv) {
         assert(distToCurrTarget != -1);
         const auto fileNum = convertOuterBoardIndex(distToCurrTarget, cornerIndex) % INNER_BOARD_SIZE;
         
-        currHash ^= HASH_VALUES[static_cast<int>(SquareState::EN_PASSANT_FILE) + fileNum];
+        hashEnPassantFile(fileNum);
     }
     
     //En passant Capture was made.
@@ -998,8 +996,7 @@ void Board::addEnPassantTarget(const Move& mv, const int offset, const int colum
         enPassantTarget = vectorTable[endSquareIndex + (offset / 2)].get();
         
         //xor in en passant file
-        currHash ^= HASH_VALUES[static_cast<int>(SquareState::EN_PASSANT_FILE) 
-            + (endSquareIndex % OUTER_BOARD_SIZE) - (INNER_BOARD_SIZE - 1 - columnNum)];
+        hashEnPassantFile((endSquareIndex % OUTER_BOARD_SIZE) - (INNER_BOARD_SIZE - 1 - columnNum));
     }
 }
 
@@ -1049,6 +1046,14 @@ void Board::hashPieceChange(const int index, const PieceTypes type) {
     currHash ^= HASH_VALUES[NUM_SQUARE_STATES * index + pieceLookupTable[type] + ((isWhiteTurn) ? 6 : 0)];
 }
 
+void Board::hashTurnChange() {
+    currHash ^= HASH_VALUES[static_cast<int>(SquareState::WHITE_MOVE)];
+}
+
+void Board::hashEnPassantFile(const int fileNum) {
+    currHash ^= HASH_VALUES[static_cast<int>(SquareState::EN_PASSANT_FILE) + fileNum];
+}
+
 void Board::promotePawn(Move& mv, const int endSquareIndex, const bool isSilent) {
     const auto cornerIndex = findCorner_1D();
     //Promote pawns on the end ranks
@@ -1070,3 +1075,4 @@ void Board::promotePawn(Move& mv, const int endSquareIndex, const bool isSilent)
         }
     }
 }
+
