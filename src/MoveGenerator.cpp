@@ -417,7 +417,6 @@ void Board::MoveGenerator::logMoveFailure(const int failureNum, const bool isSil
 }
 
 std::vector<Move> Board::MoveGenerator::generateAll() {
-    assert(board.checkBoardValidity());
     std::vector<Move> moveList;
         
     const auto currentPlayerColour = (board.isWhiteTurn) ? Colour::WHITE : Colour::BLACK;
@@ -523,7 +522,6 @@ std::vector<Move> Board::MoveGenerator::generateAll() {
             }
         }
     }
-    assert(board.checkBoardValidity());
     return moveList;
 }
 

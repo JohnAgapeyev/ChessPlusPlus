@@ -72,9 +72,10 @@ class Board {
     void performCastling(Move& mv, const int offset, const int fromSquareIndex);
     void addEnPassantTarget(const Move& mv, const int offset, const int columnNum, const int endSquareIndex);
     void captureEnPassant(const Move& mv, const int offset, const int toSquareIndex);
-    void hashPieceChange(const int index, const PieceTypes type);
+    void hashPieceChange(const int index, const PieceTypes type, const Colour colour);
     void hashTurnChange();
     void hashEnPassantFile(const int fileNum);
+    void hashCastleRights();
     void promotePawn(Move& mv, const int endSquareIndex, const bool isSilent);
 
 public:
