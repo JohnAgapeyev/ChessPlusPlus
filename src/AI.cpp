@@ -211,7 +211,7 @@ int AI::reduceKnightMobilityScore(const std::vector<Move>& moveList, const int c
                 
             for (int i = 0; i < 4; ++i) {
                 cornerCheckIndex = board.moveGen.getOffsetIndex(pawnThreatOffsets[i], cornerToSqDiff);
-                if (cornerCheckIndex < 0 || cornerCheckIndex >= OUTER_BOARD_SIZE * OUTER_BOARD_SIZE) {
+                if (cornerCheckIndex < 0 || cornerCheckIndex >= TOTAL_BOARD_SIZE) {
                     continue;
                 }
                 

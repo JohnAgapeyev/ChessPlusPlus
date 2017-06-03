@@ -7,6 +7,7 @@
 static constexpr auto INNER_BOARD_SIZE = 8;
 
 static constexpr auto OUTER_BOARD_SIZE = 15;
+static constexpr auto TOTAL_BOARD_SIZE = OUTER_BOARD_SIZE * OUTER_BOARD_SIZE;
 
 static constexpr auto NUM_SQUARE_STATES = 12;
 

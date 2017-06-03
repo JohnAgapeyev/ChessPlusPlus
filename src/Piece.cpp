@@ -3,28 +3,35 @@
 #include "headers/piece.h"
 #include "headers/consts.h"
 
-const std::vector<int> Piece::getVectorList() const {
+const std::vector<int>& Piece::getVectorList() const {
+    static const std::vector<int> whitePawn{14, 15, 16, 30};
+    static const std::vector<int> blackPawn{-14, -15, -16, -30};
+    static const std::vector<int> knight{13, 29, 31, 17, -13, -29, -31, -17};
+    static const std::vector<int> bishop{14, 16, -14, -16};
+    static const std::vector<int> king{15, 1, -15, -1, 14, 16, -14, -16, 2, -2};
+    static const std::vector<int> queen{15, 1, -15, -1, 14, 16, -14, -16};
+    static const std::vector<int> rook{15, 1, -15, -1};
+    static const std::vector<int> unknown{15, 1, -15, -1, 14, 16, -14, -16, 13, 29, 31, 17, -13, -29, -31, -17};
     switch(type) {
         case PieceTypes::PAWN:
             if (pieceColour == Colour::WHITE) {
-                return {14, 15, 16, 30};
+                return whitePawn;
             }
-            return {-14, -15, -16, -30};
+            return blackPawn;
         case PieceTypes::KNIGHT:
-            return {13, 29, 31, 17, -13, -29, -31, -17};
+            return knight;
         case PieceTypes::BISHOP:
-            return {14, 16, -14, -16};
+            return bishop;
         case PieceTypes::KING:
-            return {15, 1, -15, -1, 14, 16, -14, -16, 2, -2};
+            return king;
         case PieceTypes::QUEEN:
-            return {15, 1, -15, -1, 14, 16, -14, -16};
+            return queen;
         case PieceTypes::ROOK:
-            return {15, 1, -15, -1};
+            return rook;
         case PieceTypes::UNKNOWN:
-            return {15, 1, -15, -1, 14, 16, -14, -16, 13, 29, 31, 17, -13, -29, -31, -17};
-        default:
-            return std::vector<int>();
+            return unknown;
     }
+    __builtin_unreachable(); //Will never have a piece without the above type
 }
 
 std::ostream& operator<<(std::ostream& os, const Piece& piece) {

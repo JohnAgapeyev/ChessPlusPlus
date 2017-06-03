@@ -47,7 +47,7 @@ std::pair<int, int> Board::findCorner() {
     if (cornerCache != -1) {
         return {cornerCache / OUTER_BOARD_SIZE, cornerCache % OUTER_BOARD_SIZE};
     }
-    for (size_t i = 0; i < vectorTable.size(); ++i) {
+    for (size_t i = 0; i < TOTAL_BOARD_SIZE; ++i) {
         if (!vectorTable[i]->checkSentinel()) {
             cornerCache = i;
             return {i / OUTER_BOARD_SIZE, i % OUTER_BOARD_SIZE};
@@ -60,7 +60,7 @@ int Board::findCorner_1D() {
     if (cornerCache != -1) {
         return cornerCache;
     }
-    for (size_t i = 0; i < vectorTable.size(); ++i) {
+    for (size_t i = 0; i < TOTAL_BOARD_SIZE; ++i) {
         if (!vectorTable[i]->checkSentinel()) {
             cornerCache = i;
             return i; 
@@ -73,7 +73,7 @@ void Board::printBoardState() const {
 #ifdef NDEBUG
     const auto range = INNER_BOARD_SIZE;
     std::vector<Square *> outputTable;
-    for (size_t i = 0; i < vectorTable.size(); ++i) {
+    for (size_t i = 0; i < TOTAL_BOARD_SIZE; ++i) {
         const auto pc = vectorTable[i]->getPiece();
         if (!(pc && pc->getColour() == Colour::UNKNOWN && pc->getType() == PieceTypes::UNKNOWN)) {
             outputTable.push_back(vectorTable[i].get());
@@ -520,7 +520,7 @@ std::string Board::generateFEN() {
     int emptySquareCounter = 0;
     int rowCount = 1;
     bool rowContainsGameBoard = false;
-    for (size_t i = 0; i < vectorTable.size(); ++i) {
+    for (size_t i = 0; i < TOTAL_BOARD_SIZE; ++i) {
         const auto& sq = vectorTable[i].get();
         if (!sq->getPiece()) {
             emptySquareCounter++;
@@ -860,8 +860,7 @@ int Board::getSquareIndex(const Square *sq) {
 
 bool Board::checkEnPassantValidity(Square *sq, const Move& mv) {
     //Enemy pawn and enemy king - perform check check on left square
-    Piece temp = *sq->getPiece();
-    sq->setPiece(nullptr);
+    std::unique_ptr<Piece> temp{sq->releasePiece()};
 
     const auto cornerIndex = findCorner_1D();
 
@@ -871,20 +870,17 @@ bool Board::checkEnPassantValidity(Square *sq, const Move& mv) {
         for (int j = 0; j < INNER_BOARD_SIZE; ++j) {
             const auto piece = vectorTable[cornerIndex + (i * OUTER_BOARD_SIZE) + j]->getPiece();
             if (piece && piece->getType() == PieceTypes::KING && piece->getColour() != mv.fromPieceColour) {
-                idx = (i * OUTER_BOARD_SIZE) + j;
+                idx = cornerIndex + (i * OUTER_BOARD_SIZE) + j;
                 break;
             }
         }
     }
     assert(idx != -1);
 
-    const auto result = moveGen.inCheck(cornerIndex + idx);
+    const auto result = moveGen.inCheck(idx);
     sq->setPiece(std::move(temp));
 
-    if (result) {
-        return false;
-    }
-    return true;
+    return !result;
 }
 
 void Board::removeCastlingRights(const unsigned char flag) {

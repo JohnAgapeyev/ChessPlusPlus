@@ -23,6 +23,7 @@ public:
     void setOffset(const int off) {offset = off;}
     auto getOffset() const {return offset;}
     auto getPiece() const {return piece.get();}
+    auto releasePiece() {return piece.release();}
     
     bool checkSentinel() const {
         return (getPiece() && getPiece()->getColour() == Colour::UNKNOWN 

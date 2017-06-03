@@ -241,9 +241,9 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
 }
 
 bool Board::MoveGenerator::inCheck(const int squareIndex) const {
-    assert(squareIndex >= 0 && squareIndex < OUTER_BOARD_SIZE * OUTER_BOARD_SIZE);
+    assert(squareIndex >= 0 && squareIndex < TOTAL_BOARD_SIZE);
     
-    static const auto& checkVectors = Piece(PieceTypes::UNKNOWN, Colour::UNKNOWN).getVectorList();
+    static const auto& checkVectors{Piece(PieceTypes::UNKNOWN, Colour::UNKNOWN).getVectorList()};
     const int cornerIndex =  board.findCorner_1D();
     
     /*
@@ -265,25 +265,30 @@ bool Board::MoveGenerator::inCheck(const int squareIndex) const {
         
         for (int i = 1; i <= vectorLength; ++i) {
             const auto realIndex = getOffsetIndex(offset, squareIndex, i);
-            if (realIndex < 0 || realIndex >= OUTER_BOARD_SIZE * OUTER_BOARD_SIZE) {
+            if (realIndex < 0 || realIndex >= TOTAL_BOARD_SIZE) {
                 break;
             }
-            const auto currSquare = board.vectorTable[realIndex].get();
-            const auto& currPiece = currSquare->getPiece();
+            const auto currPiece = board.vectorTable[realIndex]->getPiece();
             if (currPiece) {
-                const auto currPieceColour = currPiece->getColour();
-                if (currPieceColour == friendlyPieceColour 
-                        || currPieceColour == Colour::UNKNOWN) {
-                    break;
-                }
-                const auto& pieceVector = currPiece->getVectorList();
-                if (std::find(pieceVector.cbegin(), pieceVector.cend(), -offset) == pieceVector.cend()) {
+                if (currPiece->getColour() == friendlyPieceColour 
+                        || currPiece->getColour() == Colour::UNKNOWN) {
                     break;
                 }
                 if (i > currPiece->getVectorLength() - 1) {
                     break;
                 }
                 if (currPiece->getType() == PieceTypes::PAWN && (offset % OUTER_BOARD_SIZE) == 0) {
+                    break;
+                }
+                const auto& pieceVector = currPiece->getVectorList();
+                bool offsetFound = false;
+                for (size_t j = 0; j < pieceVector.size(); ++j) {
+                    if (pieceVector[j] == -offset) {
+                        offsetFound = true;
+                        break;
+                    }
+                }
+                if (!offsetFound) {
                     break;
                 }
                 return true;
@@ -295,18 +300,18 @@ bool Board::MoveGenerator::inCheck(const int squareIndex) const {
 
 bool Board::MoveGenerator::inCheck(const Move& mv) const {
     const auto& checkVectors = Piece(PieceTypes::UNKNOWN, Colour::UNKNOWN).getVectorList();
-    const auto toPieceCopy = Piece(mv.toPieceType, mv.toPieceColour);
+    std::unique_ptr<Piece> toPieceCopy{mv.toSq->releasePiece()};
     bool enPassantCaptureMade = false;
     int captureIndex = -1;
+    std::unique_ptr<Piece> enPassantPiece{nullptr};
 
     if (mv.enPassantActive && mv.fromPieceType == PieceTypes::PAWN && *mv.toSq == *mv.enPassantTarget
             && ((mv.toSq->getOffset() - mv.fromSq->getOffset()) % 15)) {
         enPassantCaptureMade = true;
         captureIndex = board.getSquareIndex(mv.toSq) + ((board.isWhiteTurn) ? OUTER_BOARD_SIZE: -OUTER_BOARD_SIZE);
-        board.vectorTable[captureIndex]->setPiece(nullptr);
+        enPassantPiece.reset(board.vectorTable[captureIndex]->releasePiece());
     }
 
-    mv.toSq->setPiece(nullptr);
     std::swap(*mv.fromSq, *mv.toSq);
 
     //Check if friendly king can be found
@@ -318,7 +323,7 @@ bool Board::MoveGenerator::inCheck(const Move& mv) const {
             }) != board.vectorTable.cend());
             
     int squareIndex = -1;
-    for (size_t i = 0, len = board.vectorTable.size(); i < len; ++i) {
+    for (size_t i = 0; i < TOTAL_BOARD_SIZE; ++i) {
         const auto& piece = board.vectorTable[i]->getPiece();
         if (piece && piece->getType() == PieceTypes::KING && piece->getColour() == mv.fromPieceColour) {
             squareIndex = i;
@@ -336,7 +341,7 @@ bool Board::MoveGenerator::inCheck(const Move& mv) const {
         
         for (int i = 1; i <= vectorLength; ++i) {
             const auto realIndex = getOffsetIndex(offset, squareIndex, i);
-            if (realIndex < 0 || realIndex >= OUTER_BOARD_SIZE * OUTER_BOARD_SIZE) {
+            if (realIndex < 0 || realIndex >= TOTAL_BOARD_SIZE) {
                 break;
             }
             const auto currPiece = board.vectorTable[realIndex]->getPiece();
@@ -371,7 +376,7 @@ bool Board::MoveGenerator::inCheck(const Move& mv) const {
                     mv.toSq->setPiece(std::move(toPieceCopy));
                 }
                 if (enPassantCaptureMade) {
-                    board.vectorTable[captureIndex]->setPiece(Piece{PieceTypes::PAWN, (board.isWhiteTurn) ? Colour::BLACK : Colour::WHITE});
+                    board.vectorTable[captureIndex]->setPiece(std::move(enPassantPiece));
                 }
                 return true;
             }
@@ -382,7 +387,7 @@ bool Board::MoveGenerator::inCheck(const Move& mv) const {
         mv.toSq->setPiece(std::move(toPieceCopy));
     }
     if (enPassantCaptureMade) {
-        board.vectorTable[captureIndex]->setPiece(Piece{PieceTypes::PAWN, (board.isWhiteTurn) ? Colour::BLACK : Colour::WHITE});
+        board.vectorTable[captureIndex]->setPiece(std::move(enPassantPiece));
     }
     return false;
 }
@@ -418,11 +423,13 @@ void Board::MoveGenerator::logMoveFailure(const int failureNum, const bool isSil
 
 std::vector<Move> Board::MoveGenerator::generateAll() {
     std::vector<Move> moveList;
+    moveList.reserve(100); //More moves are possible, but this shoud cover 99% of positions without reallocating
         
     const auto currentPlayerColour = (board.isWhiteTurn) ? Colour::WHITE : Colour::BLACK;
     const auto& startCoords = board.findCorner();
     
     std::vector<std::tuple<int, int, Piece*>> pieceCoords;
+    pieceCoords.reserve(16); //Cannot have more than 16 pieces for one player
     for (int i = 0; i < INNER_BOARD_SIZE; ++i) {
         for (int j = 0; j < INNER_BOARD_SIZE; ++j) {
             const auto sq = board.vectorTable[((i + startCoords.first) * OUTER_BOARD_SIZE) + j + startCoords.second].get();
@@ -443,7 +450,7 @@ std::vector<Move> Board::MoveGenerator::generateAll() {
             for (int j = 1; j < moveLen; ++j) {
                 Move mv;
                 const auto toSquareIndex = getOffsetIndex(offset, ZERO_LOCATION_1D, j);
-                if (toSquareIndex < 0 || toSquareIndex > OUTER_BOARD_SIZE * OUTER_BOARD_SIZE) {
+                if (toSquareIndex < 0 || toSquareIndex > TOTAL_BOARD_SIZE) {
                     break;
                 }
                 mv.fromSq = board.vectorTable[ZERO_LOCATION_1D].get();

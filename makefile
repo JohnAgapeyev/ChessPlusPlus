@@ -11,7 +11,7 @@ EXEC := $(ODIR)/$(APPNAME)
 DEPS := $(EXEC).d
 
 # Add flags for release mode binary
-release: CXXFLAGS += -O3 -march=native -flto -DNDEBUG
+release: CXXFLAGS += -O3 -march=native -flto -ftracer -funswitch-loops -funroll-loops -funit-at-a-time -DNDEBUG
 release: debug
 
 debug: $(patsubst $(SRCOBJS), $(OBJS), $(SRCWILD))
