@@ -9,6 +9,15 @@
 #include "headers/enums.h"
 #include "headers/consts.h"
 
+const std::array<std::array<std::shared_ptr<Square>, INNER_BOARD_SIZE>, INNER_BOARD_SIZE> INIT_BOARD = fillInitBoard();
+const std::array<uint_fast64_t, HASH_BOARD_LENGTH> HASH_VALUES = populateHashTable();
+const unsigned char BLACK_CASTLE_FLAG = 0b1100;
+const unsigned char WHITE_CASTLE_FLAG = 0b0011;
+const unsigned char WHITE_CASTLE_QUEEN_FLAG = 0b0010;
+const unsigned char WHITE_CASTLE_KING_FLAG = 0b0001;
+const unsigned char BLACK_CASTLE_QUEEN_FLAG = 0b1000;
+const unsigned char BLACK_CASTLE_KING_FLAG = 0b0100;
+
 std::array<std::array<std::shared_ptr<Square>, INNER_BOARD_SIZE>, INNER_BOARD_SIZE> fillInitBoard() {
     const auto& pickColour = [](const auto T){return (T < 5) ? Colour::BLACK : Colour::WHITE;};
     std::array<std::array<std::shared_ptr<Square>, INNER_BOARD_SIZE>, INNER_BOARD_SIZE> result;

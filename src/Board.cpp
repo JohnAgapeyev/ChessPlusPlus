@@ -247,9 +247,9 @@ bool Board::makeMove(std::string& input) {
     
     // If moving to an occupied square, capture the piece
     if (mv.toSq->getPiece()) {
-        hashPieceChange(convertOuterBoardIndex(distToEndSquare, cornerIndex), mv.toPieceType, mv.toPieceColour);
         mv.toSq->setPiece(nullptr);
         halfMoveClock = 0;
+        hashPieceChange(convertOuterBoardIndex(distToEndSquare, cornerIndex), mv.toPieceType, mv.toPieceColour);
     }
     //xor out from piece at old square
     hashPieceChange(convertOuterBoardIndex(distToFromSquare, cornerIndex), mv.fromPieceType, mv.fromPieceColour);
@@ -267,7 +267,6 @@ bool Board::makeMove(std::string& input) {
     if (isWhiteTurn) {
         ++moveCounter;
     }
-    
     
     updateCheckStatus();
     
@@ -371,10 +370,9 @@ bool Board::makeMove(Move& mv) {
     
     // If moving to an occupied square, capture the piece
     if (mv.toSq->getPiece()) {
-        hashPieceChange(convertOuterBoardIndex(distToEndSquare, cornerIndex), mv.toPieceType, mv.toPieceColour);
-            
         mv.toSq->setPiece(nullptr);
         halfMoveClock = 0;
+        hashPieceChange(convertOuterBoardIndex(distToEndSquare, cornerIndex), mv.toPieceType, mv.toPieceColour);
     }
     //xor out from piece at old square
     hashPieceChange(convertOuterBoardIndex(distToFromSquare, cornerIndex), mv.fromPieceType, mv.fromPieceColour);
@@ -500,8 +498,8 @@ void Board::unmakeMove(const Move& mv) {
             
         vectorTable[distToEndSquare + 1 - (isQueenSide * 3)]->setOffset(temp);
 
-        hashPieceChange(convertOuterBoardIndex(distToFromSquare + 3 - (isQueenSide * 7), cornerIndex), PieceTypes::ROOK, (mv.fromPieceColour == Colour ::WHITE) ? Colour::BLACK : Colour::WHITE);
-        hashPieceChange(convertOuterBoardIndex(distToFromSquare + 1 - (isQueenSide << 1), cornerIndex), PieceTypes::ROOK, (mv.fromPieceColour == Colour ::WHITE) ? Colour::BLACK : Colour::WHITE);
+        hashPieceChange(convertOuterBoardIndex(distToEndSquare - 1 - (isQueenSide << 1), cornerIndex), PieceTypes::ROOK, mv.fromPieceColour);
+        hashPieceChange(convertOuterBoardIndex(distToEndSquare + 1 - (isQueenSide * 3), cornerIndex), PieceTypes::ROOK, mv.fromPieceColour);
     }
 
     std::rotate(repititionList.rbegin(), repititionList.rbegin() + 1, repititionList.rend());

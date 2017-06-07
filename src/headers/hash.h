@@ -9,7 +9,6 @@ class Piece;
 enum class PieceTypes : unsigned char;
 
 namespace std {
-
     template<>
     class hash<Board> {
     public:

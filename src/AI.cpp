@@ -365,10 +365,12 @@ std::pair<Move, int> AI::AlphaBeta(int alpha, int beta, const int depth) {
         //Store rtn as lower bound
         boardCache->add(board, std::make_tuple(depth, rtn.second, SearchBoundary::LOWER, rtn.first));
         
+        assert(pieceLookupTable.find(prev.fromPieceType) != pieceLookupTable.end());
+
         //If no piece is being captured
         if (rtn.first.toSq && !rtn.first.toSq->getPiece() && prev != Move()) {
             counterMove[
-                (pieceLookupTable[prev.fromPieceType] * INNER_BOARD_SIZE * INNER_BOARD_SIZE) 
+                (pieceLookupTable.find(prev.fromPieceType)->second * INNER_BOARD_SIZE * INNER_BOARD_SIZE) 
                 + board.convertOuterBoardIndex(board.getSquareIndex(prev.toSq), board.findCorner_1D())
             ] = rtn.first;
         }
@@ -564,9 +566,11 @@ std::vector<Move> AI::orderMoveList(std::vector<Move>&& list, const Move& pvMove
     for (auto it = list.begin(); it != captureIt; ++it) {
         output.insert(*it);
     }
+
+    assert(pieceLookupTable.find(prev.fromPieceType) != pieceLookupTable.end());
     
     for (auto& mv : list) {
-        if (mv == counterMove[(pieceLookupTable[prev.fromPieceType] * INNER_BOARD_SIZE * INNER_BOARD_SIZE) 
+        if (mv == counterMove[(pieceLookupTable.find(prev.fromPieceType)->second * INNER_BOARD_SIZE * INNER_BOARD_SIZE) 
                 + board.convertOuterBoardIndex(board.getSquareIndex(prev.toSq), board.findCorner_1D())]) {
             output.insert(mv);
         }

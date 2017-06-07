@@ -19,13 +19,13 @@ enum class Colour : unsigned char {
     BLACK = 'B'
 };
 
-enum class GameState {
+enum class GameState : unsigned char {
     ACTIVE,
     DRAWN,
     MATE
 };
 
-enum class SquareState : int {
+enum class SquareState : unsigned int {
     WHITE_PAWN,
     WHITE_KNIGHT,
     WHITE_BISHOP,
@@ -45,13 +45,13 @@ enum class SquareState : int {
     EN_PASSANT_FILE = (12 * 64) + 16 + 1
 };
 
-enum class SearchBoundary {
+enum class SearchBoundary : unsigned char {
     UPPER,
     LOWER,
     EXACT
 };
 
-static std::unordered_map<PieceTypes, int> pieceLookupTable = {
+static const std::unordered_map<PieceTypes, int> pieceLookupTable = {
     {PieceTypes::PAWN, 0},
     {PieceTypes::KNIGHT, 1},
     {PieceTypes::BISHOP, 2},
