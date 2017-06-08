@@ -1007,21 +1007,21 @@ void Board::captureEnPassant(const Move& mv, const int offset, const int toSquar
     }
 }
 
-void Board::hashPieceChange(const int index, const PieceTypes type, const Colour colour) {
+inline void Board::hashPieceChange(const int index, const PieceTypes type, const Colour colour) {
     assert(pieceLookupTable.find(type) != pieceLookupTable.end());
     currHash ^= HASH_VALUES[NUM_SQUARE_STATES * index + pieceLookupTable.find(type)->second + ((colour == Colour::WHITE) ? 0 : 6)];
 }
 
-void Board::hashTurnChange() {
+inline void Board::hashTurnChange() {
     currHash ^= HASH_VALUES[static_cast<unsigned int>(SquareState::WHITE_MOVE)];
 }
 
-void Board::hashEnPassantFile(const int fileNum) {
-    currHash ^= HASH_VALUES[static_cast<int>(SquareState::EN_PASSANT_FILE) + fileNum];
+inline void Board::hashEnPassantFile(const int fileNum) {
+    currHash ^= HASH_VALUES[static_cast<unsigned int>(SquareState::EN_PASSANT_FILE) + fileNum];
 }
 
-void Board::hashCastleRights() {
-    currHash ^= HASH_VALUES[static_cast<int>(SquareState::CASTLE_RIGHTS) + castleRights];
+inline void Board::hashCastleRights() {
+    currHash ^= HASH_VALUES[static_cast<unsigned int>(SquareState::CASTLE_RIGHTS) + castleRights];
 }
 
 void Board::promotePawn(Move& mv, const int endSquareIndex, const bool isSilent) {
