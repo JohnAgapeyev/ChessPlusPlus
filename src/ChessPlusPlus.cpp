@@ -25,7 +25,6 @@ void mainLoop(Board& b) {
         std::cout << "Enter your move: ";
         std::getline(std::cin, input);
         std::transform(input.begin(), input.end(), input.begin(), ::tolower);
-
         if (!input.compare("exit")) {
             break;
         }

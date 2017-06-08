@@ -237,7 +237,7 @@ bool Board::makeMove(std::string& input) {
     enPassantActive = false;
     enPassantTarget = nullptr;
 
-    addEnPassantTarget(mv, diff, static_cast<int>(INNER_BOARD_SIZE - 1 - input[0]), distToEndSquare);
+    addEnPassantTarget(mv, diff, input[0], distToEndSquare);
 
     performCastling(mv, diff, distToFromSquare);
     
