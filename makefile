@@ -1,4 +1,7 @@
-CXXFLAGS := -Wall -pedantic -pipe -std=c++14
+BASEFLAGS := -Wall -pedantic -pipe -std=c++14
+DEBUGFLAGS := -g -Og
+RELEASEFLAGS := -O3 -march=native -flto -ftracer -funswitch-loops -funroll-loops -funit-at-a-time -DNDEBUG
+CLIBS := 
 APPNAME := Chess
 ODIR := bin
 SRC := src
@@ -10,13 +13,9 @@ HEADWILD := $(wildcard $(HEAD)/*.h)
 EXEC := $(ODIR)/$(APPNAME)
 DEPS := $(EXEC).d
 
-# Add flags for release mode binary
-release: CXXFLAGS += -O3 -march=native -flto -ftracer -funswitch-loops -funroll-loops -funit-at-a-time -DNDEBUG
-release: debug
-
-debug: $(patsubst $(SRCOBJS), $(OBJS), $(SRCWILD))
+all release debug: $(patsubst $(SRCOBJS), $(OBJS), $(SRCWILD))
 # Command takes all bin .o files and creates an executable called chess in the bin folder
-	$(CXX) $^ $(CFLAGS) $(CXXFLAGS) -o $(EXEC)
+	$(CXX) $(CXXFLAGS) $^ $(CLIBS) -o $(EXEC)
 
 $(ODIR):
 	@mkdir -p $(ODIR)
@@ -24,7 +23,7 @@ $(ODIR):
 # Create dependency file for make and manually adjust it silently to work with other directories
 $(DEPS): $(SRCWILD) $(HEADWILD) | $(ODIR) 
 # Compile the non-system dependencies and store it in outputdir/execname.d
-	@$(CXX) -MM $(CFLAGS) $(CXXFLAGS) $(SRCWILD) > $(DEPS)
+	@$(CXX) -MM $(CXXFLAGS) $(SRCWILD) > $(DEPS)
 # Copy the contents to a temp file
 	@cp $(DEPS) $(DEPS).tmp
 # Take the temp file contents, do a regex text replace to change all .o strings into
@@ -39,15 +38,22 @@ ifneq ($(MAKECMDGOALS),clean)
 -include $(DEPS)
 endif
 
+#Check if in debug mode and set the appropriate compile flags
+ifeq (,$(filter debug, $(MAKECMDGOALS)))
+$(eval CXXFLAGS := $(BASEFLAGS) $(RELEASEFLAGS))
+else
+$(eval CXXFLAGS := $(BASEFLAGS) $(DEBUGFLAGS))
+endif
+
 # Target is any bin .o file, prereq is the equivalent src .cpp file
 $(OBJS): $(SRCOBJS)
 # Command compiles the src .cpp file with the listed flags and turns it into a bin .o file
-	$(CXX) -c $(CFLAGS) $(CXXFLAGS) $< -o $(patsubst $(SRCOBJS), $(OBJS), $<)
+	$(CXX) -c $(CXXFLAGS) $< -o $(patsubst $(SRCOBJS), $(OBJS), $<)
 
 # Prevent clean from trying to do anything with a file called clean
 .PHONY: clean
 
 # Deletes the executable and all .o and .d files in the bin folder
-clean: |$(ODIR)
+clean: | $(ODIR)
 	$(RM) $(EXEC) $(wildcard $(EXEC).*) $(wildcard $(ODIR)/*.d*) $(wildcard $(ODIR)/*.o)
 
