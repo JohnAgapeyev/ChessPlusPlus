@@ -3,7 +3,6 @@
 
 #include <cstdint>
 #include "square.h"
-#include "enums.h"
 
 constexpr uint_least8_t INNER_BOARD_SIZE = 8;
 constexpr uint_least8_t OUTER_BOARD_SIZE = 15;
