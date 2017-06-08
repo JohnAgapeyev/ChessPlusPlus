@@ -33,3 +33,8 @@
 # Object folder
 bin/
 
+# Profiling binaries
+vgcore.*
+massif.*
+callgrind.*
+gmon.out
