@@ -389,7 +389,7 @@ unsigned long long AI::perft(int depth) {
     if (depth == 1) {
         return moveListSize;
     }
-    
+
     for (size_t i = 0; i < moveListSize; ++i) {
         board.makeMove(moveList[i]);
         nodeCount += perft(depth - 1);

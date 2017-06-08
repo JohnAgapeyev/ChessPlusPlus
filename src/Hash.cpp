@@ -12,18 +12,10 @@ size_t std::hash<Board>::operator() (Board& b) const {
     
     const auto& cornerCoords = b.findCorner();
     const int cornerIndex = (cornerCoords.first * OUTER_BOARD_SIZE) + cornerCoords.second;
-    const auto cornerPiece = b.vectorTable[cornerIndex]->getPiece();
     size_t newHash = 0;
-    if (cornerPiece) {
-        assert(pieceLookupTable.find(cornerPiece->getType()) != pieceLookupTable.end());
-        newHash ^= HASH_VALUES[pieceLookupTable.find(cornerPiece->getType())->second + (cornerPiece->getColour() == Colour::WHITE) ? 0 : 6];
-    }
     
     for (int i = cornerCoords.first; i < cornerCoords.first + INNER_BOARD_SIZE; ++i) {
         for (int j = cornerCoords.second; j < cornerCoords.second + INNER_BOARD_SIZE; ++j) {
-            if (i == cornerCoords.first && j == cornerCoords.second) {
-                continue;
-            }
             //Black is (white hash + 6) for equivalent piece types
             if (b.vectorTable[(i * OUTER_BOARD_SIZE) + j]->getPiece()) {
                 const auto currPiece = b.vectorTable[(i * OUTER_BOARD_SIZE) + j]->getPiece();
