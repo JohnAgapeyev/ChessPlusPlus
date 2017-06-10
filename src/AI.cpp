@@ -61,8 +61,7 @@ void AI::evaluate() {
     //Counting material values
     for(int i = 0; i < INNER_BOARD_SIZE; ++i) {
         for(int j = 0; j < INNER_BOARD_SIZE; ++j) {
-            const auto& currSquare = board.vectorTable[cornerIndex + (i * OUTER_BOARD_SIZE) + j].get();
-            const auto& currPiece = currSquare->getPiece();
+            const auto currPiece = board.vectorTable[cornerIndex + (i * OUTER_BOARD_SIZE) + j]->getPiece();
             
             if (currPiece) {
                 if (currPiece->getType() != PieceTypes::KING) {
@@ -256,7 +255,7 @@ void AI::search() {
             hasBlackCastled = true;
         }
     }
-    
+
     prev = result.first;
     board.makeMove(result.first);
 }
@@ -564,9 +563,10 @@ std::vector<Move> AI::orderMoveList(std::vector<Move>&& list, const Move& pvMove
             return this->getPieceValue(first.toPieceType) > this->getPieceValue(second.toPieceType);
         }
     );
+    const auto dist = std::distance(list.begin(), captureIt);
     //Adding sorted captures
-    for (auto it = list.begin(); it != captureIt; ++it) {
-        output.insert(*it);
+    for (int i = 0; i < dist; ++i) {
+        output.insert(list[i]);
     }
 
     if (prev != Move()) {
