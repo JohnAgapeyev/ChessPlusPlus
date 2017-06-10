@@ -553,8 +553,6 @@ std::unordered_multimap<Piece, std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SI
 }
 
 std::vector<Move> AI::orderMoveList(std::vector<Move>&& list) {
-    std::set<Move, bool(*)(const Move& first, const Move& second)> output(&operator!=);
-
     assert([&]()->bool{
         for (const auto& mv : list) {
             if (!mv.fromSq || !mv.toSq) {
@@ -577,27 +575,19 @@ std::vector<Move> AI::orderMoveList(std::vector<Move>&& list) {
             return this->getPieceValue(first.toPieceType) > this->getPieceValue(second.toPieceType);
         }
     );
-    const auto dist = std::distance(list.begin(), captureIt);
-    //Adding sorted captures
-    for (int i = 0; i < dist; ++i) {
-        output.insert(list[i]);
-    }
 
     if (prev != Move()) {
         assert(pieceLookupTable.find(prev.fromPieceType) != pieceLookupTable.end());
-        
-        for (auto& mv : list) {
+
+        for (const auto& mv : list) {
             if (mv == counterMove[(pieceLookupTable.find(prev.fromPieceType)->second * INNER_BOARD_SIZE * INNER_BOARD_SIZE) 
                     + board.convertOuterBoardIndex(board.getSquareIndex(prev.toSq), board.findCorner_1D())]) {
-                output.insert(mv);
+                list.insert(captureIt + 1, mv);
             }
         }
     }
     
-    //Need to add any moves that have not already been added
-    output.insert(list.begin(), list.end());
-    
-    return std::vector<Move>{output.begin(), output.end()};
+    return list;
 }
 
 void AI::benchmarkPerft() {
