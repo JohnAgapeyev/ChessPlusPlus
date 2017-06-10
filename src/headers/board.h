@@ -34,12 +34,18 @@ class Board {
         
     public:
         MoveGenerator(Board& b) : board(b) {}
+
+        static constexpr int getOffsetIndex(const int offset, const int startIndex = 0, const int vectorLen = 1) {
+            const auto absOffset = std::abs(offset);
+            const auto offsetVal = (vectorLen * ((30 * ((absOffset + INNER_BOARD_SIZE - 1) / OUTER_BOARD_SIZE)) - absOffset));
+            return startIndex + offsetVal - ((offset > 0) * offsetVal * 2);
+        }
+
         std::vector<Move> generateAll();
         bool validateMove(const Move& mv, const bool isSilent);
         bool inCheck(const Move& mv) const;
         bool inCheck(const int squareIndex) const;
         Move createMove(std::string& input) const;
-        int getOffsetIndex(const int offset, const int startIndex = 0, const int vectorLen = 1) const;
         bool getCastleDirectionBool(const PieceTypes type, const Colour pieceColour, const int offset) const;
     };
     MoveGenerator moveGen{*this};

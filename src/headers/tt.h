@@ -21,7 +21,7 @@ class Cache {
     void overwrite() {
         internalMap.erase(internalList.back().first);
         internalList.pop_back();
-        currSize--;
+        --currSize;
     }
     
     void add(const CacheEntry& newEntry) {
@@ -29,8 +29,8 @@ class Cache {
             overwrite();
         }
         internalList.push_front(newEntry);
-        internalMap[newEntry.first] = internalList.begin();
-        currSize++;
+        internalMap.insert(newEntry.first, internalList.begin());
+        ++currSize;
     }
     
 public:

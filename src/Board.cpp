@@ -252,7 +252,7 @@ bool Board::makeMove(std::string& input) {
         hashPieceChange(convertOuterBoardIndex(distToEndSquare, cornerIndex), mv.toPieceType, mv.toPieceColour);
     }
     //xor out from piece at old square
-    hashPieceChange(convertOuterBoardIndex(distToFromSquare, cornerIndex), (mv.promotionMade) ? PieceTypes::PAWN: mv.fromPieceType, mv.fromPieceColour);
+    hashPieceChange(convertOuterBoardIndex(distToFromSquare, cornerIndex), (mv.promotionMade) ? PieceTypes::PAWN : mv.fromPieceType, mv.fromPieceColour);
 
     //xor in from piece at new square
     hashPieceChange(convertOuterBoardIndex(distToEndSquare, cornerIndex), mv.fromPieceType, mv.fromPieceColour);
@@ -993,7 +993,7 @@ void Board::performCastling(Move& mv, const int offset, const int fromSquareInde
 }
 
 void Board::captureEnPassant(const Move& mv, const int offset, const int toSquareIndex) {
-    const int captureIndex = toSquareIndex + ((isWhiteTurn) ? OUTER_BOARD_SIZE: -OUTER_BOARD_SIZE);
+    const auto captureIndex = toSquareIndex - OUTER_BOARD_SIZE + ((isWhiteTurn) * OUTER_BOARD_SIZE << 1);
     const auto cornerIndex = findCorner_1D();
     // If en passant move is made, capture the appropriate pawn
     if (enPassantActive && mv.fromPieceType == PieceTypes::PAWN 
@@ -1009,7 +1009,7 @@ void Board::captureEnPassant(const Move& mv, const int offset, const int toSquar
 
 inline void Board::hashPieceChange(const int index, const PieceTypes type, const Colour colour) {
     assert(pieceLookupTable.find(type) != pieceLookupTable.end());
-    currHash ^= HASH_VALUES[NUM_SQUARE_STATES * index + pieceLookupTable.find(type)->second + ((colour == Colour::WHITE) ? 0 : 6)];
+    currHash ^= HASH_VALUES[NUM_SQUARE_STATES * index + pieceLookupTable.find(type)->second + (6 * (colour == Colour::BLACK))];
 }
 
 inline void Board::hashTurnChange() {

@@ -42,7 +42,7 @@ class AI {
     
     std::array<Move, 6 * INNER_BOARD_SIZE * INNER_BOARD_SIZE> counterMove; 
     
-    const int DEPTH = 5;
+    const int DEPTH = 8;
     
     bool isWhitePlayer = false;
     

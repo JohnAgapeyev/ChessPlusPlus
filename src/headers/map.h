@@ -4,7 +4,7 @@
 template<typename Key, typename Value, size_t maxSize, typename Hash = std::hash<Key>>
 class CacheMap {
     std::vector<std::vector<std::pair<Value, size_t>>> internalArray{maxSize};
-    Hash hashEngine;
+    Hash hashEngine{};
     
     size_t getBoundedHash(const Key& k) const {
         return hashEngine(k) % maxSize;
@@ -16,8 +16,7 @@ public:
     }
     
     void insert(const Key& k, const Value& v) {
-        internalArray[getBoundedHash(k)].push_back(
-                std::make_pair(v, hashEngine(k)));
+        internalArray[getBoundedHash(k)].emplace_back(v, hashEngine(k));
     }
     
     Value& operator[](const Key& k) {
