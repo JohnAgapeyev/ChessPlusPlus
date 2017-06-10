@@ -312,16 +312,26 @@ std::pair<Move, int> AI::AlphaBeta(int alpha, int beta, const int depth) {
         }
     }
     
-    auto moveList = orderMoveList(board.moveGen.generateAll(), rtn.first);
-    const auto moveListSize = moveList.size();
-    
     if (depth == 0) {
         evaluate();
         rtn = std::make_pair(Move(), eval);
     } else if (board.isWhiteTurn) {
-        rtn.first = Move();
-        rtn.second = INT_MIN;
         int a = alpha;
+        rtn.second = INT_MIN;
+
+        if (rtn.first != Move()) {
+            board.makeMove(rtn.first); //Make the move if it was found in the cache
+            const auto& abCall = AlphaBeta(a, beta, depth - 1);
+            
+            if (abCall.second > rtn.second) {
+                rtn.second = abCall.second;
+            }
+            a = std::max(a, rtn.second);
+            board.unmakeMove(rtn.first);
+        }
+
+        auto moveList = orderMoveList(board.moveGen.generateAll());
+        const auto moveListSize = moveList.size();
         
         for (size_t i = 0; rtn.second < beta && i < moveListSize; ++i) {
             assert(moveList[i].fromSq && moveList[i].toSq);
@@ -336,9 +346,22 @@ std::pair<Move, int> AI::AlphaBeta(int alpha, int beta, const int depth) {
             board.unmakeMove(moveList[i]);
         }
     } else {
-        rtn.first = Move();
-        rtn.second = INT_MAX;
         int b = beta;
+        rtn.second = INT_MAX;
+
+        if (rtn.first != Move()) {
+            board.makeMove(rtn.first); //Make the move if it was found in the cache
+            const auto& abCall = AlphaBeta(alpha, b, depth - 1);
+            
+            if (abCall.second < rtn.second) {
+                rtn.second = abCall.second;
+            }
+            b = std::min(b, rtn.second);
+            board.unmakeMove(rtn.first);
+        }
+
+        auto moveList = orderMoveList(board.moveGen.generateAll());
+        const auto moveListSize = moveList.size();
         
         for (size_t i = 0; rtn.second > alpha && i < moveListSize; ++i) {
             assert(moveList[i].fromSq && moveList[i].toSq);
@@ -529,7 +552,7 @@ std::unordered_multimap<Piece, std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SI
     return tempMap;
 }
 
-std::vector<Move> AI::orderMoveList(std::vector<Move>&& list, const Move& pvMove) {
+std::vector<Move> AI::orderMoveList(std::vector<Move>&& list) {
     std::set<Move, bool(*)(const Move& first, const Move& second)> output(&operator!=);
 
     assert([&]()->bool{
@@ -541,15 +564,6 @@ std::vector<Move> AI::orderMoveList(std::vector<Move>&& list, const Move& pvMove
         return true;
     }());
 
-    //If pv move was found in the cache, move it to the front
-    if (pvMove != Move()) {
-        const auto& it = std::find_if(list.begin(), list.end(), [&](const auto& mv){return mv == pvMove;});
-        if (it != list.end()) {
-            const auto idx = std::distance(list.begin(), it);
-            output.insert(list[idx]);
-        }
-    } 
-    
     //Partition list with captures coming before quit moves
     auto captureIt = std::partition(list.begin(), list.end(), 
         [](const auto& mv){return mv.toPieceType != PieceTypes::UNKNOWN;});

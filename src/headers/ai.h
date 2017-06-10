@@ -62,7 +62,7 @@ class AI {
     int getPieceValue(const PieceTypes type) const;
     unsigned long long perft(int depth);
     unsigned long long perftDivide(int depth);
-    std::vector<Move> orderMoveList(std::vector<Move>&& list, const Move& pvMove);
+    std::vector<Move> orderMoveList(std::vector<Move>&& list);
     
 public:
     AI(Board& b) : board(b) {}
