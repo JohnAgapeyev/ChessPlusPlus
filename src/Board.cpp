@@ -138,8 +138,8 @@ void Board::shiftHorizontal(const int count) {
 
     for (int i = 0, col = 0; i < INNER_BOARD_SIZE; ++i) {
         for (int j = 0, row = 0; j < INNER_BOARD_SIZE; ++j) {
-            col = (count > 0) ? INNER_BOARD_SIZE - 1 - i : i;
-            row = (count > 0) ? INNER_BOARD_SIZE - 1 - j : j;
+            col = INNER_BOARD_SIZE - 1 - i + ((count <= 0) * ((2 * i) - (INNER_BOARD_SIZE - 1)));
+            row = INNER_BOARD_SIZE - 1 - j + ((count <= 0) * ((2 * j) - (INNER_BOARD_SIZE - 1)));
             
             std::swap(
                 vectorTable[
@@ -165,8 +165,8 @@ void Board::shiftVertical(const int count) {
     
     for (int i = 0, col = 0; i < INNER_BOARD_SIZE; ++i) {
         for (int j = 0, row = 0; j < INNER_BOARD_SIZE; ++j) {
-            col = (count > 0) ? INNER_BOARD_SIZE - 1 - i : i;
-            row = (count > 0) ? INNER_BOARD_SIZE - 1 - j : j;
+            col = INNER_BOARD_SIZE - 1 - i + ((count <= 0) * ((2 * i) - (INNER_BOARD_SIZE - 1)));
+            row = INNER_BOARD_SIZE - 1 - j + ((count <= 0) * ((2 * j) - (INNER_BOARD_SIZE - 1)));
             
             std::swap(
                 vectorTable[
@@ -646,31 +646,26 @@ std::string Board::promptPromotionType() const {
 
 void Board::updateCheckStatus() {
     const auto corner = findCorner_1D();
-    int idx = -1;
+    int whiteIndex = -1;
+    int blackIndex = -1;
     for (int i = 0; i < INNER_BOARD_SIZE; ++i) {
         for (int j = 0; j < INNER_BOARD_SIZE; ++j) {
-            const auto& piece = vectorTable[corner + (i * OUTER_BOARD_SIZE) + j]->getPiece();
-            if (piece && piece->getType() == PieceTypes::KING && piece->getColour() == Colour::BLACK) {
-                idx = (i * OUTER_BOARD_SIZE) + j;
-                break;
+            const auto piece = vectorTable[corner + (i * OUTER_BOARD_SIZE) + j]->getPiece();
+            if (piece && piece->getType() == PieceTypes::KING) {
+                if (piece->getColour() == Colour::WHITE) {
+                    assert(whiteIndex == -1); //Ensure no multiple kings exist
+                    whiteIndex = corner + (i * OUTER_BOARD_SIZE) + j;
+                } else {
+                    assert(blackIndex == -1); //Ensure no multiple kings exist
+                    blackIndex = corner + (i * OUTER_BOARD_SIZE) + j;
+                }
             }
         }
     }
-    assert(idx != -1);
-    blackInCheck = moveGen.inCheck(corner + idx);
-
-    idx = -1;
-    for (int i = 0; i < INNER_BOARD_SIZE; ++i) {
-        for (int j = 0; j < INNER_BOARD_SIZE; ++j) {
-            const auto& piece = vectorTable[corner + (i * OUTER_BOARD_SIZE) + j]->getPiece();
-            if (piece && piece->getType() == PieceTypes::KING && piece->getColour() == Colour::WHITE) {
-                idx = (i * OUTER_BOARD_SIZE) + j;
-                break;
-            }
-        }
-    }
-    assert(idx != -1);
-    whiteInCheck = moveGen.inCheck(corner + idx);
+    assert(whiteIndex != -1);
+    assert(blackIndex != -1);
+    whiteInCheck = moveGen.inCheck(whiteIndex);
+    blackInCheck = moveGen.inCheck(blackIndex);
 }
 
 //Currently no validation for this method as it is being built primarily for perft position testing
