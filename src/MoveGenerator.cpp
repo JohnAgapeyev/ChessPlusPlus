@@ -162,10 +162,9 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
      * of the selected move.
      */
     if (isDoublePawnMove) {
-        const auto dist = board.getSquareIndex(mv.fromSq);
-        const auto cornerIndex =  board.findCorner_1D();
-        const auto distFromStartToCorner = dist - cornerIndex;
-        const auto& rowPairs = (mv.fromPieceColour == Colour::WHITE) ? std::make_pair(90, 104) : std::make_pair(15, 29);
+        const auto distFromStartToCorner = board.getSquareIndex(mv.fromSq) - board.findCorner_1D();
+        const auto whiteOffset = board.isWhiteTurn * 75;
+        const auto rowPairs = std::make_pair(15 + whiteOffset, 29 + whiteOffset);
         if (distFromStartToCorner < rowPairs.first || distFromStartToCorner > rowPairs.second) {
             logMoveFailure(5, isSilent);
             return false;
