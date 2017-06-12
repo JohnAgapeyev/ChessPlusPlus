@@ -174,14 +174,13 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
     // Pawn related validation checks
     if (isPawnMove) {
         // Ensure pawns only move diagonally if they capture a piece, including en passant
-        const int captureOffset = -OUTER_BOARD_SIZE + ((mv.fromPieceColour == Colour::WHITE) * OUTER_BOARD_SIZE << 1);
-        const auto distToEndSquare = board.getSquareIndex(mv.toSq);
+        const auto distToCaptureSquare = board.getSquareIndex(mv.toSq) 
+            - OUTER_BOARD_SIZE + ((mv.fromPieceColour == Colour::WHITE) * OUTER_BOARD_SIZE << 1);
         
         if (selectedOffset % OUTER_BOARD_SIZE) {
-            if (!board.vectorTable[distToEndSquare]->getPiece() 
-                    && !(board.enPassantActive && *mv.toSq == *board.enPassantTarget 
-                        && board.vectorTable[distToEndSquare + captureOffset]->getPiece()
-                        && board.vectorTable[distToEndSquare + captureOffset]->getPiece()->getColour() != mv.fromPieceColour)) {
+            if (!mv.toSq->getPiece() && !(board.enPassantActive && *mv.toSq == *board.enPassantTarget 
+                        && board.vectorTable[distToCaptureSquare]->getPiece()
+                        && board.vectorTable[distToCaptureSquare]->getPiece()->getColour() != mv.fromPieceColour)) {
                 logMoveFailure(6, isSilent);
                 return false;
             }
