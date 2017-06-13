@@ -411,7 +411,7 @@ std::vector<Move> Board::MoveGenerator::generateAll() {
     moveList.reserve(100); //More moves are possible, but this shoud cover 99% of positions without reallocating
         
     const auto currentPlayerColour = (board.isWhiteTurn) ? Colour::WHITE : Colour::BLACK;
-    const auto& startCoords = board.findCorner();
+    const auto startCoords = board.findCorner();
     
     std::vector<std::tuple<int, int, Piece*>> pieceCoords;
     pieceCoords.reserve(16); //Cannot have more than 16 pieces for one player
@@ -477,8 +477,8 @@ std::vector<Move> Board::MoveGenerator::generateAll() {
                     //Calculate the corner index based on the above board shift to prevent a linear search
                     const auto cornerIndex = ((7 - std::get<0>(p)) * OUTER_BOARD_SIZE) + (7 - std::get<1>(p));
                     const auto distFromStartToCorner = distToEndSquare - cornerIndex;
-                    const auto& rowPairs = (mv.fromPieceColour == Colour::WHITE) 
-                        ? std::make_pair(0, 14) : std::make_pair(105, 119);
+                    const auto blackOffset = !board.isWhiteTurn * 105;
+                    const auto rowPairs = std::make_pair(0 + blackOffset, 14 + blackOffset);
                     
                     //Promotion validity
                     if (distFromStartToCorner >= rowPairs.first && distFromStartToCorner <= rowPairs.second) {
