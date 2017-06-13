@@ -83,6 +83,7 @@ class Board {
     void hashEnPassantFile(const int fileNum);
     void hashCastleRights();
     void promotePawn(Move& mv, const int endSquareIndex, const bool isSilent);
+    void detectGameEnd();
 
 public:
     Board();

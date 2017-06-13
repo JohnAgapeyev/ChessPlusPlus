@@ -258,6 +258,8 @@ void AI::search() {
 
     prev = result.first;
     board.makeMove(result.first);
+
+    board.detectGameEnd();
 }
 
 std::pair<Move, int> AI::iterativeDeepening() {

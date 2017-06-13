@@ -179,8 +179,8 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
         
         if (selectedOffset % OUTER_BOARD_SIZE) {
             if (!mv.toSq->getPiece() && !(board.enPassantActive && *mv.toSq == *board.enPassantTarget 
-                        && board.vectorTable[distToCaptureSquare]->getPiece()
-                        && board.vectorTable[distToCaptureSquare]->getPiece()->getColour() != mv.fromPieceColour)) {
+                    && board.vectorTable[distToCaptureSquare]->getPiece()
+                    && board.vectorTable[distToCaptureSquare]->getPiece()->getColour() != mv.fromPieceColour)) {
                 logMoveFailure(6, isSilent);
                 return false;
             }

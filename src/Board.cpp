@@ -263,53 +263,16 @@ bool Board::makeMove(std::string& input) {
     
     //hash the change in turn
     hashTurnChange();
-    
-    if (isWhiteTurn) {
-        ++moveCounter;
-    }
+
+    moveCounter += isWhiteTurn;
     
     updateCheckStatus();
     
     std::rotate(repititionList.begin(), repititionList.begin() + 1, repititionList.end());
     repititionList[repititionList.size() - 1] = currHash;
-    
-    //Opponent has no legal moves
-    if (!moveGen.generateAll().size()) {
-        const auto opponentCheck = (!isWhiteTurn) ? whiteInCheck : blackInCheck;
-        if (opponentCheck) {
-            //Checkmate
-            std::cout << "CHECKMATE\n";
-            currentGameState = GameState::MATE;
-            return true;
-        }
-        //Stalemate
-        std::cout << "STALEMATE\n";
-        currentGameState = GameState::DRAWN;
-        return true;
-    }
-    if (halfMoveClock >= 100) {
-        //50 move rule
-        std::cout << "DRAW\n";
-        std::cout << "50 move rule\n";
-        currentGameState = GameState::DRAWN;
-        return true;
-    }
-    
-    if (repititionList[0] == repititionList[4] && repititionList[4] == repititionList[8]) {
-        //Three move Repitition
-        std::cout << "DRAW\n";
-        std::cout << "Three move repitition\n";
-        currentGameState = GameState::DRAWN;
-        return true;
-    }
-    
-    if (drawByMaterial()) {
-        //Insufficient Material
-        std::cout << "DRAW\n";
-        std::cout << "Insufficient Material\n";
-        currentGameState = GameState::DRAWN;
-        return true;
-    }
+
+    detectGameEnd();
+
     assert(checkBoardValidity());
     return true;
 }
@@ -385,10 +348,9 @@ bool Board::makeMove(Move& mv) {
     
     //hash the change in turn
     hashTurnChange();
+
+    moveCounter += isWhiteTurn;
     
-    if (isWhiteTurn) {
-        ++moveCounter;
-    }
     updateCheckStatus();
     
     std::rotate(repititionList.begin(), repititionList.begin() + 1, repititionList.end());
@@ -1041,3 +1003,42 @@ void Board::promotePawn(Move& mv, const int endSquareIndex, const bool isSilent)
     }
 }
 
+void Board::detectGameEnd() {
+    //Opponent has no legal moves
+    if (!moveGen.generateAll().size()) {
+        const auto opponentCheck = (isWhiteTurn) ? whiteInCheck : blackInCheck;
+        if (opponentCheck) {
+            //Checkmate
+            std::cout << "CHECKMATE\n";
+            currentGameState = GameState::MATE;
+            return;
+        }
+        //Stalemate
+        std::cout << "STALEMATE\n";
+        currentGameState = GameState::DRAWN;
+        return;
+    }
+    if (halfMoveClock >= 100) {
+        //50 move rule
+        std::cout << "DRAW\n";
+        std::cout << "50 move rule\n";
+        currentGameState = GameState::DRAWN;
+        return;
+    }
+    
+    if (repititionList[0] == repititionList[4] && repititionList[4] == repititionList[8]) {
+        //Three move Repitition
+        std::cout << "DRAW\n";
+        std::cout << "Three move repitition\n";
+        currentGameState = GameState::DRAWN;
+        return;
+    }
+    
+    if (drawByMaterial()) {
+        //Insufficient Material
+        std::cout << "DRAW\n";
+        std::cout << "Insufficient Material\n";
+        currentGameState = GameState::DRAWN;
+        return;
+    }
+}
