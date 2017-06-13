@@ -7,9 +7,9 @@
 #include "hash.h"
 #include "consts.h"
 #include "enums.h"
+#include "move.h"
 
 class Square;
-struct Move;
 
 class Board {
     /*
@@ -29,11 +29,12 @@ class Board {
     
     class MoveGenerator {
         Board& board;
+        std::vector<Move> moveList;
         void logMoveFailure(const int failureNum, const bool isSilent) const;
         int getMoveOffset(const Move& mv) const;
         
     public:
-        MoveGenerator(Board& b) : board(b) {}
+        MoveGenerator(Board& b) : board(b) {moveList.reserve(100);}
 
         static constexpr int getOffsetIndex(const int offset, const int startIndex = 0, const int vectorLen = 1) {
             const auto absOffset = std::abs(offset);

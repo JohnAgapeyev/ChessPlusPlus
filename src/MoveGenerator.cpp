@@ -407,9 +407,7 @@ void Board::MoveGenerator::logMoveFailure(const int failureNum, const bool isSil
 }
 
 std::vector<Move> Board::MoveGenerator::generateAll() {
-    std::vector<Move> moveList;
-    moveList.reserve(100); //More moves are possible, but this shoud cover 99% of positions without reallocating
-        
+    moveList.clear();
     const auto currentPlayerColour = (board.isWhiteTurn) ? Colour::WHITE : Colour::BLACK;
     const auto startCoords = board.findCorner();
     
