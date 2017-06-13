@@ -183,7 +183,7 @@ void Board::shiftVertical(const int count) {
 }
 
 void Board::shiftBoard(const int col, const int row) {
-    const auto& startCoords = findCorner();
+    const auto startCoords = findCorner();
     const auto colDiff = ZERO_LOCATION.first - (startCoords.second + col);
     const auto rowDiff = ZERO_LOCATION.second - (startCoords.first + row);
     shiftHorizontal(colDiff);

@@ -1,5 +1,5 @@
 BASEFLAGS := -Wall -pedantic -pipe -std=c++14
-DEBUGFLAGS := -g -Og
+DEBUGFLAGS := -g
 RELEASEFLAGS := -O3 -march=native -flto -ftracer -funswitch-loops -funroll-loops -funit-at-a-time -DNDEBUG
 CLIBS := 
 APPNAME := Chess
