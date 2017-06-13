@@ -297,7 +297,7 @@ bool Board::MoveGenerator::inCheck(const Move& mv) const {
     int captureIndex = -1;
     std::unique_ptr<Piece> enPassantPiece{nullptr};
 
-    if (mv.enPassantActive && mv.fromPieceType == PieceTypes::PAWN && *mv.toSq == *mv.enPassantTarget
+    if (mv.enPassantActive && mv.fromPieceType == PieceTypes::PAWN && mv.toSq == mv.enPassantTarget
             && ((mv.toSq->getOffset() - mv.fromSq->getOffset()) % OUTER_BOARD_SIZE)) {
         enPassantCaptureMade = true;
         captureIndex = board.getSquareIndex(mv.toSq) - OUTER_BOARD_SIZE + ((board.isWhiteTurn) * OUTER_BOARD_SIZE << 1);
@@ -325,7 +325,7 @@ bool Board::MoveGenerator::inCheck(const Move& mv) const {
     //Ensure index was found during previous loop
     assert(squareIndex != -1);
     
-    int vectorLength = 7;
+    int vectorLength;
     for (const auto offset : checkVectors) {
         const auto absOffset = std::abs(offset);
         // Change depth if current offset is a knight offset
