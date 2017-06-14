@@ -48,7 +48,7 @@ class AI {
     
     bool hasBlackCastled = false;
     bool hasWhiteCastled = false;
-    
+
     Board& board;
     
     int eval = 0;

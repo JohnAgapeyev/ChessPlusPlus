@@ -45,7 +45,11 @@ void AI::evaluate() {
     const auto blackTotalMoves = blackMoveList.size();
     
     const auto cornerIndex = board.findCorner_1D();
-    
+
+    auto endGamePieceCount = 0;
+    auto whiteKingIndex = -1;
+    auto blackKingIndex = -1;
+
     currScore += (whiteTotalMoves - blackTotalMoves) * MOBILITY_VAL;
     
     currScore -= reduceKnightMobilityScore(whiteMoveList, cornerIndex);
@@ -67,7 +71,7 @@ void AI::evaluate() {
                 if (currPiece->getType() != PieceTypes::KING) {
                     //Non-king piece square table lookup
                     const auto& elem = pieceSquareTables.find(*currPiece);
-                    
+
                     if (currPiece->getColour() == Colour::WHITE) {
                         //Material value
                         currScore += getPieceValue(currPiece->getType());
@@ -89,6 +93,8 @@ void AI::evaluate() {
                             } else if (i == 2) {
                                 currScore += PAWN_SIX_VAL;
                             }
+                        } else {
+                            ++endGamePieceCount;
                         }
                     } else {
                         //Material value
@@ -111,26 +117,44 @@ void AI::evaluate() {
                             } else if (i == 5) {
                                 currScore -= PAWN_SIX_VAL;
                             }
+                        } else {
+                            ++endGamePieceCount;
                         }
                     }
                 } else {
-                    //Handle piece square table access for king
-                    const auto& elemRange = pieceSquareTables.equal_range(*currPiece);
-                    
                     if (currPiece->getColour() == Colour::WHITE) {
                         //Material value
                         currScore += getPieceValue(currPiece->getType());
-                        //Piece square lookup
-                        currScore += elemRange.first->second[Board::convertOuterBoardIndex(cornerIndex + (i * OUTER_BOARD_SIZE) + j, cornerIndex)];
+
+                        whiteKingIndex = Board::convertOuterBoardIndex(cornerIndex + (i * OUTER_BOARD_SIZE) + j, cornerIndex);
                     } else {
                         //Material value
                         currScore -= getPieceValue(currPiece->getType());
-                        //Piece square lookup
-                        currScore -= elemRange.first->second[Board::convertOuterBoardIndex(cornerIndex + (i * OUTER_BOARD_SIZE) + j, cornerIndex)];
+
+                        blackKingIndex = Board::convertOuterBoardIndex(cornerIndex + (i * OUTER_BOARD_SIZE) + j, cornerIndex);
                     }
                 }
             }
         }
+    }
+
+    assert(whiteKingIndex != -1);
+    assert(blackKingIndex != -1);
+
+    if (endGamePieceCount <= 4) {
+        //Endgame
+        const auto& whiteKingTable = pieceSquareTables.equal_range({PieceTypes::KING, Colour::WHITE});
+        const auto& blackKingTable = pieceSquareTables.equal_range({PieceTypes::KING, Colour::BLACK});
+
+        currScore += whiteKingTable.second->second[whiteKingIndex];
+        currScore += blackKingTable.second->second[blackKingIndex];
+    } else {
+        //Not endgame
+        const auto& whiteKingTable = pieceSquareTables.equal_range({PieceTypes::KING, Colour::WHITE});
+        const auto& blackKingTable = pieceSquareTables.equal_range({PieceTypes::KING, Colour::BLACK});
+
+        currScore += whiteKingTable.first->second[whiteKingIndex];
+        currScore += blackKingTable.first->second[blackKingIndex];
     }
     
     for (int i = 0; i < 16; ++i) {
@@ -201,7 +225,7 @@ int AI::reduceKnightMobilityScore(const std::vector<Move>& moveList, const int c
     auto totalToRemove = 0;
     auto cornerCheckIndex = 0;
     
-    for(const Move& mv : moveList) {
+    for(const auto& mv : moveList) {
         if (mv.fromPieceType == PieceTypes::KNIGHT) {
             
             //Calculate index of destination square without requiring linear search
