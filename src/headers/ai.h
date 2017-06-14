@@ -7,6 +7,10 @@
 #include "tt.h"
 #include "consts.h"
 
+#ifndef CACHE_MB
+#define CACHE_MB 4096
+#endif
+
 class AI {
     static constexpr auto MATE = SHRT_MAX;
     static constexpr auto DRAW = 0;
@@ -36,8 +40,10 @@ class AI {
     static std::unordered_multimap<Piece, std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SIZE>> initializeMap();
     
     static const std::unordered_multimap<Piece, std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SIZE>> pieceSquareTables;
-    
-    typedef Cache<Board, std::tuple<int, int, SearchBoundary, Move>, 1024 * 1024 * 512> cache_pointer_type;
+
+    using cache_key = Board;
+    using cache_value = std::tuple<int, int, SearchBoundary, Move>;
+    using cache_pointer_type = Cache<cache_key, cache_value, (static_cast<uint64_t>(CACHE_MB) << 20ul) / sizeof(Cache<cache_key, cache_value, 1>)>;
     static std::unique_ptr<cache_pointer_type> boardCache;
     
     std::array<Move, 6 * INNER_BOARD_SIZE * INNER_BOARD_SIZE> counterMove; 

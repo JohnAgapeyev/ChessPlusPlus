@@ -1,7 +1,9 @@
 #ifndef MAP_H
 #define MAP_H
 
-template<typename Key, typename Value, size_t maxSize, typename Hash = std::hash<Key>>
+#include <cstdint>
+
+template<typename Key, typename Value, uint64_t maxSize, typename Hash = std::hash<Key>>
 class CacheMap {
     static_assert(maxSize > 0, "Size must be greater than zero");
     std::vector<std::vector<std::pair<Value, size_t>>> internalArray{maxSize};

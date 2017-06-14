@@ -3,15 +3,15 @@
 
 #include <vector>
 #include <list>
-#include <array>
+#include <cstdint>
 #include "map.h"
 
-template<typename Key, typename Value, size_t maxSize, typename Hash = std::hash<Key>>
+template<typename Key, typename Value, uint64_t maxSize, typename Hash = std::hash<Key>>
 class Cache {
     static_assert(maxSize > 0, "Size must be greater than 0");
 
-    typedef std::pair<size_t, Value> CacheEntry;
-    typedef std::list<CacheEntry> CacheList;
+    using CacheEntry = std::pair<size_t, Value>;
+    using CacheList = std::list<CacheEntry>;
     
     CacheList internalList;
     CacheMap<size_t, typename CacheList::iterator, maxSize> internalMap;
@@ -34,6 +34,7 @@ class Cache {
     }
     
 public:
+
     void erase(Key& k) {
         internalList.erase(internalMap[hashEngine(k)]);
         internalMap.erase(hashEngine(k));

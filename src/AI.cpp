@@ -323,7 +323,7 @@ std::pair<Move, int> AI::AlphaBeta(int alpha, int beta, const int depth) {
         std::tie(entryDepth, entryValue, entryType, rtn.first) = (*boardCache)[board];
         if (entryDepth >= depth) {
             if (entryType == SearchBoundary::EXACT) {
-                return std::make_pair(rtn.first, entryValue);
+                return {rtn.first, entryValue};
             }
             //Update the best move based on the previous value
             if (entryType == SearchBoundary::LOWER && entryValue > alpha) {
@@ -333,7 +333,7 @@ std::pair<Move, int> AI::AlphaBeta(int alpha, int beta, const int depth) {
             }
             if (alpha >= beta) {
                 //Return the best move as well
-                return std::make_pair(rtn.first, entryValue);
+                return {rtn.first, entryValue};
             }
         }
     }
