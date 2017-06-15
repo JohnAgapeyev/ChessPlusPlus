@@ -347,20 +347,18 @@ bool Board::MoveGenerator::inCheck(const Move& mv) const {
                 if (i > currPiece->getVectorLength() - 1) {
                     break;
                 }
-                
-                bool found = false;
-                for (const auto off : currPiece->getVectorList()) {
-                    if (currPiece->getType() == PieceTypes::PAWN) {
-                        if (off % OUTER_BOARD_SIZE && off == -offset) {
-                            found = true;
-                            break;
-                        }
-                    } else if (off == -offset) {
-                        found = true;
+                if (currPiece->getType() == PieceTypes::PAWN && (offset % OUTER_BOARD_SIZE) == 0) {
+                    break;
+                }
+                const auto& pieceVector = currPiece->getVectorList();
+                bool offsetFound = false;
+                for (size_t j = 0; j < pieceVector.size(); ++j) {
+                    if (pieceVector[j] == -offset) {
+                        offsetFound = true;
                         break;
                     }
                 }
-                if (!found) {
+                if (!offsetFound) {
                     break;
                 }
                 std::swap(*mv.fromSq, *mv.toSq);
@@ -408,11 +406,11 @@ void Board::MoveGenerator::logMoveFailure(const int failureNum, const bool isSil
 
 std::vector<Move> Board::MoveGenerator::generateAll() {
     moveList.clear();
+    pieceCoords.clear();
+
     const auto currentPlayerColour = (board.isWhiteTurn) ? Colour::WHITE : Colour::BLACK;
     const auto startCoords = board.findCorner();
     
-    std::vector<std::tuple<int, int, Piece*>> pieceCoords;
-    pieceCoords.reserve(16); //Cannot have more than 16 pieces for one player
     for (int i = 0; i < INNER_BOARD_SIZE; ++i) {
         for (int j = 0; j < INNER_BOARD_SIZE; ++j) {
             const auto sq = board.vectorTable[((i + startCoords.first) * OUTER_BOARD_SIZE) + j + startCoords.second].get();
