@@ -2,6 +2,11 @@
 #define AI_H
 
 #include <climits>
+#include <thread>
+#include <mutex>
+#include <atomic>
+#include <chrono>
+#include <condition_variable>
 #include "move.h"
 #include "board.h"
 #include "tt.h"
@@ -50,7 +55,7 @@ class AI {
     
     std::array<Move, 6 * INNER_BOARD_SIZE * INNER_BOARD_SIZE> counterMove; 
     
-    const int DEPTH = 6;
+    const int DEPTH = 7;
     
     bool isWhitePlayer = false;
     
@@ -62,7 +67,17 @@ class AI {
     int eval = 0;
     
     Move prev = Move();
-    
+
+    std::atomic_bool usingTimeLimit{false};
+    std::condition_variable cv;
+    std::mutex mut;
+    std::atomic_bool isTimeUp{true};
+    std::chrono::seconds moveTimeLimit{10};
+
+    std::atomic_bool isAIActive{true};
+
+    std::thread timeLimitThread;
+
     int reduceKnightMobilityScore(const std::vector<Move>& moveList, const int cornerIndex) const;
     std::pair<Move, int> iterativeDeepening();
     std::pair<Move, int> MTD(const int guess, const int depth);
@@ -73,11 +88,14 @@ class AI {
     std::vector<Move> orderMoveList(std::vector<Move>&& list);
     
 public:
-    AI(Board& b) : board(b) {}
+    AI(Board& b);
+    ~AI();
     void evaluate();
     void search();
     auto getEval() const {return static_cast<double>(eval) / 100;}
     void benchmarkPerft();
+    void setInfiniteMode(const bool val) {usingTimeLimit = !val;}
+    void setMoveTimeLimit(const unsigned long secs) {usingTimeLimit = true; moveTimeLimit = std::chrono::seconds(secs);}
 };
 
 #endif

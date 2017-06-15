@@ -3,6 +3,10 @@
 #include <tuple>
 #include <cassert>
 #include <set>
+#include <condition_variable>
+#include <thread>
+#include <mutex>
+#include <atomic>
 #include "headers/board.h"
 #include "headers/ai.h"
 #include "headers/consts.h"
@@ -11,9 +15,32 @@
 std::unique_ptr<AI::cache_pointer_type> AI::boardCache = std::make_unique<AI::cache_pointer_type>();
 const Move AI::emptyMove{};
 
-const std::unordered_multimap<Piece, 
-    std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SIZE>> 
+const std::unordered_multimap<Piece, std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SIZE>> 
     AI::pieceSquareTables = AI::initializeMap();
+
+AI::AI(Board& b) : board(b) {
+    timeLimitThread = std::thread{[&](){
+        while (isAIActive.load()) {
+            if (!isTimeUp.load()) {
+                std::this_thread::sleep_for(moveTimeLimit);
+                isTimeUp.store(true);
+            }
+            static std::unique_lock<std::mutex> lock{mut};
+            cv.wait(lock);
+        }
+    }};
+}
+AI::~AI() {
+    isAIActive.store(false);
+    {
+        std::lock_guard<std::mutex> lock(mut);
+        isTimeUp.store(true);
+    }
+    cv.notify_all();
+    if (timeLimitThread.joinable()) {
+        timeLimitThread.join();
+    }
+}
 
 /**
  * Evaluates the current board state from the perspective of the current player
@@ -289,8 +316,22 @@ void AI::search() {
 
 std::pair<Move, int> AI::iterativeDeepening() {
     auto firstGuess = std::make_pair(emptyMove, 0);
-    for (int i = 0; i < DEPTH; ++i) {
-        firstGuess = MTD(firstGuess.second, i);
+    if (usingTimeLimit) {
+        {
+            std::lock_guard<std::mutex> lock(mut);
+            isTimeUp.store(false);
+        }
+        cv.notify_all();
+        for (int i = 0; i < DEPTH; ++i) {
+            firstGuess = MTD(firstGuess.second, i);
+            if (usingTimeLimit && isTimeUp.load()) {
+                break;
+            }
+        }
+    } else {
+        for (int i = 0; i < DEPTH; ++i) {
+            firstGuess = MTD(firstGuess.second, i);
+        }
     }
     return firstGuess;
 }
@@ -301,13 +342,28 @@ std::pair<Move, int> AI::MTD(const int firstGuess, const int depth) {
     int lower = INT_MIN;
     int beta = 0;
     
-    while (upper > lower) {
-        beta = std::max(currGuess.second, lower + 1);
-        currGuess = AlphaBeta(beta - 1, beta, depth);
-        if (currGuess.second < beta) {
-            upper = currGuess.second;
-        } else {
-            lower = currGuess.second;
+    if (usingTimeLimit) {
+        while (upper > lower) {
+            beta = std::max(currGuess.second, lower + 1);
+            currGuess = AlphaBeta(beta - 1, beta, depth);
+            if (currGuess.second < beta) {
+                upper = currGuess.second;
+            } else {
+                lower = currGuess.second;
+            }
+            if (isTimeUp.load()) {
+                break;
+            }
+        }
+    } else {
+        while (upper > lower) {
+            beta = std::max(currGuess.second, lower + 1);
+            currGuess = AlphaBeta(beta - 1, beta, depth);
+            if (currGuess.second < beta) {
+                upper = currGuess.second;
+            } else {
+                lower = currGuess.second;
+            }
         }
     }
     return currGuess;

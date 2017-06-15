@@ -1,7 +1,7 @@
 BASEFLAGS := -Wall -pedantic -pipe -std=c++14
 DEBUGFLAGS := -g
 RELEASEFLAGS := -O3 -march=native -flto -ftracer -funswitch-loops -funroll-loops -funit-at-a-time -DNDEBUG
-CLIBS := 
+CLIBS := -pthread
 APPNAME := Chess
 ODIR := bin
 SRC := src

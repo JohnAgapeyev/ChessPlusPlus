@@ -28,6 +28,9 @@ void mainLoop(Board& b) {
         if (!input.compare("exit")) {
             break;
         }
+        if (!input.compare("benchmark")) {
+            comp.benchmarkPerft();
+        }
         if (!checkInputValid(input)) {
             std::cout << "Not a valid move format\n";
             continue;
