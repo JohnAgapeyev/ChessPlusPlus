@@ -49,5 +49,4 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const Square& square);
 };
 
-
 #endif

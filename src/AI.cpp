@@ -588,7 +588,7 @@ std::vector<Move> AI::orderMoveList(std::vector<Move>&& list) {
         return true;
     }());
 
-    //Partition list with captures coming before quit moves
+    //Partition list with captures coming before quiet moves
     auto captureIt = std::partition(list.begin(), list.end(), 
         [](const auto& mv){return mv.toPieceType != PieceTypes::UNKNOWN;});
         

@@ -30,11 +30,12 @@ class Board {
     class MoveGenerator {
         Board& board;
         std::vector<Move> moveList;
+        std::vector<std::tuple<int, int, Piece*>> pieceCoords;
         void logMoveFailure(const int failureNum, const bool isSilent) const;
         int getMoveOffset(const Move& mv) const;
         
     public:
-        MoveGenerator(Board& b) : board(b) {moveList.reserve(100);}
+        MoveGenerator(Board& b) : board(b) {moveList.reserve(100); pieceCoords.reserve(16);}
 
         static constexpr int getOffsetIndex(const int offset, const int startIndex = 0, const int vectorLen = 1) {
             const auto absOffset = std::abs(offset);
