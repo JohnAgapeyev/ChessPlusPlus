@@ -9,6 +9,7 @@
 #include "headers/enums.h"
 
 std::unique_ptr<AI::cache_pointer_type> AI::boardCache = std::make_unique<AI::cache_pointer_type>();
+const Move AI::emptyMove{};
 
 const std::unordered_multimap<Piece, 
     std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SIZE>> 
@@ -287,7 +288,7 @@ void AI::search() {
 }
 
 std::pair<Move, int> AI::iterativeDeepening() {
-    auto firstGuess = std::make_pair(Move(), 0);
+    auto firstGuess = std::make_pair(emptyMove, 0);
     for (int i = 0; i < DEPTH; ++i) {
         firstGuess = MTD(firstGuess.second, i);
     }
@@ -295,7 +296,7 @@ std::pair<Move, int> AI::iterativeDeepening() {
 }
 
 std::pair<Move, int> AI::MTD(const int firstGuess, const int depth) {
-    auto currGuess = std::make_pair(Move(), firstGuess);
+    auto currGuess = std::make_pair(emptyMove, firstGuess);
     int upper = INT_MAX;
     int lower = INT_MIN;
     int beta = 0;
@@ -314,7 +315,7 @@ std::pair<Move, int> AI::MTD(const int firstGuess, const int depth) {
 
 std::pair<Move, int> AI::AlphaBeta(int alpha, int beta, const int depth) {
     assert(depth >= 0);
-    auto rtn = std::make_pair(Move(), INT_MIN);
+    auto rtn = std::make_pair(emptyMove, INT_MIN);
         
     if (boardCache->retrieve(board)) {
         int entryDepth;
@@ -340,12 +341,12 @@ std::pair<Move, int> AI::AlphaBeta(int alpha, int beta, const int depth) {
     
     if (depth == 0) {
         evaluate();
-        rtn = std::make_pair(Move(), eval);
+        rtn = std::make_pair(emptyMove, eval);
     } else if (board.isWhiteTurn) {
         int a = alpha;
         rtn.second = INT_MIN;
 
-        if (rtn.first != Move()) {
+        if (rtn.first != emptyMove) {
             board.makeMove(rtn.first); //Make the move if it was found in the cache
             const auto& abCall = AlphaBeta(a, beta, depth - 1);
             
@@ -375,7 +376,7 @@ std::pair<Move, int> AI::AlphaBeta(int alpha, int beta, const int depth) {
         int b = beta;
         rtn.second = INT_MAX;
 
-        if (rtn.first != Move()) {
+        if (rtn.first != emptyMove) {
             board.makeMove(rtn.first); //Make the move if it was found in the cache
             const auto& abCall = AlphaBeta(alpha, b, depth - 1);
             
@@ -413,11 +414,11 @@ std::pair<Move, int> AI::AlphaBeta(int alpha, int beta, const int depth) {
         //Store rtn as lower bound
         boardCache->add(board, std::make_tuple(depth, rtn.second, SearchBoundary::LOWER, rtn.first));
         
-        if (prev != Move()) {
+        if (prev != emptyMove) {
             assert(pieceLookupTable.find(prev.fromPieceType) != pieceLookupTable.end());
 
             //If no piece is being captured
-            if (rtn.first.toSq && !rtn.first.toSq->getPiece() && prev != Move()) {
+            if (rtn.first.toSq && !rtn.first.toSq->getPiece() && prev != emptyMove) {
                 counterMove[
                     (pieceLookupTable.find(prev.fromPieceType)->second * INNER_BOARD_SIZE * INNER_BOARD_SIZE) 
                     + board.convertOuterBoardIndex(board.getSquareIndex(prev.toSq), board.findCorner_1D())
@@ -602,7 +603,7 @@ std::vector<Move> AI::orderMoveList(std::vector<Move>&& list) {
         }
     );
 
-    if (prev != Move()) {
+    if (prev != emptyMove) {
         assert(pieceLookupTable.find(prev.fromPieceType) != pieceLookupTable.end());
 
         for (const auto& mv : list) {

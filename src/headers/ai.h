@@ -45,6 +45,8 @@ class AI {
     using cache_value = std::tuple<int, int, SearchBoundary, Move>;
     using cache_pointer_type = Cache<cache_key, cache_value, (static_cast<uint64_t>(CACHE_MB) << 20ul) / sizeof(Cache<cache_key, cache_value, 1>)>;
     static std::unique_ptr<cache_pointer_type> boardCache;
+
+    static const Move emptyMove;
     
     std::array<Move, 6 * INNER_BOARD_SIZE * INNER_BOARD_SIZE> counterMove; 
     
