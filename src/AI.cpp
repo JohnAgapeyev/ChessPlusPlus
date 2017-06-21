@@ -18,7 +18,7 @@ const Move AI::emptyMove{};
 const std::unordered_multimap<Piece, std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SIZE>> 
     AI::pieceSquareTables = AI::initializeMap();
 
-AI::AI(Board& b) : board(b) {
+AI::AI(Board& b) : gameBoard(b) {
     timeLimitThread = std::thread{[&](){
         while (isAIActive.load()) {
             if (!isTimeUp.load()) {
@@ -46,7 +46,7 @@ AI::~AI() {
  * Evaluates the current board state from the perspective of the current player
  * to move with a positive number favouring white, and a negative one favouring black.
  */
-void AI::evaluate() {
+void AI::evaluate(Board& board) {
     int currScore = 0;
     std::vector<Move> whiteMoveList;
     std::vector<Move> blackMoveList;
@@ -80,8 +80,8 @@ void AI::evaluate() {
 
     currScore += (whiteTotalMoves - blackTotalMoves) * MOBILITY_VAL;
     
-    currScore -= reduceKnightMobilityScore(whiteMoveList, cornerIndex);
-    currScore += reduceKnightMobilityScore(blackMoveList, cornerIndex);
+    currScore -= reduceKnightMobilityScore(whiteMoveList, cornerIndex, board);
+    currScore += reduceKnightMobilityScore(blackMoveList, cornerIndex, board);
     
     if (hasWhiteCastled) {
         currScore += CASTLE_BONUS;
@@ -248,7 +248,7 @@ void AI::evaluate() {
     eval = currScore;
 }
 
-int AI::reduceKnightMobilityScore(const std::vector<Move>& moveList, const int cornerIndex) const {
+int AI::reduceKnightMobilityScore(const std::vector<Move>& moveList, const int cornerIndex, const Board& board) const {
     static constexpr int pawnThreatOffsets[] = {14, 16, -14, -16};
     auto totalToRemove = 0;
     auto cornerCheckIndex = 0;
@@ -309,9 +309,9 @@ void AI::search() {
     }
 
     prev = result.first;
-    board.makeMove(result.first);
+    gameBoard.makeMove(result.first);
 
-    board.detectGameEnd();
+    gameBoard.detectGameEnd();
 }
 
 std::pair<Move, int> AI::iterativeDeepening() {
@@ -323,20 +323,20 @@ std::pair<Move, int> AI::iterativeDeepening() {
         }
         cv.notify_all();
         for (int i = 0; i < DEPTH; ++i) {
-            firstGuess = MTD(firstGuess.second, i);
+            firstGuess = MTD(firstGuess.second, i, gameBoard);
             if (usingTimeLimit && isTimeUp.load()) {
                 break;
             }
         }
     } else {
         for (int i = 0; i < DEPTH; ++i) {
-            firstGuess = MTD(firstGuess.second, i);
+            firstGuess = MTD(firstGuess.second, i, gameBoard);
         }
     }
     return firstGuess;
 }
 
-std::pair<Move, int> AI::MTD(const int firstGuess, const int depth) {
+std::pair<Move, int> AI::MTD(const int firstGuess, const int depth, Board& board) {
     auto currGuess = std::make_pair(emptyMove, firstGuess);
     int upper = INT_MAX;
     int lower = INT_MIN;
@@ -345,7 +345,7 @@ std::pair<Move, int> AI::MTD(const int firstGuess, const int depth) {
     if (usingTimeLimit) {
         while (upper > lower) {
             beta = std::max(currGuess.second, lower + 1);
-            currGuess = AlphaBeta(beta - 1, beta, depth);
+            currGuess = AlphaBeta(beta - 1, beta, depth, board);
             if (currGuess.second < beta) {
                 upper = currGuess.second;
             } else {
@@ -358,7 +358,7 @@ std::pair<Move, int> AI::MTD(const int firstGuess, const int depth) {
     } else {
         while (upper > lower) {
             beta = std::max(currGuess.second, lower + 1);
-            currGuess = AlphaBeta(beta - 1, beta, depth);
+            currGuess = AlphaBeta(beta - 1, beta, depth, board);
             if (currGuess.second < beta) {
                 upper = currGuess.second;
             } else {
@@ -369,7 +369,7 @@ std::pair<Move, int> AI::MTD(const int firstGuess, const int depth) {
     return currGuess;
 }
 
-std::pair<Move, int> AI::AlphaBeta(int alpha, int beta, const int depth) {
+std::pair<Move, int> AI::AlphaBeta(int alpha, int beta, const int depth, Board& board) {
     assert(depth >= 0);
     auto rtn = std::make_pair(emptyMove, INT_MIN);
         
@@ -396,7 +396,7 @@ std::pair<Move, int> AI::AlphaBeta(int alpha, int beta, const int depth) {
     }
     
     if (depth == 0) {
-        evaluate();
+        evaluate(board);
         rtn = std::make_pair(emptyMove, eval);
     } else if (board.isWhiteTurn) {
         int a = alpha;
@@ -404,7 +404,7 @@ std::pair<Move, int> AI::AlphaBeta(int alpha, int beta, const int depth) {
 
         if (rtn.first != emptyMove) {
             board.makeMove(rtn.first); //Make the move if it was found in the cache
-            const auto& abCall = AlphaBeta(a, beta, depth - 1);
+            const auto& abCall = AlphaBeta(a, beta, depth - 1, board);
             
             if (abCall.second > rtn.second) {
                 rtn.second = abCall.second;
@@ -413,13 +413,13 @@ std::pair<Move, int> AI::AlphaBeta(int alpha, int beta, const int depth) {
             board.unmakeMove(rtn.first);
         }
 
-        auto moveList = orderMoveList(board.moveGen.generateAll());
+        auto moveList = orderMoveList(board.moveGen.generateAll(), board);
         const auto moveListSize = moveList.size();
         
         for (size_t i = 0; rtn.second < beta && i < moveListSize; ++i) {
             assert(moveList[i].fromSq && moveList[i].toSq);
             board.makeMove(moveList[i]);
-            const auto& abCall = AlphaBeta(a, beta, depth - 1);
+            const auto& abCall = AlphaBeta(a, beta, depth - 1, board);
             
             if (abCall.second > rtn.second) {
                 rtn.first = moveList[i];
@@ -434,7 +434,7 @@ std::pair<Move, int> AI::AlphaBeta(int alpha, int beta, const int depth) {
 
         if (rtn.first != emptyMove) {
             board.makeMove(rtn.first); //Make the move if it was found in the cache
-            const auto& abCall = AlphaBeta(alpha, b, depth - 1);
+            const auto& abCall = AlphaBeta(alpha, b, depth - 1, board);
             
             if (abCall.second < rtn.second) {
                 rtn.second = abCall.second;
@@ -443,13 +443,13 @@ std::pair<Move, int> AI::AlphaBeta(int alpha, int beta, const int depth) {
             board.unmakeMove(rtn.first);
         }
 
-        auto moveList = orderMoveList(board.moveGen.generateAll());
+        auto moveList = orderMoveList(board.moveGen.generateAll(), board);
         const auto moveListSize = moveList.size();
         
         for (size_t i = 0; rtn.second > alpha && i < moveListSize; ++i) {
             assert(moveList[i].fromSq && moveList[i].toSq);
             board.makeMove(moveList[i]);
-            const auto& abCall = AlphaBeta(alpha, b, depth - 1);
+            const auto& abCall = AlphaBeta(alpha, b, depth - 1, board);
             
             if (abCall.second < rtn.second) {
                 rtn.first = moveList[i];
@@ -486,8 +486,7 @@ std::pair<Move, int> AI::AlphaBeta(int alpha, int beta, const int depth) {
     return rtn;
 }
 
-unsigned long long AI::perft(int depth) {
-    unsigned long long nodeCount = 0;
+unsigned long long AI::perft(int depth, Board& board) {
     auto moveList = board.moveGen.generateAll();
     const auto moveListSize = moveList.size();
 
@@ -497,16 +496,23 @@ unsigned long long AI::perft(int depth) {
         return moveListSize;
     }
 
-    for (size_t i = 0; i < moveListSize; ++i) {
-        board.makeMove(moveList[i]);
-        nodeCount += perft(depth - 1);
-        board.unmakeMove(moveList[i]);
+    unsigned long long nodeCount = 0;
+
+#pragma omp parallel firstprivate(board, moveList, moveListSize)
+    {
+        Board b{board};
+        moveList = b.moveGen.generateAll();
+#pragma omp for reduction(+:nodeCount)
+        for (size_t i = 0; i < moveListSize; ++i) {
+            b.makeMove(moveList[i]);
+            nodeCount += perft(depth - 1, b);
+            b.unmakeMove(moveList[i]);
+        }
     }
     return nodeCount;
 }
 
-unsigned long long AI::perftDivide(int depth) {
-    unsigned long long nodeCount = 0;
+unsigned long long AI::perftDivide(int depth, Board& board) {
     auto moveList = board.moveGen.generateAll();
     const auto moveListSize = moveList.size();
     
@@ -514,9 +520,10 @@ unsigned long long AI::perftDivide(int depth) {
         return 1;
     }
     
+    unsigned long long nodeCount = 0;
     for (size_t i = 0; i < moveListSize; ++i) {
         board.makeMove(moveList[i]);
-        const auto perftResult = perft(depth - 1);
+        const auto perftResult = perft(depth - 1, board);
         std::cout << board.convertMoveToCoordText(moveList[i]) << ": " << perftResult << "\n";
         nodeCount += perftResult;
         board.unmakeMove(moveList[i]);
@@ -635,7 +642,7 @@ std::unordered_multimap<Piece, std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SI
     return tempMap;
 }
 
-std::vector<Move> AI::orderMoveList(std::vector<Move>&& list) {
+std::vector<Move> AI::orderMoveList(std::vector<Move>&& list, Board& board) {
     assert([&]()->bool{
         for (const auto& mv : list) {
             if (!mv.fromSq || !mv.toSq) {
@@ -674,39 +681,40 @@ std::vector<Move> AI::orderMoveList(std::vector<Move>&& list) {
 }
 
 void AI::benchmarkPerft() {
-    board.setPositionByFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -");
+    gameBoard.setPositionByFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -");
+
     std::cout << "Position 1\n";
-    std::cout << "Depth 1: " << ((perft(1) == 48) ? "Passed" : "Failed") << "\n";
-    std::cout << "Depth 2: " << ((perft(2) == 2039) ? "Passed" : "Failed") << "\n";
-    std::cout << "Depth 3: " << ((perft(3) == 97862) ? "Passed" : "Failed") << "\n";
-    std::cout << "Depth 4: " << ((perft(4) == 4085603) ? "Passed" : "Failed") << "\n";
-    std::cout << "Depth 5: " << ((perft(5) == 193690690) ? "Passed" : "Failed") << "\n";
-    board.setPositionByFEN("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -");
+    std::cout << "Depth 1: " << ((perft(1, gameBoard) == 48) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 2: " << ((perft(2, gameBoard) == 2039) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 3: " << ((perft(3, gameBoard) == 97862) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 4: " << ((perft(4, gameBoard) == 4085603) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 5: " << ((perft(5, gameBoard) == 193690690) ? "Passed" : "Failed") << "\n";
+    gameBoard.setPositionByFEN("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -");
     std::cout << "Position 2\n";
-    std::cout << "Depth 1: " << ((perft(1) == 14) ? "Passed" : "Failed") << "\n";
-    std::cout << "Depth 2: " << ((perft(2) == 191) ? "Passed" : "Failed") << "\n";
-    std::cout << "Depth 3: " << ((perft(3) == 2812) ? "Passed" : "Failed") << "\n";
-    std::cout << "Depth 4: " << ((perft(4) == 43238) ? "Passed" : "Failed") << "\n";
-    std::cout << "Depth 5: " << ((perft(5) == 674624) ? "Passed" : "Failed") << "\n";
-    board.setPositionByFEN("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1");
+    std::cout << "Depth 1: " << ((perft(1, gameBoard) == 14) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 2: " << ((perft(2, gameBoard) == 191) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 3: " << ((perft(3, gameBoard) == 2812) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 4: " << ((perft(4, gameBoard) == 43238) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 5: " << ((perft(5, gameBoard) == 674624) ? "Passed" : "Failed") << "\n";
+    gameBoard.setPositionByFEN("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1");
     std::cout << "Position 3\n";
-    std::cout << "Depth 1: " << ((perft(1) == 6) ? "Passed" : "Failed") << "\n";
-    std::cout << "Depth 2: " << ((perft(2) == 264) ? "Passed" : "Failed") << "\n";
-    std::cout << "Depth 3: " << ((perft(3) == 9467) ? "Passed" : "Failed") << "\n";
-    std::cout << "Depth 4: " << ((perft(4) == 422333) ? "Passed" : "Failed") << "\n";
-    std::cout << "Depth 5: " << ((perft(5) == 15833292) ? "Passed" : "Failed") << "\n";
-    board.setPositionByFEN("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
+    std::cout << "Depth 1: " << ((perft(1, gameBoard) == 6) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 2: " << ((perft(2, gameBoard) == 264) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 3: " << ((perft(3, gameBoard) == 9467) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 4: " << ((perft(4, gameBoard) == 422333) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 5: " << ((perft(5, gameBoard) == 15833292) ? "Passed" : "Failed") << "\n";
+    gameBoard.setPositionByFEN("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
     std::cout << "Position 4\n";
-    std::cout << "Depth 1: " << ((perft(1) == 44) ? "Passed" : "Failed") << "\n";
-    std::cout << "Depth 2: " << ((perft(2) == 1486) ? "Passed" : "Failed") << "\n";
-    std::cout << "Depth 3: " << ((perft(3) == 62379) ? "Passed" : "Failed") << "\n";
-    std::cout << "Depth 4: " << ((perft(4) == 2103487) ? "Passed" : "Failed") << "\n";
-    std::cout << "Depth 5: " << ((perft(5) == 89941194) ? "Passed" : "Failed") << "\n";
-    board.setPositionByFEN("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10");
+    std::cout << "Depth 1: " << ((perft(1, gameBoard) == 44) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 2: " << ((perft(2, gameBoard) == 1486) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 3: " << ((perft(3, gameBoard) == 62379) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 4: " << ((perft(4, gameBoard) == 2103487) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 5: " << ((perft(5, gameBoard) == 89941194) ? "Passed" : "Failed") << "\n";
+    gameBoard.setPositionByFEN("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10");
     std::cout << "Position 5\n";
-    std::cout << "Depth 1: " << ((perft(1) == 46) ? "Passed" : "Failed") << "\n";
-    std::cout << "Depth 2: " << ((perft(2) == 2079) ? "Passed" : "Failed") << "\n";
-    std::cout << "Depth 3: " << ((perft(3) == 89890) ? "Passed" : "Failed") << "\n";
-    std::cout << "Depth 4: " << ((perft(4) == 3894594) ? "Passed" : "Failed") << "\n";
-    std::cout << "Depth 5: " << ((perft(5) == 164075551) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 1: " << ((perft(1, gameBoard) == 46) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 2: " << ((perft(2, gameBoard) == 2079) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 3: " << ((perft(3, gameBoard) == 89890) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 4: " << ((perft(4, gameBoard) == 3894594) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 5: " << ((perft(5, gameBoard) == 164075551) ? "Passed" : "Failed") << "\n";
 }

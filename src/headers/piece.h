@@ -10,6 +10,8 @@ class Piece {
 
 public:
     Piece(const PieceTypes t, const Colour c) : type(t), pieceColour(c) {}
+    Piece(const Piece& p) = default;
+    Piece(Piece&& p) = default;
     auto getType() const {return type;}
     auto getColour() const {return pieceColour;}
     const std::vector<int>& getVectorList() const;

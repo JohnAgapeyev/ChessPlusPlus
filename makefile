@@ -1,4 +1,4 @@
-BASEFLAGS := -Wall -pedantic -pipe -std=c++14
+BASEFLAGS := -Wall -pedantic -pipe -std=c++14 -fopenmp
 DEBUGFLAGS := -g
 RELEASEFLAGS := -O3 -march=native -flto -ftracer -funswitch-loops -funroll-loops -funit-at-a-time -DNDEBUG
 CLIBS := -pthread

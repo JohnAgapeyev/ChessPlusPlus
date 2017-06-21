@@ -62,7 +62,7 @@ class AI {
     bool hasBlackCastled = false;
     bool hasWhiteCastled = false;
 
-    Board& board;
+    Board& gameBoard;
     
     int eval = 0;
     
@@ -78,19 +78,19 @@ class AI {
 
     std::thread timeLimitThread;
 
-    int reduceKnightMobilityScore(const std::vector<Move>& moveList, const int cornerIndex) const;
+    int reduceKnightMobilityScore(const std::vector<Move>& moveList, const int cornerIndex, const Board& board) const;
     std::pair<Move, int> iterativeDeepening();
-    std::pair<Move, int> MTD(const int guess, const int depth);
-    std::pair<Move, int> AlphaBeta(const int alpha, const int beta, const int depth);
+    std::pair<Move, int> MTD(const int guess, const int depth, Board& board);
+    std::pair<Move, int> AlphaBeta(const int alpha, const int beta, const int depth, Board& board);
     int getPieceValue(const PieceTypes type) const;
-    unsigned long long perft(int depth);
-    unsigned long long perftDivide(int depth);
-    std::vector<Move> orderMoveList(std::vector<Move>&& list);
+    unsigned long long perft(int depth, Board& board);
+    unsigned long long perftDivide(int depth, Board& board);
+    std::vector<Move> orderMoveList(std::vector<Move>&& list, Board& board);
     
 public:
     AI(Board& b);
     ~AI();
-    void evaluate();
+    void evaluate(Board& board);
     void search();
     auto getEval() const {return static_cast<double>(eval) / 100;}
     void benchmarkPerft();

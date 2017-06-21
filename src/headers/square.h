@@ -13,7 +13,7 @@ class Square {
 public:
     Square() = default;
     Square(const Square& sq) : piece((sq.piece) ? std::make_unique<Piece>(*sq.piece) : nullptr), offset(sq.offset) {}
-    Square(Square&& sq) : piece(std::move(sq.piece)), offset(sq.offset) {}
+    Square(Square&& sq) = default;
     Square(const int off) : piece(std::make_unique<Piece>(PieceTypes::UNKNOWN, Colour::UNKNOWN)), offset(off) {}
     Square(const Piece p, const int off = 0) : piece(std::make_unique<Piece>(p)), offset(off) {}
     Square(std::unique_ptr<Piece> p, const int off = 0) : piece(std::move(p)), offset(off) {}

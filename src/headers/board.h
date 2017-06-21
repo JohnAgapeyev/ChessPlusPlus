@@ -28,14 +28,20 @@ class Board {
     }
     
     class MoveGenerator {
-        Board& board;
+        Board *board;
         std::vector<Move> moveList;
         std::vector<std::tuple<int, int, Piece*>> pieceCoords;
         void logMoveFailure(const int failureNum, const bool isSilent) const;
         int getMoveOffset(const Move& mv) const;
         
     public:
-        MoveGenerator(Board& b) : board(b) {moveList.reserve(100); pieceCoords.reserve(16);}
+        MoveGenerator(Board *b) : board(b) {moveList.reserve(100); pieceCoords.reserve(16);}
+        MoveGenerator(const MoveGenerator& m) = default;
+        MoveGenerator(MoveGenerator&& m) = default;
+        MoveGenerator& operator=(const MoveGenerator& m) = default;
+        MoveGenerator& operator=(MoveGenerator&& m) = default;
+
+        bool operator==(const MoveGenerator& second) const {return *board == *second.board && moveList == second.moveList && pieceCoords == second.pieceCoords;}
 
         static constexpr int getOffsetIndex(const int offset, const int startIndex = 0, const int vectorLen = 1) {
             const auto absOffset = std::abs(offset);
@@ -50,9 +56,9 @@ class Board {
         Move createMove(std::string& input) const;
         bool getCastleDirectionBool(const PieceTypes type, const Colour pieceColour, const int offset) const;
     };
-    MoveGenerator moveGen{*this};
+    MoveGenerator moveGen{this};
     
-    std::array<std::unique_ptr<Square>, OUTER_BOARD_SIZE * OUTER_BOARD_SIZE> vectorTable;
+    std::array<std::unique_ptr<Square>, TOTAL_BOARD_SIZE> vectorTable;
     GameState currentGameState = GameState::ACTIVE;
     unsigned char castleRights = 0x0F;
     bool blackInCheck = false;
@@ -89,9 +95,11 @@ class Board {
 
 public:
     Board();
-    Board(const Board& b) = delete;
+    Board(const Board& b);
     Board(Board&& b) = default;
     
+    Board& operator=(const Board& b);
+    Board& operator=(Board&& b) = default;
     bool operator==(const Board& second) const {return currHash == second.currHash;}
     
     void printBoardState() const;

@@ -5,6 +5,7 @@
 #include <regex>
 #include <cassert>
 #include <string>
+#include <omp.h>
 #include "headers/board.h"
 #include "headers/square.h"
 #include "headers/consts.h"
@@ -37,10 +38,57 @@ Board::Board() {
         }
     }
     
-    for (size_t i = 0, len = repititionList.size(); i < len; ++i) {
+    for (size_t i = 0; i < repititionList.size(); ++i) {
         repititionList[i] = i;
     }
     currHash = std::hash<Board>()(*this);
+}
+
+Board::Board(const Board& b) : moveGen(this), currentGameState(b.currentGameState), castleRights(b.castleRights), 
+        blackInCheck(b.blackInCheck), whiteInCheck(b.whiteInCheck), isWhiteTurn(b.isWhiteTurn), enPassantActive(b.enPassantActive), 
+        halfMoveClock(b.halfMoveClock), moveCounter(b.moveCounter), 
+        currHash(b.currHash), repititionList(b.repititionList), cornerCache(b.cornerCache) {
+
+    for (int i = 0; i < TOTAL_BOARD_SIZE; ++i) {
+        vectorTable[i] = std::make_unique<Square>(*b.vectorTable[i]);
+    }
+
+    if (b.enPassantTarget) {
+        const auto targetIndex = const_cast<Board&>(b).getSquareIndex(b.enPassantTarget);
+        assert(targetIndex != -1);
+        enPassantTarget = vectorTable[targetIndex].get();
+    } else {
+        enPassantTarget = nullptr;
+    }
+
+    assert(checkBoardValidity());
+}
+
+Board& Board::operator=(const Board& b) {
+    moveGen = std::move(MoveGenerator{this});
+    currentGameState = b.currentGameState;
+    castleRights = b.castleRights;
+    blackInCheck = b.blackInCheck;
+    whiteInCheck = b.whiteInCheck;
+    isWhiteTurn = b.isWhiteTurn;
+    enPassantActive = b.enPassantActive;
+    if (b.enPassantTarget) {
+        const auto targetIndex = const_cast<Board&>(b).getSquareIndex(b.enPassantTarget);
+        assert(targetIndex != -1);
+        enPassantTarget = vectorTable[targetIndex].get();
+    } else {
+        enPassantTarget = nullptr;
+    }
+    halfMoveClock = b.halfMoveClock;
+    moveCounter = b.moveCounter;
+    currHash = b.currHash;
+    repititionList = b.repititionList;
+    cornerCache = b.cornerCache;
+    for (int i = 0; i < TOTAL_BOARD_SIZE; ++i) {
+        vectorTable[i] = std::make_unique<Square>(*b.vectorTable[i]);
+    }
+    assert(checkBoardValidity());
+    return *this;
 }
 
 std::pair<int, int> Board::findCorner() {
@@ -86,6 +134,7 @@ void Board::printBoardState() const {
 #ifdef NDEBUG
         std::cout << "  ";
 #endif
+#pragma omp parallel for schedule(static)
         for (int j = 0; j < range; ++j) {
 #ifndef NDEBUG
             std::cout << "--------";
@@ -136,10 +185,10 @@ void Board::shiftHorizontal(const int count) {
     assert(!(startCoords.second + count < 0 
         || startCoords.second + count + INNER_BOARD_SIZE - 1 > OUTER_BOARD_SIZE));
 
-    for (int i = 0, col = 0; i < INNER_BOARD_SIZE; ++i) {
-        for (int j = 0, row = 0; j < INNER_BOARD_SIZE; ++j) {
-            col = INNER_BOARD_SIZE - 1 - i + ((count <= 0) * ((2 * i) - (INNER_BOARD_SIZE - 1)));
-            row = INNER_BOARD_SIZE - 1 - j + ((count <= 0) * ((2 * j) - (INNER_BOARD_SIZE - 1)));
+    for (int i = 0; i < INNER_BOARD_SIZE; ++i) {
+        for (int j = 0; j < INNER_BOARD_SIZE; ++j) {
+            int col = INNER_BOARD_SIZE - 1 - i + ((count <= 0) * ((2 * i) - (INNER_BOARD_SIZE - 1)));
+            int row = INNER_BOARD_SIZE - 1 - j + ((count <= 0) * ((2 * j) - (INNER_BOARD_SIZE - 1)));
             
             std::swap(
                 vectorTable[
@@ -163,10 +212,10 @@ void Board::shiftVertical(const int count) {
     assert(!(startCoords.first + count < 0 
         || startCoords.first + count + INNER_BOARD_SIZE - 1 > OUTER_BOARD_SIZE));
     
-    for (int i = 0, col = 0; i < INNER_BOARD_SIZE; ++i) {
-        for (int j = 0, row = 0; j < INNER_BOARD_SIZE; ++j) {
-            col = INNER_BOARD_SIZE - 1 - i + ((count <= 0) * ((2 * i) - (INNER_BOARD_SIZE - 1)));
-            row = INNER_BOARD_SIZE - 1 - j + ((count <= 0) * ((2 * j) - (INNER_BOARD_SIZE - 1)));
+    for (int i = 0; i < INNER_BOARD_SIZE; ++i) {
+        for (int j = 0; j < INNER_BOARD_SIZE; ++j) {
+            int col = INNER_BOARD_SIZE - 1 - i + ((count <= 0) * ((2 * i) - (INNER_BOARD_SIZE - 1)));
+            int row = INNER_BOARD_SIZE - 1 - j + ((count <= 0) * ((2 * j) - (INNER_BOARD_SIZE - 1)));
             
             std::swap(
                 vectorTable[
@@ -190,6 +239,7 @@ void Board::shiftBoard(const int col, const int row) {
     cornerCache = -1; //Invalidate corner cache after shifting the board
     shiftVertical(rowDiff);
     cornerCache = -1; //Invalidate corner cache after shifting the board
+
     for (int i = 0; i < OUTER_BOARD_SIZE; ++i) {
         for (int j = 0; j < OUTER_BOARD_SIZE; ++j) {
             vectorTable[(i* OUTER_BOARD_SIZE) + j]->setOffset(genOffset(i, j));
@@ -282,7 +332,9 @@ bool Board::makeMove(Move& mv) {
     assert(mv.fromSq && mv.toSq);
 
     const auto oldFromDist = getSquareIndex(mv.fromSq);
+    assert(oldFromDist != -1);
     const auto cornerCoords = findCorner_1D();
+    assert(cornerCoords != -1);
 
     const std::pair<int, int> shiftCoords{(oldFromDist - cornerCoords) / OUTER_BOARD_SIZE, 
         (oldFromDist - cornerCoords) % OUTER_BOARD_SIZE};
@@ -801,12 +853,11 @@ int Board::getSquareIndex(const Square *sq) {
 
     for (int i = 0; i < INNER_BOARD_SIZE; ++i) {
         for (int j = 0; j < INNER_BOARD_SIZE; ++j) {
-            if (vectorTable[cornerIndex + (i * OUTER_BOARD_SIZE) + j].get() == sq) {
+            if (*vectorTable[cornerIndex + (i * OUTER_BOARD_SIZE) + j].get() == *sq) {
                 return cornerIndex + (i * OUTER_BOARD_SIZE) + j;
             }
         }
     }
-
     return -1;
 }
 
