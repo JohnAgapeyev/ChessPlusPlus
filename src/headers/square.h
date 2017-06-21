@@ -31,7 +31,12 @@ public:
     }
 
     bool operator==(const Square& second) {
-        return (offset == second.offset && !(piece && second.piece)) || (offset == second.offset && (piece == second.piece));
+        return ((offset == second.offset) && !piece && !second.piece) 
+            || ((offset == second.offset) && piece && second.piece && *piece == *second.piece);
+    }
+
+    bool operator!=(const Square& second) {
+        return !(*this == second);
     }
 
     Square& operator=(const Square& sq) {
