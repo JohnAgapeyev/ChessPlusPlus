@@ -929,13 +929,16 @@ void Board::addEnPassantTarget(const Move& mv, const int offset, const int colum
 
         if (left->getPiece() || right->getPiece()) {
             if (left->getPiece() && right->getPiece()) {
-                const auto isLeftPawn = (left->getPiece()->getType() == PieceTypes::PAWN && left->getPiece()->getColour() != mv.fromPieceColour);
-                const auto isRightPawn = (right->getPiece()->getType() == PieceTypes::PAWN && right->getPiece()->getColour() != mv.fromPieceColour);
+                const auto isLeftPawn = (left->getPiece()->getType() == PieceTypes::PAWN 
+                        && left->getPiece()->getColour() != mv.fromPieceColour);
+                const auto isRightPawn = (right->getPiece()->getType() == PieceTypes::PAWN 
+                        && right->getPiece()->getColour() != mv.fromPieceColour);
                 if (isLeftPawn ^ isRightPawn) {
                     if (isLeftPawn) {
                         //Check right square for its piece type
                         if (right->getPiece()->getVectorLength() == INNER_BOARD_SIZE 
-                                || (right->getPiece()->getType() == PieceTypes::KING && right->getPiece()->getColour() != mv.fromPieceColour)) {
+                                || (right->getPiece()->getType() == PieceTypes::KING 
+                                    && right->getPiece()->getColour() != mv.fromPieceColour)) {
                             //Enemy pawn and enemy king - perform check check on left square
                             if (!checkEnPassantValidity(left, mv)) {
                                 return;
@@ -944,7 +947,8 @@ void Board::addEnPassantTarget(const Move& mv, const int offset, const int colum
                     } else {
                         //Check left square for its piece type
                         if (left->getPiece()->getVectorLength() == INNER_BOARD_SIZE 
-                                || (left->getPiece()->getType() == PieceTypes::KING && left->getPiece()->getColour() != mv.fromPieceColour)) {
+                                || (left->getPiece()->getType() == PieceTypes::KING 
+                                    && left->getPiece()->getColour() != mv.fromPieceColour)) {
                             //Enemy pawn and enemy king - perform check check on right square
                             if (!checkEnPassantValidity(right, mv)) {
                                 return;
@@ -952,12 +956,14 @@ void Board::addEnPassantTarget(const Move& mv, const int offset, const int colum
                         }
                     }
                 }
-            } else if (left->getPiece() && left->getPiece()->getType() == PieceTypes::PAWN && left->getPiece()->getColour() != mv.fromPieceColour) {
+            } else if (left->getPiece() && left->getPiece()->getType() == PieceTypes::PAWN 
+                    && left->getPiece()->getColour() != mv.fromPieceColour) {
                 //Perform check check on left square
                 if (!checkEnPassantValidity(left, mv)) {
                     return;
                 }
-            } else if (right->getPiece() && right->getPiece()->getType() == PieceTypes::PAWN && right->getPiece()->getColour() != mv.fromPieceColour) {
+            } else if (right->getPiece() && right->getPiece()->getType() == PieceTypes::PAWN 
+                    && right->getPiece()->getColour() != mv.fromPieceColour) {
                 //Perform check check on right square
                 if (!checkEnPassantValidity(right, mv)) {
                     return;
@@ -989,8 +995,10 @@ void Board::performCastling(Move& mv, const int offset, const int fromSquareInde
             vectorTable[fromSquareIndex + 1 - (isQueenSide << 1)]->getOffset());
         vectorTable[fromSquareIndex + 1 - (isQueenSide << 1)]->setOffset(temp);
         
-        hashPieceChange(convertOuterBoardIndex(fromSquareIndex + 3 - (isQueenSide * 7), cornerIndex), PieceTypes::ROOK, mv.fromPieceColour);
-        hashPieceChange(convertOuterBoardIndex(fromSquareIndex + 1 - (isQueenSide << 1), cornerIndex), PieceTypes::ROOK, mv.fromPieceColour);
+        hashPieceChange(convertOuterBoardIndex(fromSquareIndex + 3 - (isQueenSide * 7), cornerIndex), 
+                PieceTypes::ROOK, mv.fromPieceColour);
+        hashPieceChange(convertOuterBoardIndex(fromSquareIndex + 1 - (isQueenSide << 1), cornerIndex), 
+                PieceTypes::ROOK, mv.fromPieceColour);
             
         if (mv.fromPieceColour == Colour::WHITE) {
             removeCastlingRights(WHITE_CASTLE_FLAG);
@@ -1011,7 +1019,8 @@ void Board::captureEnPassant(const Move& mv, const int offset, const int toSquar
         vectorTable[captureIndex]->setPiece(nullptr);
         
         //xor out the captured pawn
-        hashPieceChange(convertOuterBoardIndex(captureIndex, cornerIndex), PieceTypes::PAWN, (mv.fromPieceColour == Colour::WHITE) ? Colour::BLACK : Colour::WHITE);
+        hashPieceChange(convertOuterBoardIndex(captureIndex, cornerIndex), PieceTypes::PAWN, 
+                (mv.fromPieceColour == Colour::WHITE) ? Colour::BLACK : Colour::WHITE);
     }
 }
 

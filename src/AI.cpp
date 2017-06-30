@@ -7,6 +7,7 @@
 #include <thread>
 #include <mutex>
 #include <atomic>
+#include <cassert>
 #include "headers/board.h"
 #include "headers/ai.h"
 #include "headers/consts.h"

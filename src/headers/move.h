@@ -11,8 +11,8 @@ struct Move {
     Move(const Move& mv) = default;
     Move(Move&& mv) = default;
 
-    Move& operator=(const Move& mv);
-    Move& operator=(Move&& mv);
+    Move& operator=(const Move& mv) = default;
+    Move& operator=(Move&& mv) = default;
     
     Square *fromSq;
     Square *toSq;
@@ -26,7 +26,7 @@ struct Move {
     bool isCastle;
     unsigned char castleRights;
     bool enPassantActive;
-    Square* enPassantTarget;
+    Square *enPassantTarget;
     int halfMoveClock;
     int moveCounter;
 };

@@ -4,6 +4,8 @@
 #include <vector>
 #include <list>
 #include <cstdint>
+#include <mutex>
+#include <atomic>
 #include "map.h"
 
 template<typename Key, typename Value, uint64_t maxSize, typename Hash = std::hash<Key>>
@@ -16,19 +18,28 @@ class Cache {
     CacheList internalList;
     CacheMap<size_t, typename CacheList::iterator, maxSize> internalMap;
     Hash hashEngine{};
-    size_t currSize = 0;
+    std::atomic_size_t currSize{0};
+
+    std::mutex mut;
     
     void overwrite() {
         internalMap.erase(internalList.back().first);
-        internalList.pop_back();
+        {
+            std::lock_guard<std::mutex> lock(mut);
+            internalList.pop_back();
+        }
         --currSize;
     }
     
     void add(const CacheEntry& newEntry) {
-        if (currSize >= maxSize) {
+        if (currSize.load() >= maxSize) {
             overwrite();
         }
-        internalList.push_front(newEntry);
+
+        {
+            std::lock_guard<std::mutex> lock(mut);
+            internalList.push_front(newEntry);
+        }
         internalMap.insert(newEntry.first, internalList.begin());
         ++currSize;
     }
@@ -36,12 +47,18 @@ class Cache {
 public:
 
     void erase(Key& k) {
-        internalList.erase(internalMap[hashEngine(k)]);
+        {
+            std::lock_guard<std::mutex> lock(mut);
+            internalList.erase(internalMap[hashEngine(k)]);
+        }
         internalMap.erase(hashEngine(k));
     }
     
     void clear() {
-        internalList.clear();
+        {
+            std::lock_guard<std::mutex> lock(mut);
+            internalList.clear();
+        }
         internalMap.clear();
         currSize = 0;
     }
@@ -52,8 +69,11 @@ public:
     
     Value& operator[](Key& k) {
         const auto& elem = internalMap[hashEngine(k)];
-        if (elem != internalList.begin()) {
-            internalList.splice(internalList.begin(), internalList, elem, std::next(elem));
+        {
+            std::lock_guard<std::mutex> lock(mut);
+            if (elem != internalList.begin()) {
+                internalList.splice(internalList.begin(), internalList, elem, std::next(elem));
+            }
         }
         return elem->second;
     }
@@ -63,7 +83,7 @@ public:
     }
     
     size_t size() const {
-        return currSize;
+        return currSize.load();
     }
 };
 
