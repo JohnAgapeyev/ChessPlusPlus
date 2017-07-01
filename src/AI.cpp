@@ -300,57 +300,65 @@ int AI::getPieceValue(const PieceTypes type) const {
 
 void AI::search() {
     auto result = iterativeDeepening();
-    
-    if (result.first.isCastle) {
-        if (result.first.fromPieceColour == Colour::WHITE) {
-            hasWhiteCastled = true;
-        } else {
-            hasBlackCastled = true;
-        }
-    }
 
-    prev = result.first;
-    gameBoard.makeMove(result.first);
+    prev = std::get<0>(result);
+
+    previousToSquareIndex = gameBoard.convertOuterBoardIndex(gameBoard.getSquareIndex(std::get<0>(result).toSq), gameBoard.findCorner_1D());
+
+    gameBoard.makeMove(std::get<0>(result));
 
     gameBoard.detectGameEnd();
 }
 
-std::pair<Move, int> AI::iterativeDeepening() {
-    auto firstGuess = std::make_pair(emptyMove, 0);
+std::tuple<Move, int, int, int, int> AI::iterativeDeepening() {
+    auto firstGuess = std::make_tuple(emptyMove, 0, -1, -1, -1);
+    std::atomic_int maxDepth{0};
     if (usingTimeLimit) {
         {
             std::lock_guard<std::mutex> lock(mut);
             isTimeUp.store(false);
         }
         cv.notify_all();
-        for (int i = 0; i < DEPTH; ++i) {
-            firstGuess = MTD(firstGuess.second, i, gameBoard);
-            if (usingTimeLimit && isTimeUp.load()) {
+        for (int i = 1; i <= DEPTH; ++i) {
+            firstGuess = MTD(std::get<1>(firstGuess), i, gameBoard);
+            if (isTimeUp.load()) {
                 break;
             }
         }
     } else {
-        for (int i = 0; i < DEPTH; ++i) {
-            firstGuess = MTD(firstGuess.second, i, gameBoard);
+#pragma omp parallel firstprivate(gameBoard) shared(firstGuess, maxDepth)
+        {
+            Board b{gameBoard};
+#pragma omp for schedule(guided)
+            for (int i = 1; i <= DEPTH; ++i) {
+                auto searchResult = MTD(std::get<1>(firstGuess), i, b);
+                assert(std::get<0>(searchResult) != emptyMove);
+                if (i > maxDepth.load()) {
+                    maxDepth.store(i);
+#pragma omp critical
+                    firstGuess = searchResult;
+                }
+            }
         }
     }
+    translateMovePointers(gameBoard, std::get<0>(firstGuess), std::forward_as_tuple(std::get<2>(firstGuess), std::get<3>(firstGuess), std::get<4>(firstGuess)));
     return firstGuess;
 }
 
-std::pair<Move, int> AI::MTD(const int firstGuess, const int depth, Board& board) {
-    auto currGuess = std::make_pair(emptyMove, firstGuess);
+std::tuple<Move, int, int, int, int> AI::MTD(const int firstGuess, const int depth, Board& board) {
+    auto currGuess = std::make_tuple(emptyMove, firstGuess, -1, -1, -1);
     int upper = INT_MAX;
     int lower = INT_MIN;
     int beta = 0;
     
     if (usingTimeLimit) {
         while (upper > lower) {
-            beta = std::max(currGuess.second, lower + 1);
+            beta = std::max(std::get<1>(currGuess), lower + 1);
             currGuess = AlphaBeta(beta - 1, beta, depth, board);
-            if (currGuess.second < beta) {
-                upper = currGuess.second;
+            if (std::get<1>(currGuess) < beta) {
+                upper = std::get<1>(currGuess);
             } else {
-                lower = currGuess.second;
+                lower = std::get<1>(currGuess);
             }
             if (isTimeUp.load()) {
                 break;
@@ -358,30 +366,34 @@ std::pair<Move, int> AI::MTD(const int firstGuess, const int depth, Board& board
         }
     } else {
         while (upper > lower) {
-            beta = std::max(currGuess.second, lower + 1);
+            beta = std::max(std::get<1>(currGuess), lower + 1);
             currGuess = AlphaBeta(beta - 1, beta, depth, board);
-            if (currGuess.second < beta) {
-                upper = currGuess.second;
+            if (std::get<1>(currGuess) < beta) {
+                upper = std::get<1>(currGuess);
             } else {
-                lower = currGuess.second;
+                lower = std::get<1>(currGuess);
             }
         }
     }
     return currGuess;
 }
 
-std::pair<Move, int> AI::AlphaBeta(int alpha, int beta, const int depth, Board& board) {
+std::tuple<Move, int, int, int, int> AI::AlphaBeta(int alpha, int beta, const int depth, Board& board) {
     assert(depth >= 0);
-    auto rtn = std::make_pair(emptyMove, INT_MIN);
-        
+    auto rtn = std::make_tuple(emptyMove, INT_MIN, -1, -1, -1);
+
     if (boardCache->retrieve(board)) {
         int entryDepth;
         int entryValue;
         SearchBoundary entryType;
-        std::tie(entryDepth, entryValue, entryType, rtn.first) = (*boardCache)[board];
+        std::tuple<int, int, int> moveConversionOffsets;
+        int fromOffset;
+        int toOffset;
+        int targetOffset;
+        std::tie(entryDepth, entryValue, entryType, std::get<0>(rtn), fromOffset, toOffset, targetOffset) = (*boardCache)[board];
         if (entryDepth >= depth) {
             if (entryType == SearchBoundary::EXACT) {
-                return {rtn.first, entryValue};
+                return std::make_tuple(std::get<0>(rtn), entryValue, fromOffset, toOffset, targetOffset);
             }
             //Update the best move based on the previous value
             if (entryType == SearchBoundary::LOWER && entryValue > alpha) {
@@ -391,99 +403,147 @@ std::pair<Move, int> AI::AlphaBeta(int alpha, int beta, const int depth, Board& 
             }
             if (alpha >= beta) {
                 //Return the best move as well
-                return {rtn.first, entryValue};
+                return std::make_tuple(std::get<0>(rtn), entryValue, fromOffset, toOffset, targetOffset);
             }
         }
+        translateMovePointers(board, std::get<0>(rtn), std::forward_as_tuple(fromOffset, toOffset, targetOffset));
     }
     
     if (depth == 0) {
         evaluate(board);
-        rtn = std::make_pair(emptyMove, eval);
+        rtn = std::make_tuple(emptyMove, eval, -1, -1, -1);
     } else if (board.isWhiteTurn) {
         int a = alpha;
-        rtn.second = INT_MIN;
+        std::get<1>(rtn) = INT_MIN;
 
-        if (rtn.first != emptyMove) {
-            board.makeMove(rtn.first); //Make the move if it was found in the cache
-            const auto& abCall = AlphaBeta(a, beta, depth - 1, board);
+        if (std::get<0>(rtn) != emptyMove) {
+            board.makeMove(std::get<0>(rtn)); //Make the move if it was found in the cache
+            const auto abCall = AlphaBeta(a, beta, depth - 1, board);
             
-            if (abCall.second > rtn.second) {
-                rtn.second = abCall.second;
+            if (std::get<1>(abCall) > std::get<1>(rtn)) {
+                const auto cornerIndex = board.findCorner_1D();
+
+                std::get<1>(rtn) = std::get<1>(abCall);
+                std::get<2>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(std::get<0>(rtn).fromSq), cornerIndex);
+                std::get<3>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(std::get<0>(rtn).toSq), cornerIndex);
+                std::get<4>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(std::get<0>(rtn).enPassantTarget), cornerIndex);
             }
-            a = std::max(a, rtn.second);
-            board.unmakeMove(rtn.first);
+            a = std::max(a, std::get<1>(rtn));
+            board.unmakeMove(std::get<0>(rtn));
         }
 
         auto moveList = orderMoveList(board.moveGen.generateAll(), board);
         const auto moveListSize = moveList.size();
-        
-        for (size_t i = 0; rtn.second < beta && i < moveListSize; ++i) {
-            assert(moveList[i].fromSq && moveList[i].toSq);
+
+        if (moveListSize == 0) {
+            evaluate(board);
+            rtn = std::make_tuple(emptyMove, eval, -1, -1, -1);
+        }
+
+        for (size_t i = 0; std::get<1>(rtn) < beta && i < moveListSize; ++i) {
             board.makeMove(moveList[i]);
-            const auto& abCall = AlphaBeta(a, beta, depth - 1, board);
-            
-            if (abCall.second > rtn.second) {
-                rtn.first = moveList[i];
-                rtn.second = abCall.second;
+            const auto abCall = AlphaBeta(a, beta, depth - 1, board);
+
+            if (std::get<1>(abCall) > std::get<1>(rtn)) {
+                const auto cornerIndex = board.findCorner_1D();
+
+                std::get<0>(rtn) = moveList[i];
+                std::get<1>(rtn) = std::get<1>(abCall);
+                std::get<2>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(moveList[i].fromSq), cornerIndex);
+                std::get<3>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(moveList[i].toSq), cornerIndex);
+                std::get<4>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(moveList[i].enPassantTarget), cornerIndex);
             }
-            a = std::max(a, rtn.second);
+
+            a = std::max(a, std::get<1>(rtn));
             board.unmakeMove(moveList[i]);
         }
     } else {
         int b = beta;
-        rtn.second = INT_MAX;
+        std::get<1>(rtn) = INT_MAX;
 
-        if (rtn.first != emptyMove) {
-            board.makeMove(rtn.first); //Make the move if it was found in the cache
-            const auto& abCall = AlphaBeta(alpha, b, depth - 1, board);
+        if (std::get<0>(rtn) != emptyMove) {
+            board.makeMove(std::get<0>(rtn)); //Make the move if it was found in the cache
+            const auto abCall = AlphaBeta(alpha, b, depth - 1, board);
             
-            if (abCall.second < rtn.second) {
-                rtn.second = abCall.second;
+            if (std::get<1>(abCall) < std::get<1>(rtn)) {
+                const auto cornerIndex = board.findCorner_1D();
+
+                std::get<1>(rtn) = std::get<1>(abCall);
+                std::get<2>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(std::get<0>(rtn).fromSq), cornerIndex);
+                std::get<3>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(std::get<0>(rtn).toSq), cornerIndex);
+                std::get<4>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(std::get<0>(rtn).enPassantTarget), cornerIndex);
             }
-            b = std::min(b, rtn.second);
-            board.unmakeMove(rtn.first);
+            b = std::min(b, std::get<1>(rtn));
+            board.unmakeMove(std::get<0>(rtn));
         }
 
         auto moveList = orderMoveList(board.moveGen.generateAll(), board);
         const auto moveListSize = moveList.size();
-        
-        for (size_t i = 0; rtn.second > alpha && i < moveListSize; ++i) {
-            assert(moveList[i].fromSq && moveList[i].toSq);
+
+        if (moveListSize == 0) {
+            evaluate(board);
+            rtn = std::make_tuple(emptyMove, eval, -1, -1, -1);
+        }
+
+        for (size_t i = 0; std::get<1>(rtn) > alpha && i < moveListSize; ++i) {
             board.makeMove(moveList[i]);
-            const auto& abCall = AlphaBeta(alpha, b, depth - 1, board);
-            
-            if (abCall.second < rtn.second) {
-                rtn.first = moveList[i];
-                rtn.second = abCall.second;
+            const auto abCall = AlphaBeta(alpha, b, depth - 1, board);
+
+            if (std::get<1>(abCall) < std::get<1>(rtn)) {
+                const auto cornerIndex = board.findCorner_1D();
+
+                std::get<0>(rtn) = moveList[i];
+                std::get<1>(rtn) = std::get<1>(abCall);
+                std::get<2>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(moveList[i].fromSq), cornerIndex);
+                std::get<3>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(moveList[i].toSq), cornerIndex);
+                std::get<4>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(moveList[i].enPassantTarget), cornerIndex);
+
+                assert(moveList[i] != emptyMove);
             }
-            b = std::min(b, rtn.second);
+            b = std::min(b, std::get<1>(rtn));
             board.unmakeMove(moveList[i]);
         }
     }
+
+    const auto cornerIndex = board.findCorner_1D();
     
-    if (rtn.second <= alpha) {
+    if (std::get<1>(rtn) <= alpha) {
         //Store rtn as upper bound
-        boardCache->add(board, std::make_tuple(depth, rtn.second, SearchBoundary::UPPER, rtn.first));
-    } else if (rtn.second > alpha && rtn.second < beta) {
+        boardCache->add(board, std::make_tuple(depth, std::get<1>(rtn), SearchBoundary::UPPER, 
+                    std::get<0>(rtn), 
+                        board.convertOuterBoardIndex(board.getSquareIndex(std::get<0>(rtn).fromSq), cornerIndex), 
+                        board.convertOuterBoardIndex(board.getSquareIndex(std::get<0>(rtn).toSq), cornerIndex), 
+                        board.convertOuterBoardIndex(board.getSquareIndex(std::get<0>(rtn).enPassantTarget), cornerIndex)
+                    ));
+    } else if (std::get<1>(rtn) > alpha && std::get<1>(rtn) < beta) {
         //Should not happen if using null window, but if it does, store rtn as both upper and lower
-        boardCache->add(board, std::make_tuple(depth, rtn.second, SearchBoundary::EXACT, rtn.first));
-    } else if (rtn.second >= beta ) {
+        boardCache->add(board, std::make_tuple(depth, std::get<1>(rtn), SearchBoundary::EXACT, 
+                    std::get<0>(rtn), 
+                        board.convertOuterBoardIndex(board.getSquareIndex(std::get<0>(rtn).fromSq), cornerIndex), 
+                        board.convertOuterBoardIndex(board.getSquareIndex(std::get<0>(rtn).toSq), cornerIndex), 
+                        board.convertOuterBoardIndex(board.getSquareIndex(std::get<0>(rtn).enPassantTarget), cornerIndex)
+                    ));
+    } else if (std::get<1>(rtn) >= beta ) {
         //Store rtn as lower bound
-        boardCache->add(board, std::make_tuple(depth, rtn.second, SearchBoundary::LOWER, rtn.first));
+        boardCache->add(board, std::make_tuple(depth, std::get<1>(rtn), SearchBoundary::LOWER, 
+                    std::get<0>(rtn), 
+                        board.convertOuterBoardIndex(board.getSquareIndex(std::get<0>(rtn).fromSq), cornerIndex), 
+                        board.convertOuterBoardIndex(board.getSquareIndex(std::get<0>(rtn).toSq), cornerIndex), 
+                        board.convertOuterBoardIndex(board.getSquareIndex(std::get<0>(rtn).enPassantTarget), cornerIndex)
+                    ));
         
         if (prev != emptyMove) {
             assert(pieceLookupTable.find(prev.fromPieceType) != pieceLookupTable.end());
 
             //If no piece is being captured
-            if (rtn.first.toSq && !rtn.first.toSq->getPiece() && prev != emptyMove) {
+            if (std::get<0>(rtn).toSq && !std::get<0>(rtn).toSq->getPiece() && prev != emptyMove) {
                 counterMove[
                     (pieceLookupTable.find(prev.fromPieceType)->second * INNER_BOARD_SIZE * INNER_BOARD_SIZE) 
-                    + board.convertOuterBoardIndex(board.getSquareIndex(prev.toSq), board.findCorner_1D())
-                ] = rtn.first;
+                    + previousToSquareIndex
+                ] = std::get<0>(rtn);
             }
         }
     }
-    
     return rtn;
 }
 
@@ -718,4 +778,15 @@ void AI::benchmarkPerft() {
     std::cout << "Depth 3: " << ((perft(3, gameBoard) == 89890) ? "Passed" : "Failed") << "\n";
     std::cout << "Depth 4: " << ((perft(4, gameBoard) == 3894594) ? "Passed" : "Failed") << "\n";
     std::cout << "Depth 5: " << ((perft(5, gameBoard) == 164075551) ? "Passed" : "Failed") << "\n";
+}
+
+void AI::translateMovePointers(Board& b, Move& mv, std::tuple<int, int, int> conversionOffsets) {
+    const auto cornerIndex = b.findCorner_1D();
+
+    mv.fromSq = (mv.fromSq) ? b.vectorTable[cornerIndex + ((std::get<0>(conversionOffsets) / INNER_BOARD_SIZE) 
+            * OUTER_BOARD_SIZE) + (std::get<0>(conversionOffsets) % INNER_BOARD_SIZE)].get() : nullptr;
+    mv.toSq = (mv.toSq) ? b.vectorTable[cornerIndex + ((std::get<1>(conversionOffsets) / INNER_BOARD_SIZE) 
+            * OUTER_BOARD_SIZE) + (std::get<1>(conversionOffsets) % INNER_BOARD_SIZE)].get() : nullptr;
+    mv.enPassantTarget = (mv.enPassantTarget) ? b.vectorTable[cornerIndex + ((std::get<2>(conversionOffsets) / INNER_BOARD_SIZE) 
+            * OUTER_BOARD_SIZE) + (std::get<2>(conversionOffsets) % INNER_BOARD_SIZE)].get() : nullptr;
 }

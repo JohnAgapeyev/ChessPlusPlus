@@ -47,7 +47,7 @@ class AI {
     static const std::unordered_multimap<Piece, std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SIZE>> pieceSquareTables;
 
     using cache_key = Board;
-    using cache_value = std::tuple<int, int, SearchBoundary, Move>;
+    using cache_value = std::tuple<int, int, SearchBoundary, Move, int, int, int>;
     using cache_pointer_type = Cache<cache_key, cache_value, (static_cast<uint64_t>(CACHE_MB) << 20ul) / sizeof(Cache<cache_key, cache_value, 1>)>;
     static std::unique_ptr<cache_pointer_type> boardCache;
 
@@ -67,6 +67,7 @@ class AI {
     int eval = 0;
     
     Move prev = Move();
+    int previousToSquareIndex = -1;
 
     std::atomic_bool usingTimeLimit{false};
     std::condition_variable cv;
@@ -79,13 +80,14 @@ class AI {
     std::thread timeLimitThread;
 
     int reduceKnightMobilityScore(const std::vector<Move>& moveList, const int cornerIndex, const Board& board) const;
-    std::pair<Move, int> iterativeDeepening();
-    std::pair<Move, int> MTD(const int guess, const int depth, Board& board);
-    std::pair<Move, int> AlphaBeta(const int alpha, const int beta, const int depth, Board& board);
+    std::tuple<Move, int, int, int, int> iterativeDeepening();
+    std::tuple<Move, int, int, int, int> MTD(const int guess, const int depth, Board& board);
+    std::tuple<Move, int, int, int, int> AlphaBeta(const int alpha, const int beta, const int depth, Board& board);
     int getPieceValue(const PieceTypes type) const;
     unsigned long long perft(int depth, Board& board);
     unsigned long long perftDivide(int depth, Board& board);
     std::vector<Move> orderMoveList(std::vector<Move>&& list, Board& board);
+    void translateMovePointers(Board& b, Move& mv, std::tuple<int, int, int> conversionOffsets);
     
 public:
     AI(Board& b);
