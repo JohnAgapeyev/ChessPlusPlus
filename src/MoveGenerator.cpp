@@ -81,45 +81,50 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
     assert(!(mv.fromSq->checkSentinel() || mv.toSq->checkSentinel()));
     
     //Don't perform basic checks if the computer is generating the moves
-    if (!isSilent) {
-        if (!mv.fromSq->getPiece() || (mv.fromPieceType == PieceTypes::UNKNOWN 
-                && mv.fromPieceColour == Colour::UNKNOWN)) {
+    if (!mv.fromSq->getPiece() || (mv.fromPieceType == PieceTypes::UNKNOWN 
+            && mv.fromPieceColour == Colour::UNKNOWN)) {
+        if (!isSilent) {
             std::cout << "Cannot start a move on an empty square\n";
-            return false;
         }
-        
-        // Check if piece being moved matches the current player's colour
-        if ((mv.fromPieceColour == Colour::WHITE && !board->isWhiteTurn) 
-                || (mv.fromPieceColour == Colour::BLACK && board->isWhiteTurn)) {
+        return false;
+    }
+    
+    // Check if piece being moved matches the current player's colour
+    if ((mv.fromPieceColour == Colour::WHITE && !board->isWhiteTurn) 
+            || (mv.fromPieceColour == Colour::BLACK && board->isWhiteTurn)) {
+        if (!isSilent) {
             if (board->isWhiteTurn) {
                 std::cout << "Cannot move black piece on white's turn\n";
             } else {
                 std::cout << "Cannot move white piece on black's turn\n";
             }
-            return false;
         }
+        return false;
+    }
 
-        /*
-         * Check if the colour of the piece on the starting square 
-         * is the same colour as the piece on the ending square.
-         */
-        if (mv.toSq->getPiece() && mv.fromPieceColour == mv.toPieceColour) {
-            logMoveFailure(1, isSilent);
-            return false;
-        }
-        
-        //Prevent pieces from capturing a king
-        if (mv.toPieceType == PieceTypes::KING) {
-            logMoveFailure(2, isSilent);
-            return false;
-        }
+    /*
+     * Check if the colour of the piece on the starting square 
+     * is the same colour as the piece on the ending square.
+     */
+    if (mv.toSq->getPiece() && mv.fromPieceColour == mv.toPieceColour) {
+        logMoveFailure(1, isSilent);
+        return false;
+    }
+    
+    //Prevent pieces from capturing a king
+    if (mv.toPieceType == PieceTypes::KING) {
+        logMoveFailure(2, isSilent);
+        return false;
     }
     
     // Find the offset that the move uses
     const int selectedOffset = getMoveOffset(mv);
 
     // Check if the move offset was found
-    assert(selectedOffset != -100);
+    if (selectedOffset == -100) {
+        logMoveFailure(23, isSilent);
+        return false;
+    }
     
     const auto absOffset = std::abs(selectedOffset);
     
@@ -414,6 +419,7 @@ std::vector<Move> Board::MoveGenerator::generateAll() {
     for (int i = 0; i < INNER_BOARD_SIZE; ++i) {
         for (int j = 0; j < INNER_BOARD_SIZE; ++j) {
             const auto sq = board->vectorTable[((i + startCoords.first) * OUTER_BOARD_SIZE) + j + startCoords.second].get();
+            assert(sq != nullptr);
             const auto fromPiece = sq->getPiece();
             if (fromPiece && fromPiece->getType() != PieceTypes::UNKNOWN 
                     && fromPiece->getColour() == currentPlayerColour) {

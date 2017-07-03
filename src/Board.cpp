@@ -330,7 +330,7 @@ bool Board::makeMove(std::string& input) {
 bool Board::makeMove(Move& mv) {
     assert(checkBoardValidity());
     assert(mv.fromSq && mv.toSq);
-
+    
     const auto oldFromDist = getSquareIndex(mv.fromSq);
     assert(oldFromDist != -1);
     const auto cornerCoords = findCorner_1D();
@@ -851,8 +851,13 @@ int Board::getSquareIndex(const Square *sq) {
 
     const auto cornerIndex = findCorner_1D();
 
+    assert(cornerIndex >= 0);
+    assert(cornerIndex < 225);
+
     for (int i = 0; i < INNER_BOARD_SIZE; ++i) {
         for (int j = 0; j < INNER_BOARD_SIZE; ++j) {
+            assert((cornerIndex + (i * OUTER_BOARD_SIZE) + j) < 225);
+            assert((cornerIndex + (i * OUTER_BOARD_SIZE) + j) >= 0);
             if (*vectorTable[cornerIndex + (i * OUTER_BOARD_SIZE) + j].get() == *sq) {
                 return cornerIndex + (i * OUTER_BOARD_SIZE) + j;
             }
@@ -1026,6 +1031,8 @@ void Board::captureEnPassant(const Move& mv, const int offset, const int toSquar
 
 inline void Board::hashPieceChange(const int index, const PieceTypes type, const Colour colour) {
     assert(pieceLookupTable.find(type) != pieceLookupTable.end());
+    assert(index >= 0);
+    assert(pieceLookupTable.find(type)->second >= 0);
     currHash ^= HASH_VALUES[NUM_SQUARE_STATES * index + pieceLookupTable.find(type)->second + (6 * (colour == Colour::BLACK))];
 }
 
@@ -1047,7 +1054,7 @@ void Board::promotePawn(Move& mv, const int endSquareIndex, const bool isSilent)
     if (mv.fromPieceType == PieceTypes::PAWN) {
         halfMoveClock = 0;
         const auto distFromStartToCorner = endSquareIndex - cornerIndex;
-        const auto& rowPairs = (mv.fromPieceColour == Colour::WHITE) ? std::make_pair(0, 14) : std::make_pair(105, 119);
+        const auto rowPairs = (mv.fromPieceColour == Colour::WHITE) ? std::make_pair(0, 14) : std::make_pair(105, 119);
         
         if (distFromStartToCorner >= rowPairs.first && distFromStartToCorner <= rowPairs.second) {
             if (isSilent) {

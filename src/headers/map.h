@@ -23,20 +23,25 @@ public:
     
     void insert(const Key& k, const Value& v) {
         std::lock_guard<std::mutex> lock(mut);
-        internalArray[getBoundedHash(k)].emplace_back(v, hashEngine(k));
+        if (internalArray[getBoundedHash(k)].empty()) {
+            internalArray[getBoundedHash(k)].emplace_back(v, hashEngine(k));
+        } else {
+            internalArray[getBoundedHash(k)][0] = std::make_pair(v, hashEngine(k));
+        }
     }
     
     Value& operator[](const Key& k) {
-        const auto& bounded = getBoundedHash(k);
-        const auto& fullHash = hashEngine(k);
+        const auto bounded = getBoundedHash(k);
+        const auto fullHash = hashEngine(k);
         
         {
             std::lock_guard<std::mutex> lock(mut);
 
             if (internalArray[bounded].empty()) {
                 insert(k, Value());
+                return internalArray[bounded].back().first;
             }
-            
+
             for (auto& p : internalArray[bounded]) {
                 if (p.second == fullHash) {
                     return p.first;
@@ -55,8 +60,8 @@ public:
     }
     
     bool find(const Key& k) {
-        const auto& bounded = getBoundedHash(k);
-        const auto& fullHash = hashEngine(k);
+        const auto bounded = getBoundedHash(k);
+        const auto fullHash = hashEngine(k);
         
         std::lock_guard<std::mutex> lock(mut);
         for (const auto& p : internalArray[bounded]) {

@@ -8,6 +8,7 @@
 #include <mutex>
 #include <atomic>
 #include <cassert>
+#include <omp.h>
 #include "headers/board.h"
 #include "headers/ai.h"
 #include "headers/consts.h"
@@ -47,7 +48,7 @@ AI::~AI() {
  * Evaluates the current board state from the perspective of the current player
  * to move with a positive number favouring white, and a negative one favouring black.
  */
-void AI::evaluate(Board& board) {
+int AI::evaluate(Board& board) {
     int currScore = 0;
     std::vector<Move> whiteMoveList;
     std::vector<Move> blackMoveList;
@@ -246,7 +247,7 @@ void AI::evaluate(Board& board) {
     } else if (board.drawByMaterial()) {
         currScore = 0;
     }
-    eval = currScore;
+    return currScore;
 }
 
 int AI::reduceKnightMobilityScore(const std::vector<Move>& moveList, const int cornerIndex, const Board& board) const {
@@ -256,7 +257,6 @@ int AI::reduceKnightMobilityScore(const std::vector<Move>& moveList, const int c
     
     for(const auto& mv : moveList) {
         if (mv.fromPieceType == PieceTypes::KNIGHT) {
-            
             //Calculate index of destination square without requiring linear search
             const auto cornerToSqDiff = board.moveGen.getOffsetIndex(
                 mv.toSq->getOffset() - board.vectorTable[cornerIndex]->getOffset(), cornerIndex);
@@ -299,46 +299,40 @@ int AI::getPieceValue(const PieceTypes type) const {
 }
 
 void AI::search() {
+    setMoveTimeLimit(10);
     auto result = iterativeDeepening();
-
     prev = std::get<0>(result);
-
     previousToSquareIndex = gameBoard.convertOuterBoardIndex(gameBoard.getSquareIndex(std::get<0>(result).toSq), gameBoard.findCorner_1D());
-
     gameBoard.makeMove(std::get<0>(result));
-
     gameBoard.detectGameEnd();
 }
 
 std::tuple<Move, int, int, int, int> AI::iterativeDeepening() {
     auto firstGuess = std::make_tuple(emptyMove, 0, -1, -1, -1);
+    int evalGuess;
     std::atomic_int maxDepth{0};
-    if (usingTimeLimit) {
-        {
-            std::lock_guard<std::mutex> lock(mut);
-            isTimeUp.store(false);
-        }
-        cv.notify_all();
-        for (int i = 1; i <= DEPTH; ++i) {
-            firstGuess = MTD(std::get<1>(firstGuess), i, gameBoard);
-            if (isTimeUp.load()) {
-                break;
-            }
-        }
-    } else {
-#pragma omp parallel firstprivate(gameBoard) shared(firstGuess, maxDepth)
-        {
-            Board b{gameBoard};
+    {
+        std::lock_guard<std::mutex> lock(mut);
+        isTimeUp.store(false);
+    }
+    cv.notify_all();
+#pragma omp parallel default(none) private(evalGuess) firstprivate(gameBoard) shared(firstGuess, maxDepth, isTimeUp)
+    {
+        Board b{gameBoard};
 #pragma omp for schedule(guided)
-            for (int i = 1; i <= DEPTH; ++i) {
-                auto searchResult = MTD(std::get<1>(firstGuess), i, b);
-                assert(std::get<0>(searchResult) != emptyMove);
-                if (i > maxDepth.load()) {
-                    maxDepth.store(i);
-#pragma omp critical
-                    firstGuess = searchResult;
-                }
+        for (int i = 1; i <= DEPTH; ++i) {
+#pragma omp atomic read
+            evalGuess = std::get<1>(firstGuess);
+            auto searchResult = MTD(evalGuess, i, b);
+            if (usingTimeLimit && isTimeUp.load()) {
+#pragma omp cancel for
             }
+            if (i > maxDepth.load()) {
+                maxDepth.store(i);
+#pragma omp critical
+                firstGuess = searchResult;
+            }
+#pragma omp cancellation point for
         }
     }
     translateMovePointers(gameBoard, std::get<0>(firstGuess), std::forward_as_tuple(std::get<2>(firstGuess), std::get<3>(firstGuess), std::get<4>(firstGuess)));
@@ -351,28 +345,13 @@ std::tuple<Move, int, int, int, int> AI::MTD(const int firstGuess, const int dep
     int lower = INT_MIN;
     int beta = 0;
     
-    if (usingTimeLimit) {
-        while (upper > lower) {
-            beta = std::max(std::get<1>(currGuess), lower + 1);
-            currGuess = AlphaBeta(beta - 1, beta, depth, board);
-            if (std::get<1>(currGuess) < beta) {
-                upper = std::get<1>(currGuess);
-            } else {
-                lower = std::get<1>(currGuess);
-            }
-            if (isTimeUp.load()) {
-                break;
-            }
-        }
-    } else {
-        while (upper > lower) {
-            beta = std::max(std::get<1>(currGuess), lower + 1);
-            currGuess = AlphaBeta(beta - 1, beta, depth, board);
-            if (std::get<1>(currGuess) < beta) {
-                upper = std::get<1>(currGuess);
-            } else {
-                lower = std::get<1>(currGuess);
-            }
+    while (upper > lower) {
+        beta = std::max(std::get<1>(currGuess), lower + 1);
+        currGuess = AlphaBeta(beta - 1, beta, depth, board);
+        if (std::get<1>(currGuess) < beta) {
+            upper = std::get<1>(currGuess);
+        } else {
+            lower = std::get<1>(currGuess);
         }
     }
     return currGuess;
@@ -407,11 +386,15 @@ std::tuple<Move, int, int, int, int> AI::AlphaBeta(int alpha, int beta, const in
             }
         }
         translateMovePointers(board, std::get<0>(rtn), std::forward_as_tuple(fromOffset, toOffset, targetOffset));
+
+        //If cache entry is invalid due to hash collision, ignore it
+        if (std::get<0>(rtn) != emptyMove && !board.moveGen.validateMove(std::get<0>(rtn), true)) {
+            rtn = std::make_tuple(emptyMove, INT_MIN, -1, -1, -1);
+        }
     }
     
     if (depth == 0) {
-        evaluate(board);
-        rtn = std::make_tuple(emptyMove, eval, -1, -1, -1);
+        rtn = std::make_tuple(emptyMove, evaluate(board), -1, -1, -1);
     } else if (board.isWhiteTurn) {
         int a = alpha;
         std::get<1>(rtn) = INT_MIN;
@@ -436,8 +419,8 @@ std::tuple<Move, int, int, int, int> AI::AlphaBeta(int alpha, int beta, const in
         const auto moveListSize = moveList.size();
 
         if (moveListSize == 0) {
-            evaluate(board);
-            rtn = std::make_tuple(emptyMove, eval, -1, -1, -1);
+            rtn = std::make_tuple(emptyMove, evaluate(board), -1, -1, -1);
+            return rtn;
         }
 
         for (size_t i = 0; std::get<1>(rtn) < beta && i < moveListSize; ++i) {
@@ -452,10 +435,23 @@ std::tuple<Move, int, int, int, int> AI::AlphaBeta(int alpha, int beta, const in
                 std::get<2>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(moveList[i].fromSq), cornerIndex);
                 std::get<3>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(moveList[i].toSq), cornerIndex);
                 std::get<4>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(moveList[i].enPassantTarget), cornerIndex);
+
+                if (usingTimeLimit && isTimeUp.load()) {
+                    board.unmakeMove(std::get<0>(rtn));
+                    break;
+                }
             }
 
             a = std::max(a, std::get<1>(rtn));
             board.unmakeMove(moveList[i]);
+        }
+        if (moveListSize > 0 && std::get<0>(rtn) == emptyMove) {
+            const auto cornerIndex = board.findCorner_1D();
+            std::get<0>(rtn) = moveList[0];
+            std::get<1>(rtn) = a;
+            std::get<2>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(moveList[0].fromSq), cornerIndex);
+            std::get<3>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(moveList[0].toSq), cornerIndex);
+            std::get<4>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(moveList[0].enPassantTarget), cornerIndex);
         }
     } else {
         int b = beta;
@@ -481,8 +477,8 @@ std::tuple<Move, int, int, int, int> AI::AlphaBeta(int alpha, int beta, const in
         const auto moveListSize = moveList.size();
 
         if (moveListSize == 0) {
-            evaluate(board);
-            rtn = std::make_tuple(emptyMove, eval, -1, -1, -1);
+            rtn = std::make_tuple(emptyMove, evaluate(board), -1, -1, -1);
+            return rtn;
         }
 
         for (size_t i = 0; std::get<1>(rtn) > alpha && i < moveListSize; ++i) {
@@ -498,10 +494,21 @@ std::tuple<Move, int, int, int, int> AI::AlphaBeta(int alpha, int beta, const in
                 std::get<3>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(moveList[i].toSq), cornerIndex);
                 std::get<4>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(moveList[i].enPassantTarget), cornerIndex);
 
-                assert(moveList[i] != emptyMove);
+                if (usingTimeLimit && isTimeUp.load()) {
+                    board.unmakeMove(std::get<0>(rtn));
+                    break;
+                }
             }
             b = std::min(b, std::get<1>(rtn));
             board.unmakeMove(moveList[i]);
+        }
+        if (moveListSize > 0 && std::get<0>(rtn) == emptyMove) {
+            const auto cornerIndex = board.findCorner_1D();
+            std::get<0>(rtn) = moveList[0];
+            std::get<1>(rtn) = b;
+            std::get<2>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(moveList[0].fromSq), cornerIndex);
+            std::get<3>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(moveList[0].toSq), cornerIndex);
+            std::get<4>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(moveList[0].enPassantTarget), cornerIndex);
         }
     }
 
@@ -531,10 +538,7 @@ std::tuple<Move, int, int, int, int> AI::AlphaBeta(int alpha, int beta, const in
                         board.convertOuterBoardIndex(board.getSquareIndex(std::get<0>(rtn).toSq), cornerIndex), 
                         board.convertOuterBoardIndex(board.getSquareIndex(std::get<0>(rtn).enPassantTarget), cornerIndex)
                     ));
-        
         if (prev != emptyMove) {
-            assert(pieceLookupTable.find(prev.fromPieceType) != pieceLookupTable.end());
-
             //If no piece is being captured
             if (std::get<0>(rtn).toSq && !std::get<0>(rtn).toSq->getPiece() && prev != emptyMove) {
                 counterMove[
@@ -732,7 +736,7 @@ std::vector<Move> AI::orderMoveList(std::vector<Move>&& list, Board& board) {
 
         for (const auto& mv : list) {
             if (mv == counterMove[(pieceLookupTable.find(prev.fromPieceType)->second * INNER_BOARD_SIZE * INNER_BOARD_SIZE) 
-                    + board.convertOuterBoardIndex(board.getSquareIndex(prev.toSq), board.findCorner_1D())]) {
+                    + previousToSquareIndex]) {
                 list.insert(captureIt + 1, mv);
             }
         }

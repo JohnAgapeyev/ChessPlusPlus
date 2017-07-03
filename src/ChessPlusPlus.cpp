@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cctype>
 #include <regex>
+#include <unistd.h>
+#include <omp.h>
 #include "headers/board.h"
 #include "headers/square.h"
 #include "headers/piece.h"
@@ -11,7 +13,12 @@
 #include "headers/tt.h"
 #include "headers/ai.h"
 
-int main() {
+int main(int argc, char **argv) {
+    if (!omp_get_cancellation()) {
+      printf("Cancellations were not enabled, enabling cancellation and rerunning program\n");
+      putenv("OMP_CANCELLATION=true");
+      execv(argv[0], argv);
+    }
     Board b;
     b.printBoardState();
     mainLoop(b);

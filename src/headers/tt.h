@@ -23,9 +23,9 @@ class Cache {
     std::mutex mut;
     
     void overwrite() {
-        internalMap.erase(internalList.back().first);
         {
             std::lock_guard<std::mutex> lock(mut);
+            internalMap.erase(internalList.back().first);
             internalList.pop_back();
         }
         --currSize;
@@ -39,8 +39,8 @@ class Cache {
         {
             std::lock_guard<std::mutex> lock(mut);
             internalList.push_front(newEntry);
+            internalMap.insert(newEntry.first, internalList.begin());
         }
-        internalMap.insert(newEntry.first, internalList.begin());
         ++currSize;
     }
     
@@ -68,11 +68,12 @@ public:
     }
     
     Value& operator[](Key& k) {
-        const auto& elem = internalMap[hashEngine(k)];
+        const auto elem = internalMap[hashEngine(k)];
         {
             std::lock_guard<std::mutex> lock(mut);
-            if (elem != internalList.begin()) {
-                internalList.splice(internalList.begin(), internalList, elem, std::next(elem));
+            assert(elem != internalList.end());
+            if (elem != internalList.begin() && elem != internalList.end()) {
+                internalList.splice(internalList.begin(), internalList, elem);
             }
         }
         return elem->second;

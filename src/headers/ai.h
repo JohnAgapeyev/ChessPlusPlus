@@ -64,8 +64,6 @@ class AI {
 
     Board& gameBoard;
     
-    int eval = 0;
-    
     Move prev = Move();
     int previousToSquareIndex = -1;
 
@@ -92,9 +90,8 @@ class AI {
 public:
     AI(Board& b);
     ~AI();
-    void evaluate(Board& board);
+    int evaluate(Board& board);
     void search();
-    auto getEval() const {return static_cast<double>(eval) / 100;}
     void benchmarkPerft();
     void setInfiniteMode(const bool val) {usingTimeLimit = !val;}
     void setMoveTimeLimit(const unsigned long secs) {usingTimeLimit = true; moveTimeLimit = std::chrono::seconds(secs);}
