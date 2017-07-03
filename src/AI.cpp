@@ -320,7 +320,7 @@ std::tuple<Move, int, int, int, int> AI::iterativeDeepening() {
     {
         Board b{gameBoard};
 #pragma omp for schedule(guided)
-        for (int i = 1; i <= DEPTH; ++i) {
+        for (int i = 1; i <= DEPTH + (99 * usingTimeLimit); ++i) {
 #pragma omp atomic read
             evalGuess = std::get<1>(firstGuess);
             auto searchResult = MTD(evalGuess, i, b);
