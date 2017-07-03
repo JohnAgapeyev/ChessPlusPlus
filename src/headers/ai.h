@@ -55,7 +55,7 @@ class AI {
     
     std::array<Move, 6 * INNER_BOARD_SIZE * INNER_BOARD_SIZE> counterMove; 
     
-    const int DEPTH = 7;
+    int DEPTH = 7;
     
     bool isWhitePlayer = false;
     
@@ -95,6 +95,7 @@ public:
     void benchmarkPerft();
     void setInfiniteMode(const bool val) {usingTimeLimit = !val;}
     void setMoveTimeLimit(const unsigned long secs) {usingTimeLimit = true; moveTimeLimit = std::chrono::seconds(secs);}
+    void setDepth(const int dep) {DEPTH = dep;} 
 };
 
 #endif
