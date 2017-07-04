@@ -20,14 +20,14 @@ const Move AI::emptyMove{};
 const std::unordered_multimap<Piece, std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SIZE>> 
     AI::pieceSquareTables = AI::initializeMap();
 
-AI::AI(Board& b) : gameBoard(b) {
+AI::AI(Board *b) : gameBoard(b) {
     timeLimitThread = std::thread{[&](){
         while (isAIActive.load()) {
             if (!isTimeUp.load()) {
                 std::this_thread::sleep_for(moveTimeLimit);
                 isTimeUp.store(true);
             }
-            static std::unique_lock<std::mutex> lock{mut};
+            std::unique_lock<std::mutex> lock{mut};
             cv.wait(lock);
         }
     }};
@@ -84,13 +84,6 @@ int AI::evaluate(Board& board) {
     
     currScore -= reduceKnightMobilityScore(whiteMoveList, cornerIndex, board);
     currScore += reduceKnightMobilityScore(blackMoveList, cornerIndex, board);
-    
-    if (hasWhiteCastled) {
-        currScore += CASTLE_BONUS;
-    }
-    if (hasBlackCastled) {
-        currScore -= CASTLE_BONUS;
-    }
     
     //Counting material values
     for(int i = 0; i < INNER_BOARD_SIZE; ++i) {
@@ -299,12 +292,11 @@ int AI::getPieceValue(const PieceTypes type) const {
 }
 
 void AI::search() {
-    setMoveTimeLimit(10);
     auto result = iterativeDeepening();
     prev = std::get<0>(result);
-    previousToSquareIndex = gameBoard.convertOuterBoardIndex(gameBoard.getSquareIndex(std::get<0>(result).toSq), gameBoard.findCorner_1D());
-    gameBoard.makeMove(std::get<0>(result));
-    gameBoard.detectGameEnd();
+    previousToSquareIndex = gameBoard->convertOuterBoardIndex(gameBoard->getSquareIndex(std::get<0>(result).toSq), gameBoard->findCorner_1D());
+    gameBoard->makeMove(std::get<0>(result));
+    gameBoard->detectGameEnd();
 }
 
 std::tuple<Move, int, int, int, int> AI::iterativeDeepening() {
@@ -318,7 +310,7 @@ std::tuple<Move, int, int, int, int> AI::iterativeDeepening() {
     cv.notify_all();
 #pragma omp parallel default(none) private(evalGuess) firstprivate(gameBoard) shared(firstGuess, maxDepth, isTimeUp)
     {
-        Board b{gameBoard};
+        Board b{*gameBoard};
 #pragma omp for schedule(guided)
         for (int i = 1; i <= DEPTH + (99 * usingTimeLimit); ++i) {
 #pragma omp atomic read
@@ -335,7 +327,7 @@ std::tuple<Move, int, int, int, int> AI::iterativeDeepening() {
 #pragma omp cancellation point for
         }
     }
-    translateMovePointers(gameBoard, std::get<0>(firstGuess), std::forward_as_tuple(std::get<2>(firstGuess), std::get<3>(firstGuess), std::get<4>(firstGuess)));
+    translateMovePointers(*gameBoard, std::get<0>(firstGuess), std::forward_as_tuple(std::get<2>(firstGuess), std::get<3>(firstGuess), std::get<4>(firstGuess)));
     return firstGuess;
 }
 
@@ -746,42 +738,42 @@ std::vector<Move> AI::orderMoveList(std::vector<Move>&& list, Board& board) {
 }
 
 void AI::benchmarkPerft() {
-    gameBoard.setPositionByFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -");
+    gameBoard->setPositionByFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -");
 
     std::cout << "Position 1\n";
-    std::cout << "Depth 1: " << ((perft(1, gameBoard) == 48) ? "Passed" : "Failed") << "\n";
-    std::cout << "Depth 2: " << ((perft(2, gameBoard) == 2039) ? "Passed" : "Failed") << "\n";
-    std::cout << "Depth 3: " << ((perft(3, gameBoard) == 97862) ? "Passed" : "Failed") << "\n";
-    std::cout << "Depth 4: " << ((perft(4, gameBoard) == 4085603) ? "Passed" : "Failed") << "\n";
-    std::cout << "Depth 5: " << ((perft(5, gameBoard) == 193690690) ? "Passed" : "Failed") << "\n";
-    gameBoard.setPositionByFEN("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -");
+    std::cout << "Depth 1: " << ((perft(1, *gameBoard) == 48) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 2: " << ((perft(2, *gameBoard) == 2039) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 3: " << ((perft(3, *gameBoard) == 97862) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 4: " << ((perft(4, *gameBoard) == 4085603) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 5: " << ((perft(5, *gameBoard) == 193690690) ? "Passed" : "Failed") << "\n";
+    gameBoard->setPositionByFEN("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -");
     std::cout << "Position 2\n";
-    std::cout << "Depth 1: " << ((perft(1, gameBoard) == 14) ? "Passed" : "Failed") << "\n";
-    std::cout << "Depth 2: " << ((perft(2, gameBoard) == 191) ? "Passed" : "Failed") << "\n";
-    std::cout << "Depth 3: " << ((perft(3, gameBoard) == 2812) ? "Passed" : "Failed") << "\n";
-    std::cout << "Depth 4: " << ((perft(4, gameBoard) == 43238) ? "Passed" : "Failed") << "\n";
-    std::cout << "Depth 5: " << ((perft(5, gameBoard) == 674624) ? "Passed" : "Failed") << "\n";
-    gameBoard.setPositionByFEN("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1");
+    std::cout << "Depth 1: " << ((perft(1, *gameBoard) == 14) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 2: " << ((perft(2, *gameBoard) == 191) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 3: " << ((perft(3, *gameBoard) == 2812) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 4: " << ((perft(4, *gameBoard) == 43238) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 5: " << ((perft(5, *gameBoard) == 674624) ? "Passed" : "Failed") << "\n";
+    gameBoard->setPositionByFEN("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1");
     std::cout << "Position 3\n";
-    std::cout << "Depth 1: " << ((perft(1, gameBoard) == 6) ? "Passed" : "Failed") << "\n";
-    std::cout << "Depth 2: " << ((perft(2, gameBoard) == 264) ? "Passed" : "Failed") << "\n";
-    std::cout << "Depth 3: " << ((perft(3, gameBoard) == 9467) ? "Passed" : "Failed") << "\n";
-    std::cout << "Depth 4: " << ((perft(4, gameBoard) == 422333) ? "Passed" : "Failed") << "\n";
-    std::cout << "Depth 5: " << ((perft(5, gameBoard) == 15833292) ? "Passed" : "Failed") << "\n";
-    gameBoard.setPositionByFEN("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
+    std::cout << "Depth 1: " << ((perft(1, *gameBoard) == 6) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 2: " << ((perft(2, *gameBoard) == 264) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 3: " << ((perft(3, *gameBoard) == 9467) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 4: " << ((perft(4, *gameBoard) == 422333) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 5: " << ((perft(5, *gameBoard) == 15833292) ? "Passed" : "Failed") << "\n";
+    gameBoard->setPositionByFEN("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
     std::cout << "Position 4\n";
-    std::cout << "Depth 1: " << ((perft(1, gameBoard) == 44) ? "Passed" : "Failed") << "\n";
-    std::cout << "Depth 2: " << ((perft(2, gameBoard) == 1486) ? "Passed" : "Failed") << "\n";
-    std::cout << "Depth 3: " << ((perft(3, gameBoard) == 62379) ? "Passed" : "Failed") << "\n";
-    std::cout << "Depth 4: " << ((perft(4, gameBoard) == 2103487) ? "Passed" : "Failed") << "\n";
-    std::cout << "Depth 5: " << ((perft(5, gameBoard) == 89941194) ? "Passed" : "Failed") << "\n";
-    gameBoard.setPositionByFEN("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10");
+    std::cout << "Depth 1: " << ((perft(1, *gameBoard) == 44) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 2: " << ((perft(2, *gameBoard) == 1486) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 3: " << ((perft(3, *gameBoard) == 62379) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 4: " << ((perft(4, *gameBoard) == 2103487) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 5: " << ((perft(5, *gameBoard) == 89941194) ? "Passed" : "Failed") << "\n";
+    gameBoard->setPositionByFEN("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10");
     std::cout << "Position 5\n";
-    std::cout << "Depth 1: " << ((perft(1, gameBoard) == 46) ? "Passed" : "Failed") << "\n";
-    std::cout << "Depth 2: " << ((perft(2, gameBoard) == 2079) ? "Passed" : "Failed") << "\n";
-    std::cout << "Depth 3: " << ((perft(3, gameBoard) == 89890) ? "Passed" : "Failed") << "\n";
-    std::cout << "Depth 4: " << ((perft(4, gameBoard) == 3894594) ? "Passed" : "Failed") << "\n";
-    std::cout << "Depth 5: " << ((perft(5, gameBoard) == 164075551) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 1: " << ((perft(1, *gameBoard) == 46) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 2: " << ((perft(2, *gameBoard) == 2079) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 3: " << ((perft(3, *gameBoard) == 89890) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 4: " << ((perft(4, *gameBoard) == 3894594) ? "Passed" : "Failed") << "\n";
+    std::cout << "Depth 5: " << ((perft(5, *gameBoard) == 164075551) ? "Passed" : "Failed") << "\n";
 }
 
 void AI::translateMovePointers(Board& b, Move& mv, std::tuple<int, int, int> conversionOffsets) {

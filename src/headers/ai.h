@@ -40,10 +40,7 @@ class AI {
     static constexpr auto HALF_OPEN_FILE_VAL = 10;
     static constexpr auto ROOK_SEVEN_VAL = 10;
     
-    static constexpr auto CASTLE_BONUS = 30;
-    
     static std::unordered_multimap<Piece, std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SIZE>> initializeMap();
-    
     static const std::unordered_multimap<Piece, std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SIZE>> pieceSquareTables;
 
     using cache_key = Board;
@@ -58,11 +55,8 @@ class AI {
     int DEPTH = 7;
     
     bool isWhitePlayer = false;
-    
-    bool hasBlackCastled = false;
-    bool hasWhiteCastled = false;
 
-    Board& gameBoard;
+    Board *gameBoard;
     
     Move prev = Move();
     int previousToSquareIndex = -1;
@@ -88,7 +82,7 @@ class AI {
     void translateMovePointers(Board& b, Move& mv, std::tuple<int, int, int> conversionOffsets);
     
 public:
-    AI(Board& b);
+    AI(Board *b);
     ~AI();
     int evaluate(Board& board);
     void search();
