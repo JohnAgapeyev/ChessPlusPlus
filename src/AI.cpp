@@ -148,12 +148,10 @@ int AI::evaluate(Board& board) {
                     if (currPiece->getColour() == Colour::WHITE) {
                         //Material value
                         currScore += getPieceValue(currPiece->getType());
-
                         whiteKingIndex = Board::convertOuterBoardIndex(cornerIndex + (i * OUTER_BOARD_SIZE) + j, cornerIndex);
                     } else {
                         //Material value
                         currScore -= getPieceValue(currPiece->getType());
-
                         blackKingIndex = Board::convertOuterBoardIndex(cornerIndex + (i * OUTER_BOARD_SIZE) + j, cornerIndex);
                     }
                 }
@@ -641,10 +639,10 @@ std::unordered_multimap<Piece, std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SI
             -30,-40,-40,-50,-50,-40,-40,-30,
             -30,-40,-40,-50,-50,-40,-40,-30,
             -30,-40,-40,-50,-50,-40,-40,-30,
-            -20,-30,-30,-40,-40,-30,-30,-20,
-            -10,-20,-20,-20,-20,-20,-20,-10,
-             20, 20,  0,  0,  0,  0, 20, 20,
-             30, 40, 10,  0,  0, 10, 40, 30
+            -30,-30,-30,-40,-40,-30,-30,-30,
+            -30,-30,-30,-30,-30,-30,-30,-30,
+            -30,-30,-30,-30,-30,-30,-30,-30,
+             40, 40, 50,  0,  0, 30, 50, 40
         }}));
     tempMap.emplace(std::make_pair(Piece(PieceTypes::KING, Colour::WHITE), 
         std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SIZE>{{
