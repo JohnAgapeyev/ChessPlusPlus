@@ -595,11 +595,11 @@ std::unordered_multimap<Piece, std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SI
         std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SIZE>{{
               0,  0,  0,  0,  0,  0,  0,  0,
              50, 50, 50, 50, 50, 50, 50, 50,
-             10, 10, 20, 30, 30, 20, 10, 10,
-              5,  5, 10, 25, 25, 10,  5,  5,
-              0,  0,  0, 20, 20,  0,  0,  0,
-              5, -5, 10,  0,  0,-10, -5,  5,
-              5, 10, 10,-20,-20, 10, 10, 50,
+             10, 10, 20, 40, 40, 20, 10, 10,
+              5,  5, 10, 30, 30, 10,  5,  5,
+              0,  0,  0, 25, 25,  0,  0,  0,
+              5, -5, 10, -5, -5,-10, -5,  5,
+              5, 10, 10,-25,-25, 10, 10, 50,
               0,  0,  0,  0,  0,  0,  0,  0
         }}));
     tempMap.emplace(std::make_pair(Piece(PieceTypes::BISHOP, Colour::WHITE), 
@@ -615,14 +615,14 @@ std::unordered_multimap<Piece, std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SI
         }}));
     tempMap.emplace(std::make_pair(Piece(PieceTypes::KNIGHT, Colour::WHITE), 
         std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SIZE>{{
-            -50,-40,-30,-30,-30,-30,-40,-50,
-            -40,-20,  0,  0,  0,  0,-20,-40,
-            -30,  0, 10, 15, 15, 10,  0,-30,
-            -30,  5, 15, 20, 20, 15,  5,-30,
-            -30,  0, 15, 20, 20, 15,  0,-30,
-            -30,  5, 10, 15, 15, 10,  5,-30,
-            -40,-20,  0,  5,  5,  0,-20, 50,
-            -50,-40,-30,-30,-30,-30,-40,-50
+            -40,-30,-20,-20,-20,-20,-30,-40,
+            -30,-20,  0,  0,  0,  0,-20,-30,
+            -20,  0, 10, 15, 15, 10,  0,-20,
+            -20,  5, 15, 20, 20, 15,  5,-20,
+            -20,  0, 15, 20, 20, 15,  0,-20,
+            -20,  5, 10, 15, 15, 10,  5,-20,
+            -30,-20,  0,  5,  5,  0,-20, 30,
+            -40,-30,-20,-20,-20,-20,-30,-40
         }}));
     tempMap.emplace(std::make_pair(Piece(PieceTypes::ROOK, Colour::WHITE), 
         std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SIZE>{{
@@ -644,7 +644,7 @@ std::unordered_multimap<Piece, std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SI
             -20,-30,-30,-40,-40,-30,-30,-20,
             -10,-20,-20,-20,-20,-20,-20,-10,
              20, 20,  0,  0,  0,  0, 20, 20,
-             20, 30, 10,  0,  0, 10, 30, 20
+             30, 40, 10,  0,  0, 10, 40, 30
         }}));
     tempMap.emplace(std::make_pair(Piece(PieceTypes::KING, Colour::WHITE), 
         std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SIZE>{{
