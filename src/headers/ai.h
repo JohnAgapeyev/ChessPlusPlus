@@ -85,7 +85,7 @@ public:
     AI(Board *b);
     ~AI();
     int evaluate(Board& board);
-    void search();
+    std::string search();
     void benchmarkPerft();
     void setInfiniteMode(const bool val) {usingTimeLimit = !val;}
     void setMoveTimeLimit(const unsigned long secs) {usingTimeLimit = true; moveTimeLimit = std::chrono::seconds(secs);}

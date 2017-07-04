@@ -5,6 +5,8 @@ bool checkMoveInputValid(const std::string& input);
 std::string getUserInput();
 int getUserInt();
 void printHelpText();
+void printInGameHelp();
+void printInGameAIHelp();
 void setupGame();
 bool configureAI(bool& usingTimeLimit, int& timeLimit, int& plyCount);
 

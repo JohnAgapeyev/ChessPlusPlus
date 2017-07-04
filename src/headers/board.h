@@ -115,6 +115,8 @@ public:
     std::string generateFEN();
     bool drawByMaterial();
     void setPositionByFEN(const std::string& fen);
+    void setGameState(const GameState state) {currentGameState = state;}
+    auto getWhiteTurn() const {return isWhiteTurn;}
     
     friend class std::hash<Board>;
     friend class AI;

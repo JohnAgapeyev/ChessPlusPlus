@@ -14,11 +14,10 @@ int main(int argc, char **argv) {
         putenv((char *)"OMP_CANCELLATION=true");
         execv(argv[0], argv);
     }
-    std::string input;
-
     std::cout << "Welcome to ChessPlusPlus!\n" << "This program is a Chess AI written in C++14 and OpenMP.\n" 
         << "For more information on this program, go to www.github.com/JohnAgapeyev/ChessPlusPlus\n\n";
         
+    std::string input;
     for (;;) {
         std::cout << "Enter your command, or enter help to see a list of possible commands: ";
         input = getUserInput(); 
@@ -37,7 +36,7 @@ int main(int argc, char **argv) {
         }
         if (!input.compare("game")) {
             setupGame();
-            //continue;
+            continue;
         }
     }
     return 0;
@@ -77,6 +76,31 @@ void printHelpText() {
         << "benchmark - For testing the speed and correctness of the chess engine behind the AI using a set of known test positions\n"
         << "help - To display this help message\n"
         << "exit - To exit the program\n";
+}
+
+void printInGameHelp() {
+    std::cout << "There are 6 avaiable commands while in-game:\n";
+    std::cout << "e2e4 - The main format of move input.\n" 
+        << "\tIt is characterized by the sequence of a letter a-h, followed by a number 1-8; repeated twice.\n"
+        << "\tAnother example move would look like g1f3\n";
+    std::cout << "5254 - An alternate input format. This is equivalent to e2e4, " 
+        << "but the letters are converted to their logical value in the alphabet with 'a' being equal to 1\n";
+    std::cout << "draw - Offers a draw to the other player\n";
+    std::cout << "resign - Resigns the game\n";
+    std::cout << "fen - Generates a FEN string of the current position\n";
+    std::cout << "exit - Exit the game and return to the main menu. This will terminate the game and not save its state or result.\n";
+}
+
+void printInGameAIHelp() {
+    std::cout << "There are 5 avaiable commands while in-game with the AI:\n";
+    std::cout << "e2e4 - The main format of move input.\n" 
+        << "\tIt is characterized by the sequence of a letter a-h, followed by a number 1-8; repeated twice.\n"
+        << "\tAnother example move would look like g1f3\n";
+    std::cout << "5254 - An alternate input format. This is equivalent to e2e4, " 
+        << "but the letters are converted to their logical value in the alphabet with 'a' being equal to 1\n";
+    std::cout << "resign - Resigns the game\n";
+    std::cout << "fen - Generates a FEN string of the current position\n";
+    std::cout << "exit - Exit the game and return to the main menu. This will terminate the game and not save its state or result.\n";
 }
 
 void setupGame() {
@@ -172,10 +196,41 @@ void playHumanGame() {
     b.printBoardState();
     std::string input;
     while (b.getGameState() == GameState::ACTIVE) {
+        if (b.getWhiteTurn()) {
+            std::cout << "It is white's turn to move\n";
+        } else {
+            std::cout << "It is black's turn to move\n";
+        }
         std::cout << "Enter your move: ";
         input = getUserInput();
         if (!input.compare("exit")) {
             break;
+        }
+        if (!input.compare("help")) {
+            printInGameHelp();
+            continue;
+        }
+        if (!input.compare("draw")) {
+            std::cout << "The other player has offered a draw, do you accept [y/n]? ";
+            input = getUserInput();
+            if (!input.compare("y")) {
+                std::cout << "DRAW\n";
+                std::cout << "Mutual agreement\n";
+                b.setGameState(GameState::DRAWN);
+                break;
+            } else {
+                std::cout << "Draw declined\n";
+                continue;
+            }
+        }
+        if (!input.compare("resign")) {
+            std::cout << "RESIGNATION\n";
+            b.setGameState(GameState::MATE);
+            break;
+        }
+        if (!input.compare("fen")) {
+            std::cout << "FEN string: " << b.generateFEN() << "\n";
+            continue;
         }
         if (!checkMoveInputValid(input)) {
             std::cout << "Not a valid move format\n";
@@ -202,13 +257,27 @@ void playMixedGame(bool isAIWhite, bool usingTimeLimit, int timeLimit, int plyCo
     while (b.getGameState() == GameState::ACTIVE) {
         if (isAIWhite) {
             //AI is white
-            comp.search();
+            std::cout << "The AI made the move: " << comp.search() << "\n";
             b.printBoardState();
             for (;;) {
+                std::cout << "It is black's turn to move\n";
                 std::cout << "Enter your move: ";
                 input = getUserInput();
                 if (!input.compare("exit")) {
                     return;
+                }
+                if (!input.compare("help")) {
+                    printInGameAIHelp();
+                    continue;
+                }
+                if (!input.compare("resign")) {
+                    std::cout << "RESIGNATION\n";
+                    b.setGameState(GameState::MATE);
+                    return;
+                }
+                if (!input.compare("fen")) {
+                    std::cout << "FEN string: " << b.generateFEN() << "\n";
+                    continue;
                 }
                 if (checkMoveInputValid(input) && b.makeMove(input)) {
                     b.printBoardState();
@@ -218,20 +287,34 @@ void playMixedGame(bool isAIWhite, bool usingTimeLimit, int timeLimit, int plyCo
             }
         } else {
             //AI is black
-            std::cout << "Enter your move: ";
-            input = getUserInput();
-            if (!input.compare("exit")) {
-                return;
-            }
-            if (!checkMoveInputValid(input)) {
+            for (;;) {
+                std::cout << "It is white's turn to move\n";
+                std::cout << "Enter your move: ";
+                input = getUserInput();
+                if (!input.compare("exit")) {
+                    return;
+                }
+                if (!input.compare("help")) {
+                    printInGameAIHelp();
+                    continue;
+                }
+                if (!input.compare("resign")) {
+                    std::cout << "RESIGNATION\n";
+                    b.setGameState(GameState::MATE);
+                    return;
+                }
+                if (!input.compare("fen")) {
+                    std::cout << "FEN string: " << b.generateFEN() << "\n";
+                    continue;
+                }
+                if (checkMoveInputValid(input) && b.makeMove(input)) {
+                    b.printBoardState();
+                    break;
+                }
                 std::cout << "Not a valid move format\n";
-                continue;
             }
-            if (b.makeMove(input)) {
-                b.printBoardState();
-                comp.search();
-                b.printBoardState();
-            }
+            std::cout << "The AI made the move: " << comp.search() << "\n";
+            b.printBoardState();
         }
     }
 }
@@ -253,9 +336,9 @@ void playAIGame(bool usingTimeLimit, int timeLimit, int plyCount) {
     }
     b.printBoardState();
     while (b.getGameState() == GameState::ACTIVE) {
-        comp1.search();
+        std::cout << "The white AI made the move: " << comp1.search() << "\n";
         b.printBoardState();
-        comp2.search();
+        std::cout << "The black AI made the move: " << comp2.search() << "\n";
         b.printBoardState();
     }
 }

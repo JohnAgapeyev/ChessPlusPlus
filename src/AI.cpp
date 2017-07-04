@@ -289,12 +289,14 @@ int AI::getPieceValue(const PieceTypes type) const {
     }
 }
 
-void AI::search() {
+std::string AI::search() {
     auto result = iterativeDeepening();
     prev = std::get<0>(result);
     previousToSquareIndex = gameBoard->convertOuterBoardIndex(gameBoard->getSquareIndex(std::get<0>(result).toSq), gameBoard->findCorner_1D());
+    const auto moveText = gameBoard->convertMoveToCoordText(std::get<0>(result));
     gameBoard->makeMove(std::get<0>(result));
     gameBoard->detectGameEnd();
+    return moveText;
 }
 
 std::tuple<Move, int, int, int, int> AI::iterativeDeepening() {
