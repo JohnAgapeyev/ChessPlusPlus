@@ -1,6 +1,6 @@
 BASEFLAGS := -Wall -pedantic -pipe -std=c++14 -fopenmp
 DEBUGFLAGS := -fsanitize=undefined -g
-RELEASEFLAGS := -O3 -march=native -flto -ftracer -funswitch-loops -funroll-loops -funit-at-a-time -fno-rtti -fno-exceptions -fomit-frame-pointer -DNDEBUG
+RELEASEFLAGS := -s -O3 -march=native -flto -ftracer -funswitch-loops -funroll-loops -funit-at-a-time -fno-rtti -fno-exceptions -fomit-frame-pointer -DNDEBUG
 CLIBS := -pthread
 APPNAME := Chess
 ODIR := bin
