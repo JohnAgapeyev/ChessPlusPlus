@@ -3,6 +3,12 @@
 
 #include <unordered_map>
 
+/**
+ * Various enums used throughout the program
+ * to represent values such as piece types and colour.
+ * These enums also represent values for use in board hashing.
+ */
+
 enum class PieceTypes : unsigned char {
     UNKNOWN = ' ',
     PAWN = 'P',

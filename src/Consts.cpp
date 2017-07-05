@@ -68,6 +68,9 @@ std::array<std::array<std::unique_ptr<Square>, INNER_BOARD_SIZE>, INNER_BOARD_SI
     return result;
 }
 
+/**
+ * Populates the hash table values used by zobrist hashing.
+ */
 std::array<uint_fast64_t, HASH_BOARD_LENGTH> populateHashTable() {
     std::array<uint_fast64_t, HASH_BOARD_LENGTH> result;
     std::mt19937_64 gen(std::random_device{}());

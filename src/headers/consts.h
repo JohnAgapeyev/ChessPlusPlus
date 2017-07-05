@@ -4,6 +4,11 @@
 #include <cstdint>
 #include "square.h"
 
+/**
+ * Various global constants used throughout the program.
+ * Mainly used for castling bit-flipping and reducing magic numbers.
+ */
+
 constexpr uint_least8_t INNER_BOARD_SIZE = 8;
 constexpr uint_least8_t OUTER_BOARD_SIZE = 15;
 constexpr uint_least8_t TOTAL_BOARD_SIZE = OUTER_BOARD_SIZE * OUTER_BOARD_SIZE;

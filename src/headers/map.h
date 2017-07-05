@@ -4,6 +4,13 @@
 #include <cstdint>
 #include <mutex>
 
+/**
+ * CacheMap is a fixed size thread-safe hashmap implementation that does not store the key.
+ * I found that the STL unordered_map stored the key for rehashing purposes,
+ * and since my key value was large (~1KiB) it was a waste of memory for something that was fixed size.
+ * This container originally used chaining to resolve collisions, though that had 
+ * an unacceptable level of memory growth, so it was replaced with this fixed memory scheme.
+ */
 template<typename Key, typename Value, uint64_t maxSize, typename Hash = std::hash<Key>>
 class CacheMap {
     static_assert(maxSize > 0, "Size must be greater than zero");

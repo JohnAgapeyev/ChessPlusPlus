@@ -241,6 +241,13 @@ int AI::evaluate(Board& board) {
     return currScore;
 }
 
+/**
+ * The evaulation function uses piece mobility as a metric.
+ * Knights that have their perspective squares guarded by enemy pawns should not consider those squares viable moves due
+ * to an easy capture of the knight.
+ * This method removes those squares from a knight's mobility list, effectively reducing its bonus based on how
+ * corralled it is by enemy pawns.
+ */
 int AI::reduceKnightMobilityScore(const std::vector<Move>& moveList, const int cornerIndex, const Board& board) const {
     static constexpr int pawnThreatOffsets[] = {14, 16, -14, -16};
     auto totalToRemove = 0;
@@ -270,6 +277,9 @@ int AI::reduceKnightMobilityScore(const std::vector<Move>& moveList, const int c
     return totalToRemove;
 }
 
+/**
+ * Returns the evaluation weight of the given piece type.
+ */
 int AI::getPieceValue(const PieceTypes type) const {
     switch(type) {
         case PieceTypes::PAWN:
@@ -289,6 +299,9 @@ int AI::getPieceValue(const PieceTypes type) const {
     }
 }
 
+/**
+ * General search method used for initiating the AI's search, and performing the best found move.
+ */
 std::string AI::search() {
     auto result = iterativeDeepening();
     prev = std::get<0>(result);
@@ -299,6 +312,13 @@ std::string AI::search() {
     return moveText;
 }
 
+/**
+ * This function performs an iterative deepning search upon the game board.
+ * For multithreading purposes, each thread performs a deep copy of the current game
+ * board, then performs one or more of the iterations of the iterative deepening loop.
+ * These results are then aggregated based on depth and returned.
+ * The rest of the code is used for handling move time limits.
+ */
 std::tuple<Move, int, int, int, int> AI::iterativeDeepening() {
     auto firstGuess = std::make_tuple(emptyMove, 0, -1, -1, -1);
     int evalGuess;
@@ -331,6 +351,11 @@ std::tuple<Move, int, int, int, int> AI::iterativeDeepening() {
     return firstGuess;
 }
 
+/**
+ * MTD(f) is called from inside the iterative deepening function.
+ * It performs repeated null window alpha beta searches to attempt a faster and more efficient
+ * convergence on the true value of a given board state.
+ */
 std::tuple<Move, int, int, int, int> AI::MTD(const int firstGuess, const int depth, Board& board) {
     auto currGuess = std::make_tuple(emptyMove, firstGuess, -1, -1, -1);
     int upper = INT_MAX;
@@ -349,6 +374,11 @@ std::tuple<Move, int, int, int, int> AI::MTD(const int firstGuess, const int dep
     return currGuess;
 }
 
+/**
+ * Alpha beta is the primary search method utilized by this AI.
+ * It is called with a null window by MTDF above.
+ * This function performs transposition table lookup and storage, as well as game tree traversal.
+ */
 std::tuple<Move, int, int, int, int> AI::AlphaBeta(int alpha, int beta, const int depth, Board& board) {
     assert(depth >= 0);
     auto rtn = std::make_tuple(emptyMove, INT_MIN, -1, -1, -1);
@@ -388,11 +418,13 @@ std::tuple<Move, int, int, int, int> AI::AlphaBeta(int alpha, int beta, const in
     if (depth == 0) {
         rtn = std::make_tuple(emptyMove, evaluate(board), -1, -1, -1);
     } else if (board.isWhiteTurn) {
+        //Maximizing player
         int a = alpha;
         std::get<1>(rtn) = INT_MIN;
-
+        
+        //Make the move if it was found in the cache
         if (std::get<0>(rtn) != emptyMove) {
-            board.makeMove(std::get<0>(rtn)); //Make the move if it was found in the cache
+            board.makeMove(std::get<0>(rtn)); 
             const auto abCall = AlphaBeta(a, beta, depth - 1, board);
             
             if (std::get<1>(abCall) > std::get<1>(rtn)) {
@@ -410,11 +442,13 @@ std::tuple<Move, int, int, int, int> AI::AlphaBeta(int alpha, int beta, const in
         auto moveList = orderMoveList(board.moveGen.generateAll(), board);
         const auto moveListSize = moveList.size();
 
+        //Evalulate the board if the current position is a checkmate or stalemate
         if (moveListSize == 0) {
             rtn = std::make_tuple(emptyMove, evaluate(board), -1, -1, -1);
             return rtn;
         }
 
+        //Traverses the game tree
         for (size_t i = 0; std::get<1>(rtn) < beta && i < moveListSize; ++i) {
             board.makeMove(moveList[i]);
             const auto abCall = AlphaBeta(a, beta, depth - 1, board);
@@ -437,6 +471,8 @@ std::tuple<Move, int, int, int, int> AI::AlphaBeta(int alpha, int beta, const in
             a = std::max(a, std::get<1>(rtn));
             board.unmakeMove(moveList[i]);
         }
+        
+        //If no cutoff was found by the previous loop, default to the first move in the list
         if (moveListSize > 0 && std::get<0>(rtn) == emptyMove) {
             const auto cornerIndex = board.findCorner_1D();
             std::get<0>(rtn) = moveList[0];
@@ -446,6 +482,7 @@ std::tuple<Move, int, int, int, int> AI::AlphaBeta(int alpha, int beta, const in
             std::get<4>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(moveList[0].enPassantTarget), cornerIndex);
         }
     } else {
+        //Minimizing player
         int b = beta;
         std::get<1>(rtn) = INT_MAX;
 
@@ -468,11 +505,13 @@ std::tuple<Move, int, int, int, int> AI::AlphaBeta(int alpha, int beta, const in
         auto moveList = orderMoveList(board.moveGen.generateAll(), board);
         const auto moveListSize = moveList.size();
 
+        //Evalulate the board if the current position is a checkmate or stalemate
         if (moveListSize == 0) {
             rtn = std::make_tuple(emptyMove, evaluate(board), -1, -1, -1);
             return rtn;
         }
 
+        //Traverses the game tree
         for (size_t i = 0; std::get<1>(rtn) > alpha && i < moveListSize; ++i) {
             board.makeMove(moveList[i]);
             const auto abCall = AlphaBeta(alpha, b, depth - 1, board);
@@ -494,6 +533,7 @@ std::tuple<Move, int, int, int, int> AI::AlphaBeta(int alpha, int beta, const in
             b = std::min(b, std::get<1>(rtn));
             board.unmakeMove(moveList[i]);
         }
+        //If no cutoff was found by the previous loop, default to the first move in the list
         if (moveListSize > 0 && std::get<0>(rtn) == emptyMove) {
             const auto cornerIndex = board.findCorner_1D();
             std::get<0>(rtn) = moveList[0];
@@ -543,6 +583,12 @@ std::tuple<Move, int, int, int, int> AI::AlphaBeta(int alpha, int beta, const in
     return rtn;
 }
 
+/**
+ * Performs perft evaluation in parallel to a certain depth on a given board.
+ * This is used primarily for checking the correctness of the chess engine,
+ * but can also be a partial measure of the general speed of the engine based on how
+ * fast move generation and tree traversal is based on fixed and deterministic parameters.
+ */
 unsigned long long AI::perft(int depth, Board& board) {
     auto moveList = board.moveGen.generateAll();
     const auto moveListSize = moveList.size();
@@ -569,6 +615,11 @@ unsigned long long AI::perft(int depth, Board& board) {
     return nodeCount;
 }
 
+/**
+ * Performs a divided perft output.
+ * This is mainly used for debugging incorrect perft results as it will
+ * show the breakdown of perft results based on individual moves at the root node.
+ */
 unsigned long long AI::perftDivide(int depth, Board& board) {
     auto moveList = board.moveGen.generateAll();
     const auto moveListSize = moveList.size();
@@ -588,6 +639,10 @@ unsigned long long AI::perftDivide(int depth, Board& board) {
     return nodeCount;
 }
 
+/**
+ * Initializes the piece square tables for evaluation.
+ * The tables are initially emplaced from white' perspective, and the copied and reversed for black.
+ */
 std::unordered_multimap<Piece, std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SIZE>> AI::initializeMap() {
     std::unordered_multimap<Piece, std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SIZE>> tempMap;
     
@@ -699,6 +754,13 @@ std::unordered_multimap<Piece, std::array<int, INNER_BOARD_SIZE * INNER_BOARD_SI
     return tempMap;
 }
 
+/**
+ * This function orders the movelist in order to reach a faster alpha-beta cutoff.
+ * Captures are sorted before quiet moves due to their more forcing nature.
+ * Captures are individually sorted on a MVV-LVA basis.
+ * Lastly, a countermove heuristic is used.
+ * Otherwise, the quiet moves are not in any particular order.
+ */
 std::vector<Move> AI::orderMoveList(std::vector<Move>&& list, Board& board) {
     assert([&]()->bool{
         for (const auto& mv : list) {
@@ -737,6 +799,10 @@ std::vector<Move> AI::orderMoveList(std::vector<Move>&& list, Board& board) {
     return list;
 }
 
+/**
+ * This is a debug method to test the overall correctness of the chess engine behind the AI.
+ * It tests 5 different test positions in perft up to depth 5 and compares them against verified results.
+ */
 void AI::benchmarkPerft() {
     gameBoard->setPositionByFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -");
 
@@ -776,6 +842,20 @@ void AI::benchmarkPerft() {
     std::cout << "Depth 5: " << ((perft(5, *gameBoard) == 164075551) ? "Passed" : "Failed") << "\n";
 }
 
+/**
+ * This method is essential to the multithreaded search. Due to the nature of the search performing deep copies
+ * of the current board for each thread; each thread has a separate board in a separate section of memory.
+ * The moves generated contain pointers to the from and to squares, resulting in all generated moves only being
+ * valid for a given board instance.
+ * This method is used to translate the pointers based on board invariant conversion values to a new board.
+ * These values are the index on the 8x8 board as to where the pointers point.
+ * So a pointer to d7 would equal the value 11.
+ * This simple translation allows moves to be consolidated and shared across threads, even when the memory they
+ * referred to has been freed and is unusable.
+ * This normally is somewhat of a hack I will admit, though I could not find a more elegant solution without
+ * completely restructuring moves to not use pointers, which would require essentially a rewrite of the entire chess engine
+ * and move validation calls.
+ */
 void AI::translateMovePointers(Board& b, Move& mv, std::tuple<int, int, int> conversionOffsets) {
     const auto cornerIndex = b.findCorner_1D();
 
@@ -786,3 +866,4 @@ void AI::translateMovePointers(Board& b, Move& mv, std::tuple<int, int, int> con
     mv.enPassantTarget = (mv.enPassantTarget) ? b.vectorTable[cornerIndex + ((std::get<2>(conversionOffsets) / INNER_BOARD_SIZE) 
             * OUTER_BOARD_SIZE) + (std::get<2>(conversionOffsets) % INNER_BOARD_SIZE)].get() : nullptr;
 }
+

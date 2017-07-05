@@ -5,6 +5,14 @@
 #include "headers/board.h"
 #include "headers/hash.h"
 
+/**
+ * Default zobrist hashing implemenation.
+ * Due to the incremental nature of zobrist hashing, each board
+ * caches its hash value.
+ * Therefore, this method is only ever called in constructors, or
+ * for debug assertions to confirm the incremental updates are equivalent
+ * to this full hash.
+ */
 size_t std::hash<Board>::operator() (Board& b) const {
     if (b.currHash) {
         return b.currHash;

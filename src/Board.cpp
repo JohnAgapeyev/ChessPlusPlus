@@ -13,15 +13,16 @@
 #include "headers/move.h"
 
 /*
- * Try to remove index from squares and instead calculate it based off the index
- * This will ensure that the offsets aren't rotated during board movement
- * 
  * Offset = 98 - (15 * i) + (j + 1)
  * IMPORTANT:
  * Positive x: (30 * ((x + 7) / 15)) - x
  * Negative x: -((30 * ((abs(x) + 7) / 15)) - abs(x))
  */
  
+/**
+ * Board constructor performs a deep copy of the initial board state.
+ * It also initializes the repitionList and the current board hash.
+ */
 Board::Board() {
     for (int i = 0; i < OUTER_BOARD_SIZE; ++i) {
         for (int j = 0; j < OUTER_BOARD_SIZE; ++j) {
@@ -44,6 +45,10 @@ Board::Board() {
     currHash = std::hash<Board>()(*this);
 }
 
+/**
+ * Copy constructor performs a deep board copy of another board.
+ * This is not used outside of threading specific board creation.
+ */
 Board::Board(const Board& b) : moveGen(this), currentGameState(b.currentGameState), castleRights(b.castleRights), 
         blackInCheck(b.blackInCheck), whiteInCheck(b.whiteInCheck), isWhiteTurn(b.isWhiteTurn), enPassantActive(b.enPassantActive), 
         halfMoveClock(b.halfMoveClock), moveCounter(b.moveCounter), 
@@ -64,6 +69,10 @@ Board::Board(const Board& b) : moveGen(this), currentGameState(b.currentGameStat
     assert(checkBoardValidity());
 }
 
+/**
+ * Deep copy copy assignment operator.
+ * Same as above, not used outside of threading purposes.
+ */
 Board& Board::operator=(const Board& b) {
     moveGen = std::move(MoveGenerator{this});
     currentGameState = b.currentGameState;
@@ -91,6 +100,10 @@ Board& Board::operator=(const Board& b) {
     return *this;
 }
 
+/**
+ * Due to the nature of the board shifting around inside of the array, this function returns
+ * the 2D coordinates of the corner of the board.
+ */
 std::pair<int, int> Board::findCorner() {
     if (cornerCache != -1) {
         return {cornerCache / OUTER_BOARD_SIZE, cornerCache % OUTER_BOARD_SIZE};
@@ -104,6 +117,9 @@ std::pair<int, int> Board::findCorner() {
     return {-1, -1};
 }
 
+/**
+ * Same as above, but returns a 1D index of the board corner.
+ */
 int Board::findCorner_1D() {
     if (cornerCache != -1) {
         return cornerCache;
@@ -117,6 +133,9 @@ int Board::findCorner_1D() {
     return -1;
 }
 
+/**
+ * Main output method for displaying the board.
+ */
 void Board::printBoardState() const {
 #ifdef NDEBUG
     const auto range = INNER_BOARD_SIZE;
@@ -176,6 +195,9 @@ void Board::printBoardState() const {
 #endif
 }
 
+/**
+ * Shifts the board horizontally by a given count.
+ */
 void Board::shiftHorizontal(const int count) {
     if (!count) {
         return;
@@ -203,6 +225,9 @@ void Board::shiftHorizontal(const int count) {
     }
 }
 
+/**
+ * Shifts the board vertically by a given count.
+ */
 void Board::shiftVertical(const int count) {
     if (!count) {
         return;
@@ -231,6 +256,12 @@ void Board::shiftVertical(const int count) {
     }
 }
 
+/**
+ * The nature of the board requires that the current square a piece is moving
+ * from has the square offset of 0, which is equal to 7,7 on the 15x15 board.
+ * This method calls the above 2 shift calls to shift a given coordinate square to the
+ * center of the board.
+ */
 void Board::shiftBoard(const int col, const int row) {
     const auto startCoords = findCorner();
     const auto colDiff = ZERO_LOCATION.first - (startCoords.second + col);
@@ -247,6 +278,10 @@ void Board::shiftBoard(const int col, const int row) {
     }
 }
 
+/**
+ * Takes a given user input and performs the move it indicates.
+ * This method is only used when interacting with a user.
+ */
 bool Board::makeMove(std::string& input) {
     assert(checkBoardValidity());
     auto mv = moveGen.createMove(input);
@@ -327,6 +362,13 @@ bool Board::makeMove(std::string& input) {
     return true;
 }
 
+/**
+ * This method makes a move provided to it.
+ * In contrast to the above method, this is only ever called from the AI side
+ * of things.
+ * This separation of user and automated move making is done for small tweaks related to
+ * movement such as whether to prompt the user or not for promotion types, etc.
+ */
 bool Board::makeMove(Move& mv) {
     assert(checkBoardValidity());
     assert(mv.fromSq && mv.toSq);
@@ -412,6 +454,12 @@ bool Board::makeMove(Move& mv) {
     return true;
 }
 
+/**
+ * Unmakes a given move for the current board.
+ * This is only ever called by the chess engine during tree traversal.
+ * If the move provided is invalid or has not been immeditely made previously, 
+ * the behaviour is undefined.
+ */
 void Board::unmakeMove(const Move& mv) {
     assert(checkBoardValidity());
     
@@ -524,6 +572,9 @@ void Board::unmakeMove(const Move& mv) {
     assert(checkBoardValidity());
 }
 
+/**
+ * Generates a FEN string represnting the current board state.
+ */
 std::string Board::generateFEN() {
     std::string output;
     int emptySquareCounter = 0;
@@ -594,6 +645,10 @@ std::string Board::generateFEN() {
     return output;
 }
 
+/**
+ * Counts the material on the board to check if it would cause a draw due to
+ * insufficient material.
+ */
 bool Board::drawByMaterial() {
     const int cornerIndex = findCorner_1D();
     int minorCount = 0;
@@ -640,6 +695,9 @@ bool Board::drawByMaterial() {
     return false;
 }
 
+/**
+ * Prompts the user to enter a character representing their desire promotion type.
+ */
 std::string Board::promptPromotionType() const {
     std::string input;
     std::regex reg("[NBRQ]");
@@ -658,6 +716,9 @@ std::string Board::promptPromotionType() const {
     return input;
 }
 
+/**
+ * Updates the current check status of the board after a move is made or unmade.
+ */
 void Board::updateCheckStatus() {
     const auto corner = findCorner_1D();
     int whiteIndex = -1;
@@ -682,7 +743,12 @@ void Board::updateCheckStatus() {
     blackInCheck = moveGen.inCheck(blackIndex);
 }
 
-//Currently no validation for this method as it is being built primarily for perft position testing
+/**
+ * Sets a board's position based on a given FEN string.
+ * This method is used only for perft testing, and has no validation that the
+ * position is a valid chess position, or that the input string is valid.
+ * As such, it is not publicly exposed to the end user in the interface.
+ */
 void Board::setPositionByFEN(const std::string& fen) {
     const auto cornerDist = findCorner_1D();
     std::stringstream fenStream(fen);
@@ -772,7 +838,14 @@ void Board::setPositionByFEN(const std::string& fen) {
     updateCheckStatus();
 }
 
-//Testing method used to assert board state
+/**
+ * This method is a testing method used for validating the current board
+ * state is as it should be.
+ * This includes checks for en passant having a valid target when it is active,
+ * ensuring the 8x8 board is consistent and contains no sentinel values.
+ * The most important check this method performs is a forced reset validation of the board hash,
+ * ensuring the incremental update is fully equivalent to a complete rehash.
+ */
 bool Board::checkBoardValidity() {
     int cornerCoords;
     if ((cornerCoords = findCorner_1D()) == -1) {
@@ -830,6 +903,10 @@ bool Board::checkBoardValidity() {
     return true;
 }
 
+/**
+ * Converts a given square pointer to text.
+ * If a square pointer points to g3, returns the text "g3".
+ */
 std::string Board::convertSquareToCoordText(const Square *sq) {
     const auto cornerCoords = findCorner_1D();
     const auto squareDist = getSquareIndex(sq);
@@ -840,10 +917,19 @@ std::string Board::convertSquareToCoordText(const Square *sq) {
         + std::to_string(INNER_BOARD_SIZE - (innerDist / INNER_BOARD_SIZE));
 }
 
+/**
+ * Complement to the above method, converts the from and to squares to text.
+ */
 std::string Board::convertMoveToCoordText(const Move& mv) {
     return convertSquareToCoordText(mv.fromSq) + convertSquareToCoordText(mv.toSq);
 }
 
+/**
+ * Performs a linear search on the board to find a given square
+ * based on a pointer to it.
+ * It only searches for valid on-board squares as it searches only the 8x8 board, instead of
+ * the full 15x15.
+ */
 int Board::getSquareIndex(const Square *sq) {
     if (!sq) {
         return -1;
@@ -866,6 +952,10 @@ int Board::getSquareIndex(const Square *sq) {
     return -1;
 }
 
+/**
+ * Checks whether en passant is valid after a given move based on an en passant capture
+ * resulting in uncovering a pin, resulting in check, which is an invalid move.
+ */
 bool Board::checkEnPassantValidity(Square *sq, const Move& mv) {
     //Enemy pawn and enemy king - perform check check on left square
     std::unique_ptr<Piece> temp{sq->releasePiece()};
@@ -891,12 +981,18 @@ bool Board::checkEnPassantValidity(Square *sq, const Move& mv) {
     return !result;
 }
 
+/**
+ * Used during move making to remove castling rights from the board.
+ */
 void Board::removeCastlingRights(const unsigned char flag) {
     hashCastleRights();
     castleRights &= ~flag;
     hashCastleRights();
 }
 
+/**
+ * This method disables castling based on the piece that moved.
+ */
 void Board::disableCastling(const Move& mv) {
     // Disable castling if the appropriate rook moves
     if (mv.fromPieceType == PieceTypes::ROOK) {
@@ -926,6 +1022,10 @@ void Board::disableCastling(const Move& mv) {
     }
 }
 
+/**
+ * Adds an en passant target to the board is it is valid.
+ * Part of that validity check involves calling checkEnPassantValidity on the neighbouring squares.
+ */
 void Board::addEnPassantTarget(const Move& mv, const int offset, const int columnNum, const int endSquareIndex) {
     // Add en Passant target if pawn double move was made.
     if (std::abs(offset) == 30 && mv.fromPieceType == PieceTypes::PAWN) {
@@ -984,6 +1084,9 @@ void Board::addEnPassantTarget(const Move& mv, const int offset, const int colum
     }
 }
 
+/**
+ * Performs castling on the board for a given move.
+ */
 void Board::performCastling(Move& mv, const int offset, const int fromSquareIndex) {
     const bool castleDirectionChosen = moveGen.getCastleDirectionBool(mv.fromPieceType, mv.fromPieceColour, offset);
     //Perform castling
@@ -1013,6 +1116,9 @@ void Board::performCastling(Move& mv, const int offset, const int fromSquareInde
     }
 }
 
+/**
+ * Performs an en passant catpure and removes the captured piece.
+ */
 void Board::captureEnPassant(const Move& mv, const int offset, const int toSquareIndex) {
     const auto captureIndex = toSquareIndex - OUTER_BOARD_SIZE + ((isWhiteTurn) * OUTER_BOARD_SIZE << 1);
     const auto cornerIndex = findCorner_1D();
@@ -1029,6 +1135,11 @@ void Board::captureEnPassant(const Move& mv, const int offset, const int toSquar
     }
 }
 
+/**
+ * Incrementally updates the hashbased on a change in the piece structure of the board.
+ * Every time a piece moves, it must be hashed out of its old square and hashed into its new square.
+ * The hashing call is done to this function.
+ */
 inline void Board::hashPieceChange(const int index, const PieceTypes type, const Colour colour) {
     assert(pieceLookupTable.find(type) != pieceLookupTable.end());
     assert(index >= 0);
@@ -1036,18 +1147,30 @@ inline void Board::hashPieceChange(const int index, const PieceTypes type, const
     currHash ^= HASH_VALUES[NUM_SQUARE_STATES * index + pieceLookupTable.find(type)->second + (6 * (colour == Colour::BLACK))];
 }
 
+/**
+ * Incrementally updates the hash based on the change in turn.
+ */
 inline void Board::hashTurnChange() {
     currHash ^= HASH_VALUES[static_cast<unsigned int>(SquareState::WHITE_MOVE)];
 }
 
+/**
+ * Incrementally updates the hash based on the change in the en passant file
+ */
 inline void Board::hashEnPassantFile(const int fileNum) {
     currHash ^= HASH_VALUES[static_cast<unsigned int>(SquareState::EN_PASSANT_FILE) + fileNum];
 }
 
+/**
+ * Incrementally updates the hash based on the change in castling rights.
+ */
 inline void Board::hashCastleRights() {
     currHash ^= HASH_VALUES[static_cast<unsigned int>(SquareState::CASTLE_RIGHTS) + castleRights];
 }
 
+/**
+ * Promotes a pawn to a given type when it is appropriate to do so.
+ */
 void Board::promotePawn(Move& mv, const int endSquareIndex, const bool isSilent) {
     const auto cornerIndex = findCorner_1D();
     //Promote pawns on the end ranks
@@ -1070,6 +1193,10 @@ void Board::promotePawn(Move& mv, const int endSquareIndex, const bool isSilent)
     }
 }
 
+/**
+ * Detects if the board is at an end state, the type of that state, and ends the
+ * current game in progress if one has been reached.
+ */
 void Board::detectGameEnd() {
     //Opponent has no legal moves
     if (!moveGen.generateAll().size()) {
@@ -1109,3 +1236,4 @@ void Board::detectGameEnd() {
         return;
     }
 }
+

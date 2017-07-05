@@ -11,6 +11,13 @@
 
 class Square;
 
+/**
+ * Main class for the chess engine.
+ * It features a 15x15 vector based board containing an 8x8 board that shifts around
+ * inside of it.
+ * The board handles move making and unnmaking, piece movement, piece capturing and game ending states.
+ * This class is also responsible for incrementally updating its own hash.
+ */
 class Board {
     /*
      * Convert 15x15 board index that references square on the inner board, and
@@ -27,6 +34,10 @@ class Board {
         return 98 - (15 * i) + j;
     }
     
+    /**
+     * The move generator class handles all matters regarding move generation and validation,
+     * including checking if a king is in check.
+     */
     class MoveGenerator {
         Board *board;
         std::vector<Move> moveList;

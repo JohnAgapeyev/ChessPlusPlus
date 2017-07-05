@@ -9,6 +9,9 @@
 #include "headers/enums.h"
 #include "headers/move.h"
 
+/**
+ * This method translates human text input into a move struct that can be used.
+ */
 Move Board::MoveGenerator::createMove(std::string& input) const {
     // If the characters are letters, convert them to digit chars
     if (input[0] > 8 && input[2] > 8) {
@@ -60,7 +63,9 @@ Move Board::MoveGenerator::createMove(std::string& input) const {
     
     return result;
 }
- /*
+ /**
+  * This method validates a given move for legality.
+  *
   * IMPORTANT:
   * Positive x: (30 * ((x + 7) / 15)) - x
   * Negative x: -((30 * ((abs(x) + 7) / 15)) - abs(x))
@@ -80,7 +85,6 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
     // Check for either square being a sentinel
     assert(!(mv.fromSq->checkSentinel() || mv.toSq->checkSentinel()));
     
-    //Don't perform basic checks if the computer is generating the moves
     if (!mv.fromSq->getPiece() || (mv.fromPieceType == PieceTypes::UNKNOWN 
             && mv.fromPieceColour == Colour::UNKNOWN)) {
         if (!isSilent) {
@@ -122,7 +126,7 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
 
     // Check if the move offset was found
     if (selectedOffset == -100) {
-        logMoveFailure(23, isSilent);
+        logMoveFailure(3, isSilent);
         return false;
     }
     
@@ -150,13 +154,13 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
         }
         // Check if the square has a piece on it or is a sentinel
         if (currSquare->getPiece()) {
-            logMoveFailure(3, isSilent);
+            logMoveFailure(4, isSilent);
             return false;
         }
     }
     // Check if square was found in previous loop
     if (!foundToSquare) {
-        logMoveFailure(4, isSilent);
+        logMoveFailure(5, isSilent);
         return false;
     }
     
@@ -171,7 +175,7 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
         const auto whiteOffset = board->isWhiteTurn * 75;
         const auto rowPairs = std::make_pair(15 + whiteOffset, 29 + whiteOffset);
         if (distFromStartToCorner < rowPairs.first || distFromStartToCorner > rowPairs.second) {
-            logMoveFailure(5, isSilent);
+            logMoveFailure(6, isSilent);
             return false;
         }
     }
@@ -186,32 +190,32 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
             if (!mv.toSq->getPiece() && !(board->enPassantActive && *mv.toSq == *board->enPassantTarget 
                     && board->vectorTable[distToCaptureSquare]->getPiece()
                     && board->vectorTable[distToCaptureSquare]->getPiece()->getColour() != mv.fromPieceColour)) {
-                logMoveFailure(6, isSilent);
+                logMoveFailure(7, isSilent);
                 return false;
             }
         } else if (mv.toSq->getPiece()) {
             // Prevent pawns from capturing vertically
-            logMoveFailure(7, isSilent);
+            logMoveFailure(8, isSilent);
             return false;
         }
     }
     
     //Prevent players from placing their own king in check
     if (inCheck(mv)) {
-        logMoveFailure(8, isSilent);
+        logMoveFailure(9, isSilent);
         return false;
     }
     
     if (mv.fromPieceType == PieceTypes::KING && absOffset == 2) {
         // Prevent king from jumping 2 spaces if not castling
         if (!getCastleDirectionBool(mv.fromPieceType, mv.fromPieceColour, selectedOffset)) {
-            logMoveFailure(9, isSilent);
+            logMoveFailure(10, isSilent);
             return false;
         }
         //Prevent castling if king is currently in check
         if ((mv.fromPieceColour == Colour::BLACK && board->blackInCheck) 
                 || (mv.fromPieceColour == Colour::WHITE && board->whiteInCheck)) {
-            logMoveFailure(10, isSilent);
+            logMoveFailure(11, isSilent);
             return false;
         }
         const bool isKingSide = (selectedOffset > 0);
@@ -220,7 +224,7 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
         const auto rookSquare = board->vectorTable[currIndex - 3 + (isKingSide * 3 << 1) - !isKingSide]->getPiece();
         if (!rookSquare || rookSquare->getType() != PieceTypes::ROOK 
                 || rookSquare->getColour() != (board->isWhiteTurn ? Colour::WHITE : Colour::BLACK)) {
-            logMoveFailure(11, isSilent); 
+            logMoveFailure(12, isSilent); 
             return false;
         }
 
@@ -228,8 +232,9 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
             const auto index = -i + (isKingSide * i << 1);
             const auto currPiece = board->vectorTable[currIndex + index]->getPiece();
             const auto checkIndex = currIndex + index;
+            //Prevent castling if the squares are not empty, there is no rook in the corner, or the in-between squares are under attack
             if ((currPiece && currPiece->getType() != PieceTypes::ROOK) || (i <= 2 && inCheck(checkIndex))) {
-                logMoveFailure(12, isSilent);
+                logMoveFailure(13, isSilent);
                 return false;
             }
         }
@@ -237,6 +242,10 @@ bool Board::MoveGenerator::validateMove(const Move& mv, const bool isSilent) {
     return true;
 }
 
+/**
+ * Checks if a given square on the board is in check.
+ * This method is called primarily in regards to castling, or checking if a king is in check
+ */
 bool Board::MoveGenerator::inCheck(const int squareIndex) const {
     assert(squareIndex >= 0 && squareIndex < TOTAL_BOARD_SIZE);
     
@@ -295,6 +304,11 @@ bool Board::MoveGenerator::inCheck(const int squareIndex) const {
     return false;
 }
 
+/**
+ * Same as above, this method performs a check for check.
+ * The difference is that this method validates a given move instead of a square index due to the requirements
+ * of checking the pieces and square involved.
+ */
 bool Board::MoveGenerator::inCheck(const Move& mv) const {
     static const auto& checkVectors = Piece(PieceTypes::UNKNOWN, Colour::UNKNOWN).getVectorList();
     std::unique_ptr<Piece> toPieceCopy{mv.toSq->releasePiece()};
@@ -387,6 +401,11 @@ bool Board::MoveGenerator::inCheck(const Move& mv) const {
     return false;
 }
 
+/**
+ * Checks if a piece can castle based on the offset it is moving.
+ * It checks the given values against the castle rights and returns whether
+ * castling rights are allowed or not for the given input.
+ */
 bool Board::MoveGenerator::getCastleDirectionBool(const PieceTypes type, 
         const Colour pieceColour, const int offset) const {
     if (type == PieceTypes::KING && std::abs(offset) == 2) {
@@ -409,6 +428,9 @@ void Board::MoveGenerator::logMoveFailure(const int failureNum, const bool isSil
 #endif
 }
 
+/**
+ * This function generates all legal moves for the current position.
+ */
 std::vector<Move> Board::MoveGenerator::generateAll() {
     moveList.clear();
     pieceCoords.clear();
@@ -509,6 +531,12 @@ std::vector<Move> Board::MoveGenerator::generateAll() {
     return moveList;
 }
 
+/**
+ * Due to the vector based nature of the board layout this chess engine uses, it's important
+ * to know what vector offset a given move is using.
+ * This function uses the differences in square offset values to determine the offset, which can
+ * then be used for move validation.
+ */
 int Board::MoveGenerator::getMoveOffset(const Move& mv) const {
     assert(mv.fromSq && mv.toSq);
     assert(mv.fromSq->getPiece());

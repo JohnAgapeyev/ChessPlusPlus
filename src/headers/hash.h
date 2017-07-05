@@ -7,6 +7,10 @@
 class Board;
 class Piece;
 
+/**
+ * Template specialization of the std::hash class for use
+ * in the transposition table
+ */
 namespace std {
     template<>
     class hash<Board> {

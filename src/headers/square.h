@@ -6,6 +6,9 @@
 #include "piece.h"
 #include "enums.h"
 
+/**
+ * Class representing a square on the board.
+ */
 class Square {
     std::unique_ptr<Piece> piece;
     int offset;

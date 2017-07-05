@@ -8,6 +8,22 @@
 #include <atomic>
 #include "map.h"
 
+/**
+ * Cache is a fixed size thread-safe transposition table container for the AI.
+ * It is organized as an LRU cache implemented over a linked list of key value pairs,
+ * and a fixed size custom hashmap storing keys and linked list iterators.
+ * When an element is accessed, it is moved to the front of the linked list.
+ * This creates a temporal queue of access based on the order of the linked list entries.
+ * When the max size is reached, the tail of the linked list - representing the least recently accessed element
+ * is deleted along with the associated element in the hashmap.
+ *
+ * Complexity details:
+ * Insertion O(1)
+ * Deletion O(1)
+ * Retrieval O(1)
+ * Erase O(n)
+ * Space O(n)
+ */
 template<typename Key, typename Value, uint64_t maxSize, typename Hash = std::hash<Key>>
 class Cache {
     static_assert(maxSize > 0, "Size must be greater than 0");

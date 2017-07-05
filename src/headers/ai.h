@@ -16,6 +16,11 @@
 #define CACHE_MB 4096
 #endif
 
+/**
+ * This class handles all AI related behaviour.
+ * It operates on top of a board instance upon which it will search
+ * and evaluate positions up to a certain depth.
+ */
 class AI {
     static constexpr auto MATE = SHRT_MAX;
     static constexpr auto DRAW = 0;

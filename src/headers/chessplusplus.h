@@ -1,6 +1,10 @@
 #ifndef CHESSPLUSPLUS_H
 #define CHESSPLUSPLUS_H
 
+/**
+ * These are methods entirely based aorund the text interface and UX design.
+ */
+
 bool checkMoveInputValid(const std::string& input);
 std::string getUserInput();
 int getUserInt();

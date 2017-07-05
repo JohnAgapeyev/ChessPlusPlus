@@ -4,6 +4,9 @@
 #include <vector>
 #include "enums.h"
 
+/**
+ * Class representing a piece in the game.
+ */
 class Piece {
     PieceTypes type;
     Colour pieceColour;
