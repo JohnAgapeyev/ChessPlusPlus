@@ -21,7 +21,7 @@ constexpr uint_least16_t HASH_BOARD_LENGTH = (NUM_SQUARE_STATES * 64) + 1 + 16 +
 constexpr std::pair<int, int> ZERO_LOCATION = std::make_pair(7, 7);
 constexpr uint_least8_t ZERO_LOCATION_1D = (ZERO_LOCATION.first * OUTER_BOARD_SIZE) + ZERO_LOCATION.second;
 
-extern const std::array<std::array<std::shared_ptr<Square>, INNER_BOARD_SIZE>, INNER_BOARD_SIZE> INIT_BOARD;
+extern const std::array<std::array<std::unique_ptr<Square>, INNER_BOARD_SIZE>, INNER_BOARD_SIZE> INIT_BOARD;
 extern const std::array<uint_fast64_t, HASH_BOARD_LENGTH> HASH_VALUES;
 extern const unsigned char BLACK_CASTLE_FLAG;
 extern const unsigned char WHITE_CASTLE_FLAG;
@@ -30,7 +30,7 @@ extern const unsigned char WHITE_CASTLE_KING_FLAG;
 extern const unsigned char BLACK_CASTLE_QUEEN_FLAG;
 extern const unsigned char BLACK_CASTLE_KING_FLAG;
 
-std::array<std::array<std::shared_ptr<Square>, INNER_BOARD_SIZE>, INNER_BOARD_SIZE> fillInitBoard();
+std::array<std::array<std::unique_ptr<Square>, INNER_BOARD_SIZE>, INNER_BOARD_SIZE> fillInitBoard();
 std::array<uint_fast64_t, HASH_BOARD_LENGTH> populateHashTable();
 
 #endif

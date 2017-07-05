@@ -9,7 +9,7 @@
 #include "headers/enums.h"
 #include "headers/consts.h"
 
-const std::array<std::array<std::shared_ptr<Square>, INNER_BOARD_SIZE>, INNER_BOARD_SIZE> INIT_BOARD = fillInitBoard();
+const std::array<std::array<std::unique_ptr<Square>, INNER_BOARD_SIZE>, INNER_BOARD_SIZE> INIT_BOARD = fillInitBoard();
 const std::array<uint_fast64_t, HASH_BOARD_LENGTH> HASH_VALUES = populateHashTable();
 const unsigned char BLACK_CASTLE_FLAG = 0b1100;
 const unsigned char WHITE_CASTLE_FLAG = 0b0011;
@@ -18,11 +18,17 @@ const unsigned char WHITE_CASTLE_KING_FLAG = 0b0001;
 const unsigned char BLACK_CASTLE_QUEEN_FLAG = 0b1000;
 const unsigned char BLACK_CASTLE_KING_FLAG = 0b0100;
 
-std::array<std::array<std::shared_ptr<Square>, INNER_BOARD_SIZE>, INNER_BOARD_SIZE> fillInitBoard() {
+/**
+ * This method populates the global initial board state.
+ * I had originally planned early on in development for the board to be reset back to this internal state using
+ * a reset method in the board class.
+ * This never really became feasible, and as such this init board is merely used to initially construct a board.
+ */
+std::array<std::array<std::unique_ptr<Square>, INNER_BOARD_SIZE>, INNER_BOARD_SIZE> fillInitBoard() {
     const auto& pickColour = [](const auto T){return (T < 5) ? Colour::BLACK : Colour::WHITE;};
-    std::array<std::array<std::shared_ptr<Square>, INNER_BOARD_SIZE>, INNER_BOARD_SIZE> result;
+    std::array<std::array<std::unique_ptr<Square>, INNER_BOARD_SIZE>, INNER_BOARD_SIZE> result;
     for (int i = 0; i < INNER_BOARD_SIZE; ++i) {
-        std::array<std::shared_ptr<Square>, INNER_BOARD_SIZE> row;
+        std::array<std::unique_ptr<Square>, INNER_BOARD_SIZE> row;
         for (int j = 0; j < INNER_BOARD_SIZE; ++j) {
             switch(i) {
                 case 0:
@@ -30,30 +36,30 @@ std::array<std::array<std::shared_ptr<Square>, INNER_BOARD_SIZE>, INNER_BOARD_SI
                     switch(j) {
                         case 0:
                         case 7:
-                            row[j] = std::make_shared<Square>(Piece(PieceTypes::ROOK, pickColour(i)));
+                            row[j] = std::make_unique<Square>(Piece(PieceTypes::ROOK, pickColour(i)));
                             break;
                         case 1:
                         case 6:
-                            row[j] = std::make_shared<Square>(Piece(PieceTypes::KNIGHT, pickColour(i)));
+                            row[j] = std::make_unique<Square>(Piece(PieceTypes::KNIGHT, pickColour(i)));
                             break;
                         case 2:
                         case 5:
-                            row[j] = std::make_shared<Square>(Piece(PieceTypes::BISHOP, pickColour(i)));
+                            row[j] = std::make_unique<Square>(Piece(PieceTypes::BISHOP, pickColour(i)));
                             break;
                         case 3:
-                            row[j] = std::make_shared<Square>(Piece(PieceTypes::QUEEN, pickColour(i)));
+                            row[j] = std::make_unique<Square>(Piece(PieceTypes::QUEEN, pickColour(i)));
                             break;
                         case 4:
-                            row[j] = std::make_shared<Square>(Piece(PieceTypes::KING, pickColour(i)));
+                            row[j] = std::make_unique<Square>(Piece(PieceTypes::KING, pickColour(i)));
                             break;
                     }
                     break;
                 case 1:
                 case 6:
-                    row[j] = std::make_shared<Square>(Piece(PieceTypes::PAWN, pickColour(i)));
+                    row[j] = std::make_unique<Square>(Piece(PieceTypes::PAWN, pickColour(i)));
                     break;
                 default:
-                    row[j] = std::make_shared<Square>();
+                    row[j] = std::make_unique<Square>();
                     break;
             }
         }
