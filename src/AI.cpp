@@ -430,10 +430,13 @@ std::tuple<Move, int, int, int, int> AI::AlphaBeta(int alpha, int beta, const in
             if (std::get<1>(abCall) > std::get<1>(rtn)) {
                 const auto cornerIndex = board.findCorner_1D();
 
-                std::get<1>(rtn) = std::get<1>(abCall);
-                std::get<2>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(std::get<0>(rtn).fromSq), cornerIndex);
-                std::get<3>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(std::get<0>(rtn).toSq), cornerIndex);
-                std::get<4>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(std::get<0>(rtn).enPassantTarget), cornerIndex);
+                rtn = std::forward_as_tuple(
+                        std::get<0>(rtn), 
+                        std::get<1>(abCall), 
+                        board.convertOuterBoardIndex(board.getSquareIndex(std::get<0>(rtn).fromSq), cornerIndex),
+                        board.convertOuterBoardIndex(board.getSquareIndex(std::get<0>(rtn).toSq), cornerIndex),
+                        board.convertOuterBoardIndex(board.getSquareIndex(std::get<0>(rtn).enPassantTarget), cornerIndex)
+                );
             }
             a = std::max(a, std::get<1>(rtn));
             board.unmakeMove(std::get<0>(rtn));
@@ -456,11 +459,13 @@ std::tuple<Move, int, int, int, int> AI::AlphaBeta(int alpha, int beta, const in
             if (std::get<1>(abCall) > std::get<1>(rtn)) {
                 const auto cornerIndex = board.findCorner_1D();
 
-                std::get<0>(rtn) = moveList[i];
-                std::get<1>(rtn) = std::get<1>(abCall);
-                std::get<2>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(moveList[i].fromSq), cornerIndex);
-                std::get<3>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(moveList[i].toSq), cornerIndex);
-                std::get<4>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(moveList[i].enPassantTarget), cornerIndex);
+                rtn = std::forward_as_tuple(
+                        moveList[i],
+                        std::get<1>(abCall), 
+                        board.convertOuterBoardIndex(board.getSquareIndex(moveList[i].fromSq), cornerIndex),
+                        board.convertOuterBoardIndex(board.getSquareIndex(moveList[i].toSq), cornerIndex),
+                        board.convertOuterBoardIndex(board.getSquareIndex(moveList[i].enPassantTarget), cornerIndex)
+                );
 
                 if (usingTimeLimit && isTimeUp.load()) {
                     board.unmakeMove(std::get<0>(rtn));
@@ -475,11 +480,14 @@ std::tuple<Move, int, int, int, int> AI::AlphaBeta(int alpha, int beta, const in
         //If no cutoff was found by the previous loop, default to the first move in the list
         if (moveListSize > 0 && std::get<0>(rtn) == emptyMove) {
             const auto cornerIndex = board.findCorner_1D();
-            std::get<0>(rtn) = moveList[0];
-            std::get<1>(rtn) = a;
-            std::get<2>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(moveList[0].fromSq), cornerIndex);
-            std::get<3>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(moveList[0].toSq), cornerIndex);
-            std::get<4>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(moveList[0].enPassantTarget), cornerIndex);
+
+            rtn = std::forward_as_tuple(
+                    moveList[0],
+                    a,
+                    board.convertOuterBoardIndex(board.getSquareIndex(moveList[0].fromSq), cornerIndex),
+                    board.convertOuterBoardIndex(board.getSquareIndex(moveList[0].toSq), cornerIndex),
+                    board.convertOuterBoardIndex(board.getSquareIndex(moveList[0].enPassantTarget), cornerIndex)
+            );
         }
     } else {
         //Minimizing player
@@ -493,10 +501,13 @@ std::tuple<Move, int, int, int, int> AI::AlphaBeta(int alpha, int beta, const in
             if (std::get<1>(abCall) < std::get<1>(rtn)) {
                 const auto cornerIndex = board.findCorner_1D();
 
-                std::get<1>(rtn) = std::get<1>(abCall);
-                std::get<2>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(std::get<0>(rtn).fromSq), cornerIndex);
-                std::get<3>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(std::get<0>(rtn).toSq), cornerIndex);
-                std::get<4>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(std::get<0>(rtn).enPassantTarget), cornerIndex);
+                rtn = std::forward_as_tuple(
+                        std::get<0>(rtn), 
+                        std::get<1>(abCall), 
+                        board.convertOuterBoardIndex(board.getSquareIndex(std::get<0>(rtn).fromSq), cornerIndex),
+                        board.convertOuterBoardIndex(board.getSquareIndex(std::get<0>(rtn).toSq), cornerIndex),
+                        board.convertOuterBoardIndex(board.getSquareIndex(std::get<0>(rtn).enPassantTarget), cornerIndex)
+                );
             }
             b = std::min(b, std::get<1>(rtn));
             board.unmakeMove(std::get<0>(rtn));
@@ -519,11 +530,13 @@ std::tuple<Move, int, int, int, int> AI::AlphaBeta(int alpha, int beta, const in
             if (std::get<1>(abCall) < std::get<1>(rtn)) {
                 const auto cornerIndex = board.findCorner_1D();
 
-                std::get<0>(rtn) = moveList[i];
-                std::get<1>(rtn) = std::get<1>(abCall);
-                std::get<2>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(moveList[i].fromSq), cornerIndex);
-                std::get<3>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(moveList[i].toSq), cornerIndex);
-                std::get<4>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(moveList[i].enPassantTarget), cornerIndex);
+                rtn = std::forward_as_tuple(
+                        moveList[i],
+                        std::get<1>(abCall), 
+                        board.convertOuterBoardIndex(board.getSquareIndex(moveList[i].fromSq), cornerIndex),
+                        board.convertOuterBoardIndex(board.getSquareIndex(moveList[i].toSq), cornerIndex),
+                        board.convertOuterBoardIndex(board.getSquareIndex(moveList[i].enPassantTarget), cornerIndex)
+                );
 
                 if (usingTimeLimit && isTimeUp.load()) {
                     board.unmakeMove(std::get<0>(rtn));
@@ -536,11 +549,13 @@ std::tuple<Move, int, int, int, int> AI::AlphaBeta(int alpha, int beta, const in
         //If no cutoff was found by the previous loop, default to the first move in the list
         if (moveListSize > 0 && std::get<0>(rtn) == emptyMove) {
             const auto cornerIndex = board.findCorner_1D();
-            std::get<0>(rtn) = moveList[0];
-            std::get<1>(rtn) = b;
-            std::get<2>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(moveList[0].fromSq), cornerIndex);
-            std::get<3>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(moveList[0].toSq), cornerIndex);
-            std::get<4>(rtn) = board.convertOuterBoardIndex(board.getSquareIndex(moveList[0].enPassantTarget), cornerIndex);
+            rtn = std::forward_as_tuple(
+                    moveList[0],
+                    b,
+                    board.convertOuterBoardIndex(board.getSquareIndex(moveList[0].fromSq), cornerIndex),
+                    board.convertOuterBoardIndex(board.getSquareIndex(moveList[0].toSq), cornerIndex),
+                    board.convertOuterBoardIndex(board.getSquareIndex(moveList[0].enPassantTarget), cornerIndex)
+            );
         }
     }
 
